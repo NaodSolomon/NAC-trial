@@ -2,7 +2,8 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  output: 'standalone',
+  // Windows cannot create pnpm's standalone symlinks without Developer Mode.
+  output: process.platform === 'win32' ? undefined : 'standalone',
 };
 
 export default nextConfig;

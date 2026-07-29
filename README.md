@@ -490,6 +490,27 @@ Real PayPal traffic requires all three explicit switches:
 `PAYMENT_DRIVER=paypal`, `PAYMENTS_ENABLED=true`, and `PAYPAL_ENABLED=true`, plus valid
 credentials. Leaving any switch disabled keeps the production gateway closed.
 
+### Step 19: Donation simulation
+
+Open `http://localhost:3000/donate` to complete the local demonstration. The fake gateway
+creates a persisted donation and redirects to `/donate/simulated`, where it can be confirmed,
+failed, or cancelled. Confirmation generates a PDF test receipt in MinIO and sends its link
+to Mailpit (`http://localhost:8025`). No card, bank, PayPal, Telebirr, or CBE information is
+requested, stored, or transmitted.
+
+The simulation API is:
+
+- `POST /api/v1/public/donations`
+- `GET /api/v1/public/donations/:id`
+- `POST /api/v1/public/donations/:id/cancel`
+- `POST /api/v1/test/payments/:id/confirm`
+- `POST /api/v1/test/payments/:id/fail`
+
+The `/test/payments` controller is registered only for `NODE_ENV=test` or when
+`TRIAL_MODE=true` outside production. Production rejects `TRIAL_MODE=true` during startup
+and independently omits these routes. Repeating a confirmation uses the same fake event ID:
+the database accepts it once, returns `duplicate: true` thereafter, and sends only one email.
+
 ## Production Deployment
 
 ```bash

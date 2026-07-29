@@ -113,6 +113,7 @@ export class DrizzleDonationRepository implements DonationRepository {
           and(
             eq(donations.gateway, 'PAYPAL'),
             eq(donations.providerOrderId, event.providerOrderId),
+            inArray(donations.status, ['INITIATED', 'PENDING']),
           ),
         );
       return true;

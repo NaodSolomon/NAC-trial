@@ -11,6 +11,7 @@ import { cleanTestDatabase } from './database-cleaner.helper';
 import { connectTestPostgres, PostgresTestContext } from './postgres-test.helper';
 import { requireDedicatedTestDatabase } from './test-database-safety.helper';
 import { createTestApp } from './test-app.helper';
+import { MAILER, Mailer } from '../../src/modules/mail/mail.interface';
 
 export const E2E_PASSWORD = 'TestingPassword123';
 
@@ -25,6 +26,7 @@ export interface E2eTestContext extends PostgresTestContext {
   actors: E2eActors;
   storage: jest.Mocked<ObjectStorage>;
   gateway: jest.Mocked<PaymentGateway>;
+  mailer: jest.Mocked<Mailer>;
 }
 
 export async function createE2eTestContext(): Promise<E2eTestContext> {
@@ -93,12 +95,19 @@ export async function createE2eTestContext(): Promise<E2eTestContext> {
       status: 'CONFIRMED' as const,
     })),
   };
+  const mailer: jest.Mocked<Mailer> = { send: jest.fn().mockResolvedValue(undefined) };
   const app = await createTestApp({
     databaseUrl,
     configureModule: (builder) =>
-      builder.overrideProvider(OBJECT_STORAGE).useValue(storage).overrideProvider(PAYMENT_GATEWAY).useValue(gateway),
+      builder
+        .overrideProvider(OBJECT_STORAGE)
+        .useValue(storage)
+        .overrideProvider(PAYMENT_GATEWAY)
+        .useValue(gateway)
+        .overrideProvider(MAILER)
+        .useValue(mailer),
   });
-  return { ...postgres, app, actors, storage, gateway };
+  return { ...postgres, app, actors, storage, gateway, mailer };
 }
 
 export async function closeE2eTestContext(context: E2eTestContext): Promise<void> {

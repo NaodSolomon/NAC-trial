@@ -13,7 +13,10 @@ export class FakePaymentGateway implements PaymentGateway {
   constructor(private readonly config: ConfigService) {}
 
   isEnabled(): boolean {
-    return this.config.get<string>('runtime.paymentDriver') === 'fake';
+    return (
+      this.config.get<string>('runtime.paymentDriver') === 'fake' &&
+      this.config.get<boolean>('runtime.trialMode') === true
+    );
   }
 
   async createCheckout(donation: Donation): Promise<GatewayCheckout> {

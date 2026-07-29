@@ -16,6 +16,7 @@ services:
       PAYMENT_DRIVER: fake
       CACHE_DRIVER: redis
       PAYMENTS_ENABLED: "false"
+      TRIAL_MODE: "true"
       STORAGE_ENDPOINT: http://minio:9000
       STORAGE_PUBLIC_URL: http://localhost:9000/nehemiah-media
       MAIL_HOST: mailpit

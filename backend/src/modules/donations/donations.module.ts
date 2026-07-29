@@ -1,11 +1,16 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { MediaModule } from '../media/media.module';
+import { MailModule } from '../mail/mail.module';
 import {
   AdminDonationController,
   DonationWebhookController,
   PublicDonationController,
 } from './controllers/donation.controllers';
+import {
+  TestPaymentController,
+  trialPaymentRoutesEnabled,
+} from './controllers/test-payment.controller';
 import { PayPalGateway } from './gateways/paypal.gateway';
 import { FakePaymentGateway } from './gateways/fake-payment.gateway';
 import { ConfigService } from '@nestjs/config';
@@ -15,8 +20,13 @@ import { DrizzleDonationRepository } from './repositories/drizzle-donation.repos
 import { DonationService } from './services/donation.service';
 
 @Module({
-  imports: [AuthModule, MediaModule],
-  controllers: [PublicDonationController, DonationWebhookController, AdminDonationController],
+  imports: [AuthModule, MediaModule, MailModule],
+  controllers: [
+    PublicDonationController,
+    DonationWebhookController,
+    AdminDonationController,
+    ...(trialPaymentRoutesEnabled() ? [TestPaymentController] : []),
+  ],
   providers: [
     DonationService,
     { provide: DONATION_REPOSITORY, useClass: DrizzleDonationRepository },

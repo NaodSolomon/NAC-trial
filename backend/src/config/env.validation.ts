@@ -41,6 +41,7 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   PAYMENT_DRIVER: 'fake' | 'paypal';
   CACHE_DRIVER: 'redis';
   PAYMENTS_ENABLED: boolean;
+  TRIAL_MODE: boolean;
   MAIL_HOST: string;
   MAIL_PORT: number;
   MAIL_FROM: string;
@@ -162,6 +163,10 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
 
   if (!ENVIRONMENTS.includes(environment)) {
     throw new Error(`NODE_ENV must be one of: ${ENVIRONMENTS.join(', ')}`);
+  }
+  const trialMode = parseBoolean(raw.TRIAL_MODE, environment !== 'production');
+  if (environment === 'production' && trialMode) {
+    throw new Error('TRIAL_MODE cannot be enabled in production');
   }
 
   const accessSecret = validateSecret(
@@ -289,6 +294,7 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     ),
     PAYPAL_ENABLED: paypalEnabled,
     PAYMENTS_ENABLED: paymentsEnabled,
+    TRIAL_MODE: trialMode,
     PAYMENT_DRIVER: paymentDriver,
     STORAGE_DRIVER: parseChoice(raw.STORAGE_DRIVER, 'STORAGE_DRIVER', ['minio', 'r2'], 'minio'),
     MAIL_DRIVER: parseChoice(raw.MAIL_DRIVER, 'MAIL_DRIVER', ['mailpit'], 'mailpit'),
