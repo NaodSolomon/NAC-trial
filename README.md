@@ -168,6 +168,25 @@ pnpm db:migrate
 
 Do not use schema push commands. Migration files are reviewed and deployed in order so every environment has a reproducible database history.
 
+## Administrator Authentication
+
+The platform has no public user registration. Administrator authentication uses:
+
+- short-lived JWT access tokens;
+- rotating JWT refresh tokens stored only as SHA-256 hashes;
+- refresh-token family revocation when reuse is detected;
+- database-backed account activation and temporary login lockout;
+- separate production secrets for access tokens, refresh tokens, and IP hashing.
+
+| Method | Endpoint               | Purpose                         |
+|--------|------------------------|---------------------------------|
+| POST   | `/api/v1/auth/login`   | Authenticate an administrator   |
+| POST   | `/api/v1/auth/refresh` | Rotate a valid refresh token    |
+| POST   | `/api/v1/auth/logout`  | Revoke the supplied session     |
+| GET    | `/api/v1/auth/me`      | Return the current administrator|
+
+To create the first super administrator, set `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL`, and `SEED_ADMIN_PASSWORD`, then run `pnpm db:seed` from `backend/`. Seed credentials are never given default values, and an existing administrator is never overwritten.
+
 ## CI/CD
 
 ### PR Flow

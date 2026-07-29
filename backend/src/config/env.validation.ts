@@ -12,8 +12,13 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   DATABASE_USER: string;
   DATABASE_PASSWORD: string;
   DATABASE_NAME: string;
-  JWT_SECRET?: string;
-  JWT_EXPIRY: string;
+  JWT_ACCESS_SECRET: string;
+  JWT_REFRESH_SECRET: string;
+  JWT_ACCESS_EXPIRY: string;
+  JWT_REFRESH_EXPIRY: string;
+  JWT_ISSUER: string;
+  JWT_AUDIENCE: string;
+  IP_HASH_SECRET: string;
 }
 
 function parsePort(value: unknown, name: string, fallback: number): number {
@@ -26,18 +31,38 @@ function parsePort(value: unknown, name: string, fallback: number): number {
   return port;
 }
 
-function requireProductionSecret(
+function validateSecret(
   value: unknown,
   name: string,
   environment: Environment,
-): string | undefined {
-  const secret = typeof value === 'string' ? value.trim() : undefined;
+  developmentFallback: string,
+): string {
+  const suppliedSecret =
+    typeof value === 'string' && value.trim() ? value.trim() : undefined;
+  const secret = suppliedSecret ?? developmentFallback;
 
-  if (environment === 'production' && (!secret || secret.length < 32)) {
+  if (
+    environment === 'production' &&
+    (!suppliedSecret || suppliedSecret.length < 32)
+  ) {
     throw new Error(`${name} must contain at least 32 characters in production`);
   }
 
   return secret;
+}
+
+function validateDuration(
+  value: unknown,
+  name: string,
+  fallback: string,
+): string {
+  const duration = String(value ?? fallback);
+
+  if (!/^\d+[smhd]$/.test(duration)) {
+    throw new Error(`${name} must use a duration such as 15m, 1h, or 7d`);
+  }
+
+  return duration;
 }
 
 export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVariables {
@@ -45,6 +70,34 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
 
   if (!ENVIRONMENTS.includes(environment)) {
     throw new Error(`NODE_ENV must be one of: ${ENVIRONMENTS.join(', ')}`);
+  }
+
+  const accessSecret = validateSecret(
+    raw.JWT_ACCESS_SECRET,
+    'JWT_ACCESS_SECRET',
+    environment,
+    'development-access-secret-change-me',
+  );
+  const refreshSecret = validateSecret(
+    raw.JWT_REFRESH_SECRET,
+    'JWT_REFRESH_SECRET',
+    environment,
+    'development-refresh-secret-change-me',
+  );
+  const ipHashSecret = validateSecret(
+    raw.IP_HASH_SECRET,
+    'IP_HASH_SECRET',
+    environment,
+    'development-ip-hash-secret-change-me',
+  );
+
+  if (
+    environment === 'production' &&
+    new Set([accessSecret, refreshSecret, ipHashSecret]).size !== 3
+  ) {
+    throw new Error(
+      'JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, and IP_HASH_SECRET must be different',
+    );
   }
 
   return {
@@ -58,7 +111,20 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     DATABASE_USER: String(raw.DATABASE_USER ?? 'postgres'),
     DATABASE_PASSWORD: String(raw.DATABASE_PASSWORD ?? 'password'),
     DATABASE_NAME: String(raw.DATABASE_NAME ?? 'appdb'),
-    JWT_SECRET: requireProductionSecret(raw.JWT_SECRET, 'JWT_SECRET', environment),
-    JWT_EXPIRY: String(raw.JWT_EXPIRY ?? '15m'),
+    JWT_ACCESS_SECRET: accessSecret,
+    JWT_REFRESH_SECRET: refreshSecret,
+    JWT_ACCESS_EXPIRY: validateDuration(
+      raw.JWT_ACCESS_EXPIRY,
+      'JWT_ACCESS_EXPIRY',
+      '15m',
+    ),
+    JWT_REFRESH_EXPIRY: validateDuration(
+      raw.JWT_REFRESH_EXPIRY,
+      'JWT_REFRESH_EXPIRY',
+      '7d',
+    ),
+    JWT_ISSUER: String(raw.JWT_ISSUER ?? 'nehemiah-api'),
+    JWT_AUDIENCE: String(raw.JWT_AUDIENCE ?? 'nehemiah-admin'),
+    IP_HASH_SECRET: ipHashSecret,
   };
 }
