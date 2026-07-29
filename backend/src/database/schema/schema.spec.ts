@@ -8,6 +8,11 @@ import {
   languageCodeEnum,
   mediaAssets,
   mediaTranslations,
+  newsletterSubscribers,
+  testimonialStatusEnum,
+  testimonials,
+  volunteerApplicationStatusEnum,
+  volunteerApplications,
 } from '.';
 
 describe('database schema foundation', () => {
@@ -44,5 +49,15 @@ describe('database schema foundation', () => {
     expect(columns).toEqual(expect.arrayContaining(['name', 'email', 'message', 'language_code']));
     expect(columns).not.toEqual(expect.arrayContaining(['ip_address', 'user_agent']));
     expect(config.indexes).toHaveLength(2);
+  });
+
+  it('enforces engagement moderation and subscriber uniqueness', () => {
+    expect(volunteerApplicationStatusEnum.enumValues).toEqual(['PENDING', 'APPROVED', 'REJECTED']);
+    expect(testimonialStatusEnum.enumValues).toEqual(['DRAFT', 'PUBLISHED']);
+    expect(getTableConfig(volunteerApplications).indexes).toHaveLength(3);
+    expect(getTableConfig(testimonials).foreignKeys).toHaveLength(1);
+    expect(getTableConfig(newsletterSubscribers).indexes.some((index) => index.config.unique)).toBe(
+      true,
+    );
   });
 });

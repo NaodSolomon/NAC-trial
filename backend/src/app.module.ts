@@ -15,6 +15,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { MediaModule } from './modules/media/media.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ContactModule } from './modules/contact/contact.module';
+import { EngagementModule } from './modules/engagement/engagement.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { ContactModule } from './modules/contact/contact.module';
     SettingsModule,
     MediaModule,
     ContactModule,
+    EngagementModule,
   ],
 })
 export class AppModule {}

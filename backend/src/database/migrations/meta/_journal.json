@@ -15,6 +15,13 @@
       "when": 1785336945651,
       "tag": "0001_add_contact_submissions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785340676508,
+      "tag": "0002_add_volunteer_engagement",
+      "breakpoints": true
     }
   ]
 }
