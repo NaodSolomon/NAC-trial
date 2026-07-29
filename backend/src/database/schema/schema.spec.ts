@@ -17,6 +17,8 @@ import {
   events,
   eventRsvps,
   galleryItems,
+  analyticsEvents,
+  analyticsEventTypeEnum,
 } from '.';
 
 describe('database schema foundation', () => {
@@ -77,5 +79,18 @@ describe('database schema foundation', () => {
     const config = getTableConfig(galleryItems);
     expect(config.foreignKeys).toHaveLength(2);
     expect(config.indexes.some((index) => index.config.unique)).toBe(true);
+  });
+
+  it('stores bounded anonymous analytics without network identifiers', () => {
+    const config = getTableConfig(analyticsEvents);
+    const columns = config.columns.map((column) => column.name);
+    expect(analyticsEventTypeEnum.enumValues).toEqual(['page_view', 'click', 'submit']);
+    expect(columns).toEqual(
+      expect.arrayContaining(['event_type', 'page_url', 'country', 'device_type', 'referrer']),
+    );
+    expect(columns).not.toEqual(
+      expect.arrayContaining(['ip_address', 'visitor_id', 'cookie_id', 'user_agent']),
+    );
+    expect(config.indexes).toHaveLength(3);
   });
 });

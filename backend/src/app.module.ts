@@ -20,6 +20,7 @@ import paymentConfig from './config/payment.config';
 import { DonationsModule } from './modules/donations/donations.module';
 import { EventsModule } from './modules/events/events.module';
 import { GalleryModule } from './modules/gallery/gallery.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { GalleryModule } from './modules/gallery/gallery.module';
     DonationsModule,
     EventsModule,
     GalleryModule,
+    AnalyticsModule,
   ],
 })
 export class AppModule {}

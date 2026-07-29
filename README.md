@@ -353,6 +353,26 @@ The upload is `multipart/form-data` with `file`, `title`, `altText`, and `langua
 (`en` or `am`). Public listing supports pagination, language, media-type filtering, and never
 exposes storage object keys or administrator identifiers. Mutations are audit logged.
 
+## Anonymous Visitor Analytics
+
+Step 12 adds the documented analytics summary and timeline using a first-party, anonymous
+event stream. The system records page paths, timestamps, Cloudflare country codes, coarse
+device categories, and sanitized referrers. Query strings are removed before storage because
+they can contain tokens or personal information. IP addresses, cookies, user agents, and
+visitor fingerprints are not stored.
+
+| Method | Endpoint                            | Access                  | Purpose |
+|--------|-------------------------------------|-------------------------|---------|
+| POST   | `/api/v1/public/analytics/events`   | Public, rate-limited    | Record an anonymous event |
+| GET    | `/api/v1/admin/analytics/summary`   | `SUPER_ADMIN`           | Read total page views and top dimensions |
+| GET    | `/api/v1/admin/analytics/timeline`  | `SUPER_ADMIN`           | Read a 1-, 7-, or 30-day visitor timeline |
+
+The ingestion body accepts `eventType` (`page_view`, `click`, or `submit`), a local `pageUrl`,
+`deviceType`, and optional `referrer`. Country is accepted only from Cloudflare's
+`CF-IPCountry` request header; clients cannot submit it in the body. In this anonymous model,
+the documented `totalVisitors` and daily `visitors` values represent page-view counts rather
+than uniquely identified people.
+
 ## CI/CD
 
 ### PR Flow

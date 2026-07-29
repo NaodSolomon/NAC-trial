@@ -85,6 +85,7 @@ describe('Application conventions (e2e)', () => {
     '/api/v1/admin/testimonials',
     '/api/v1/admin/newsletter',
     '/api/v1/admin/donations',
+    '/api/v1/admin/analytics/summary',
   ])('protects the private administration endpoint %s', async (endpoint) => {
     const response = await request(app.getHttpServer()).get(endpoint).expect(401);
 
@@ -99,6 +100,20 @@ describe('Application conventions (e2e)', () => {
     const endpoint = '/api/v1/admin/gallery';
     const response = await request(app.getHttpServer()).post(endpoint).expect(401);
     expect(response.body).toMatchObject({ success: false, statusCode: 401, path: endpoint });
+  });
+
+  it('validates anonymous analytics before persistence', async () => {
+    const endpoint = '/api/v1/public/analytics/events';
+    const response = await request(app.getHttpServer())
+      .post(endpoint)
+      .send({
+        eventType: 'page_view',
+        pageUrl: 'https://attacker.example/tracker',
+        deviceType: 'desktop',
+        country: 'ET',
+      })
+      .expect(400);
+    expect(response.body).toMatchObject({ success: false, statusCode: 400, path: endpoint });
   });
 
   it('protects the scheduled-publishing job with an internal API key', async () => {
