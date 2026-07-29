@@ -122,4 +122,34 @@ describe('Donations in simulated mode (e2e)', () => {
     await request(context.app.getHttpServer()).post('/api/v1/webhooks/telebirr').send({}).expect(503);
     await request(context.app.getHttpServer()).post('/api/v1/webhooks/cbe').send({}).expect(503);
   });
+
+  it('confirms, fails, and deduplicates trial payments without collecting payment details', async () => {
+    const confirmed = await request(context.app.getHttpServer())
+      .post('/api/v1/public/donations')
+      .send(donationPayload('receipt-donor@e2e.test'))
+      .expect(201);
+    const confirmedId = confirmed.body.data.donationId as string;
+
+    await request(context.app.getHttpServer())
+      .post(`/api/v1/test/payments/${confirmedId}/confirm`)
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body.data).toMatchObject({ status: 'CONFIRMED', duplicate: false });
+        expect(body.data.receiptUrl).toContain('/receipts/');
+      });
+    await request(context.app.getHttpServer())
+      .post(`/api/v1/test/payments/${confirmedId}/confirm`)
+      .expect(201)
+      .expect(({ body }) => expect(body.data.duplicate).toBe(true));
+    expect(context.mailer.send).toHaveBeenCalledTimes(1);
+
+    const retry = await request(context.app.getHttpServer())
+      .post('/api/v1/public/donations')
+      .send(donationPayload('failed-donor@e2e.test'))
+      .expect(201);
+    await request(context.app.getHttpServer())
+      .post(`/api/v1/test/payments/${retry.body.data.donationId}/fail`)
+      .expect(201)
+      .expect(({ body }) => expect(body.data.status).toBe('FAILED'));
+  });
 });

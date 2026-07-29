@@ -3,11 +3,13 @@ import { DonationRepository } from '../interfaces/donation-repository.interface'
 import { PaymentGateway } from '../interfaces/payment-gateway.interface';
 import { ObjectStorage } from '../../media/interfaces/object-storage.interface';
 import { DonationService } from './donation.service';
+import { Mailer } from '../../mail/mail.interface';
 
 describe('DonationService', () => {
   let repository: jest.Mocked<DonationRepository>;
   let gateway: jest.Mocked<PaymentGateway>;
   let storage: jest.Mocked<ObjectStorage>;
+  let mailer: jest.Mocked<Mailer>;
   let service: DonationService;
 
   beforeEach(() => {
@@ -34,7 +36,53 @@ describe('DonationService', () => {
       delete: jest.fn(),
       publicUrl: jest.fn(),
     };
-    service = new DonationService(repository, gateway, storage);
+    mailer = { send: jest.fn() };
+    service = new DonationService(repository, gateway, storage, mailer);
+  });
+
+  it('treats repeated simulated confirmation as an idempotent delivery', async () => {
+    const donation = {
+      id: '239fc6d9-31f8-47fd-958d-c3a69b2c9ec7',
+      donorName: 'Trial Donor',
+      donorEmail: 'trial@example.com',
+      message: null,
+      amount: '25.00',
+      currency: 'USD',
+      gateway: 'PAYPAL',
+      status: 'PENDING',
+      providerOrderId: 'FAKE-ORDER',
+      externalTransactionId: null,
+      receiptUrl: null,
+      confirmedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as const;
+    repository.findById
+      .mockResolvedValueOnce(donation)
+      .mockResolvedValueOnce({ ...donation, status: 'CONFIRMED', confirmedAt: new Date() })
+      .mockResolvedValueOnce({
+        ...donation,
+        status: 'CONFIRMED',
+        confirmedAt: new Date(),
+        receiptUrl: 'http://minio/receipt.pdf',
+      })
+      .mockResolvedValueOnce({
+        ...donation,
+        status: 'CONFIRMED',
+        confirmedAt: new Date(),
+        receiptUrl: 'http://minio/receipt.pdf',
+      });
+    repository.applyWebhook.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    storage.publicUrl.mockReturnValue('http://minio/receipt.pdf');
+
+    await expect(service.simulate(donation.id, 'CONFIRMED')).resolves.toMatchObject({
+      duplicate: false,
+      status: 'CONFIRMED',
+    });
+    await expect(service.simulate(donation.id, 'CONFIRMED')).resolves.toMatchObject({
+      duplicate: true,
+    });
+    expect(mailer.send).toHaveBeenCalledTimes(1);
   });
 
   it('fails closed before persisting when PayPal is disabled', async () => {

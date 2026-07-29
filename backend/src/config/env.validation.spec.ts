@@ -14,7 +14,17 @@ describe('validateEnvironment', () => {
       PAYMENT_DRIVER: 'fake',
       CACHE_DRIVER: 'redis',
       PAYMENTS_ENABLED: false,
+      TRIAL_MODE: true,
     });
+  });
+
+  it('never permits trial payment routes in production', () => {
+    expect(() =>
+      validateEnvironment({
+        NODE_ENV: 'production',
+        TRIAL_MODE: true,
+      }),
+    ).toThrow('TRIAL_MODE cannot be enabled in production');
   });
 
   it('rejects unsupported local adapter drivers', () => {

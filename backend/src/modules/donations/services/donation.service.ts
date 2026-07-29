@@ -1,9 +1,16 @@
-import { Inject, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 // PDFKit exposes its constructor through CommonJS rather than a runtime default export.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import PDFDocument = require('pdfkit');
 import { AdminPrincipal } from '../../auth/interfaces/auth.types';
 import { OBJECT_STORAGE, ObjectStorage } from '../../media/interfaces/object-storage.interface';
+import { MAILER, Mailer } from '../../mail/mail.interface';
 import { CreateDonationDto, DonationQueryDto } from '../dto/donation.dto';
 import {
   DONATION_REPOSITORY,
@@ -19,16 +26,19 @@ import {
 export class DonationService {
   constructor(
     @Inject(DONATION_REPOSITORY) private readonly donations: DonationRepository,
-    @Inject(PAYMENT_GATEWAY) private readonly paypal: PaymentGateway,
+    @Inject(PAYMENT_GATEWAY) private readonly paymentGateway: PaymentGateway,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
+    @Inject(MAILER) private readonly mailer: Mailer,
   ) {}
 
   gateways() {
-    return this.paypal.isEnabled() ? ['PAYPAL'] : [];
+    return this.paymentGateway.isEnabled() ? ['PAYPAL'] : [];
   }
 
   async initiate(dto: CreateDonationDto) {
-    if (!this.paypal.isEnabled()) throw new ServiceUnavailableException('PayPal is not configured');
+    if (!this.paymentGateway.isEnabled()) {
+      throw new ServiceUnavailableException('Payments are not configured');
+    }
     const donation = await this.donations.create({
       donorName: dto.donorName.trim(),
       donorEmail: dto.donorEmail.trim().toLowerCase(),
@@ -37,7 +47,7 @@ export class DonationService {
       currency: dto.currency,
       gateway: dto.gateway,
     });
-    const checkout = await this.paypal.createCheckout(donation);
+    const checkout = await this.paymentGateway.createCheckout(donation);
     await this.donations.attachOrder(donation.id, checkout.providerOrderId);
     return { donationId: donation.id, status: 'PENDING', paymentUrl: checkout.paymentUrl };
   }
@@ -99,7 +109,7 @@ export class DonationService {
   }
 
   async paypalWebhook(headers: PayPalWebhookHeaders, event: Record<string, unknown>) {
-    const verified = await this.paypal.verifyWebhook(headers, event);
+    const verified = await this.paymentGateway.verifyWebhook(headers, event);
     if (verified.status && verified.providerOrderId && verified.eventId) {
       await this.donations.applyWebhook({
         eventId: verified.eventId,
@@ -110,6 +120,43 @@ export class DonationService {
       });
     }
     return { received: true };
+  }
+
+  async simulate(id: string, outcome: 'CONFIRMED' | 'FAILED') {
+    const row = await this.requireDonation(id);
+    if (!row.providerOrderId) throw new ConflictException('Donation has no simulated checkout');
+    const eventId = `FAKE-${outcome}-${row.id}`;
+
+    if (row.status !== 'INITIATED' && row.status !== 'PENDING' && row.status !== outcome) {
+      throw new ConflictException(`A ${row.status.toLowerCase()} donation cannot be simulated`);
+    }
+
+    const processed = await this.donations.applyWebhook({
+      eventId,
+      eventType: outcome === 'CONFIRMED' ? 'FAKE.PAYMENT.CONFIRMED' : 'FAKE.PAYMENT.FAILED',
+      providerOrderId: row.providerOrderId,
+      transactionId: outcome === 'CONFIRMED' ? `FAKE-RECEIPT-${row.id}` : null,
+      status: outcome,
+    });
+
+    let receiptUrl: string | undefined;
+    if (outcome === 'CONFIRMED') {
+      receiptUrl = (await this.receipt(id)).receiptUrl;
+      if (processed) {
+        await this.mailer.send({
+          to: row.donorEmail,
+          subject: 'Your simulated Nehemiah Autism Center donation receipt',
+          text: [
+            `Thank you, ${row.donorName}.`,
+            `This was a simulated donation of ${row.amount} ${row.currency}.`,
+            `Test receipt: ${receiptUrl}`,
+            'No real money was collected.',
+          ].join('\n'),
+        });
+      }
+    }
+
+    return { donationId: id, status: outcome, duplicate: !processed, receiptUrl };
   }
 
   async receipt(id: string) {
