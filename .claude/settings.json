@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git rm:*)",
+      "Bash(git reset:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker rm:*)"
+    ],
+    "additionalDirectories": [
+      "/Users/ameno/.claude/commands"
+    ]
+  }
+}

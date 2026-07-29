@@ -1,0 +1,17 @@
+node_modules
+dist
+coverage
+.env
+.env.local
+.env*.local
+test/e2e
+*.log
+npm-debug.log*
+.DS_Store
+*.pem
+.git
+.gitignore
+README.md
+.eslintrc*
+.prettierrc*
+jest.config.ts
