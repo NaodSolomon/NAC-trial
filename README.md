@@ -231,6 +231,24 @@ A trusted scheduler should call `POST /api/v1/internal/jobs/publish-scheduled` w
 `x-internal-api-key` header. Set a separate, randomly generated `INTERNAL_API_KEY` of at least
 32 characters in production. This endpoint is intended for a cron service, not browsers.
 
+## Media Library
+
+Step 6 provides CMS asset storage through the S3-compatible API shared by Cloudflare R2 and
+local MinIO. The API accepts JPEG, PNG, GIF, WebP, MP4, WebM, and PDF files. It verifies both
+the declared MIME type and the file signature, generates the object key server-side, limits
+each request to one bounded file, and requires accessibility alt text for images.
+
+| Method | Endpoint                     | Required role                    | Purpose                    |
+|--------|------------------------------|----------------------------------|----------------------------|
+| GET    | `/api/v1/admin/media`        | Editor or super administrator    | Search and filter assets   |
+| POST   | `/api/v1/admin/media/upload` | Editor or super administrator    | Upload an asset            |
+| DELETE | `/api/v1/admin/media/:id`    | `SUPER_ADMIN`                    | Delete an asset            |
+
+Uploads use `multipart/form-data` with a required `file` and optional `languageCode`,
+`altText`, `caption`, and `folder` fields. `altText` is mandatory for images. Configure the
+`STORAGE_*` variables for Cloudflare R2 in production; the example values target MinIO during
+local development. Set `STORAGE_PUBLIC_URL` to the public CDN or custom-domain base URL.
+
 ## CI/CD
 
 ### PR Flow

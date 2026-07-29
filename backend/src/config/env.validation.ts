@@ -20,6 +20,13 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   JWT_AUDIENCE: string;
   IP_HASH_SECRET: string;
   INTERNAL_API_KEY: string;
+  STORAGE_ENDPOINT: string;
+  STORAGE_REGION: string;
+  STORAGE_BUCKET: string;
+  STORAGE_ACCESS_KEY_ID: string;
+  STORAGE_SECRET_ACCESS_KEY: string;
+  STORAGE_PUBLIC_URL: string;
+  MEDIA_MAX_FILE_SIZE_BYTES: number;
 }
 
 function parsePort(value: unknown, name: string, fallback: number): number {
@@ -30,6 +37,41 @@ function parsePort(value: unknown, name: string, fallback: number): number {
   }
 
   return port;
+}
+
+function parsePositiveInteger(value: unknown, name: string, fallback: number): number {
+  const parsed = Number(value ?? fallback);
+
+  if (!Number.isSafeInteger(parsed) || parsed < 1) {
+    throw new Error(`${name} must be a positive integer`);
+  }
+
+  return parsed;
+}
+
+function validateUrl(value: unknown, name: string, fallback: string): string {
+  const url = String(value ?? fallback).replace(/\/+$/, '');
+
+  try {
+    new URL(url);
+  } catch {
+    throw new Error(`${name} must be a valid URL`);
+  }
+
+  return url;
+}
+
+function requiredInProduction(
+  value: unknown,
+  name: string,
+  environment: Environment,
+  developmentFallback: string,
+): string {
+  const supplied = typeof value === 'string' ? value.trim() : '';
+  if (environment === 'production' && !supplied) {
+    throw new Error(`${name} is required in production`);
+  }
+  return supplied || developmentFallback;
 }
 
 function validateSecret(
@@ -116,5 +158,49 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     JWT_AUDIENCE: String(raw.JWT_AUDIENCE ?? 'nehemiah-admin'),
     IP_HASH_SECRET: ipHashSecret,
     INTERNAL_API_KEY: internalApiKey,
+    STORAGE_ENDPOINT: validateUrl(
+      requiredInProduction(
+        raw.STORAGE_ENDPOINT,
+        'STORAGE_ENDPOINT',
+        environment,
+        'http://localhost:9000',
+      ),
+      'STORAGE_ENDPOINT',
+      'http://localhost:9000',
+    ),
+    STORAGE_REGION: String(raw.STORAGE_REGION ?? 'auto'),
+    STORAGE_BUCKET: requiredInProduction(
+      raw.STORAGE_BUCKET,
+      'STORAGE_BUCKET',
+      environment,
+      'nehemiah-media',
+    ),
+    STORAGE_ACCESS_KEY_ID: requiredInProduction(
+      raw.STORAGE_ACCESS_KEY_ID,
+      'STORAGE_ACCESS_KEY_ID',
+      environment,
+      'minioadmin',
+    ),
+    STORAGE_SECRET_ACCESS_KEY: requiredInProduction(
+      raw.STORAGE_SECRET_ACCESS_KEY,
+      'STORAGE_SECRET_ACCESS_KEY',
+      environment,
+      'minioadmin',
+    ),
+    STORAGE_PUBLIC_URL: validateUrl(
+      requiredInProduction(
+        raw.STORAGE_PUBLIC_URL,
+        'STORAGE_PUBLIC_URL',
+        environment,
+        'http://localhost:9000/nehemiah-media',
+      ),
+      'STORAGE_PUBLIC_URL',
+      'http://localhost:9000/nehemiah-media',
+    ),
+    MEDIA_MAX_FILE_SIZE_BYTES: parsePositiveInteger(
+      raw.MEDIA_MAX_FILE_SIZE_BYTES,
+      'MEDIA_MAX_FILE_SIZE_BYTES',
+      10_485_760,
+    ),
   };
 }
