@@ -1,3 +1,5 @@
+name: nac-trial-integration
+
 services:
   postgres-test:
     image: postgres:16-alpine
@@ -6,9 +8,10 @@ services:
       POSTGRES_PASSWORD: nehemiah_test
       POSTGRES_DB: nehemiah_test
     ports:
-      - "5434:5432"
+      - "127.0.0.1:5434:5432"
     tmpfs:
       - /var/lib/postgresql/data
+    restart: "no"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nehemiah_test -d nehemiah_test"]
       interval: 2s

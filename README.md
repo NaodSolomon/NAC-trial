@@ -425,7 +425,15 @@ docker compose -f ../docker-compose.test.yml down
 ```
 
 Use only a disposable database whose name clearly contains `test`. The database cleanup
-helper refuses to truncate any other database name.
+and connection helpers refuse any other database name. At integration-suite startup, the
+dedicated database's `public` and `drizzle` schemas are recreated and all committed migrations
+are applied from the beginning.
+
+The PostgreSQL suite exercises every Drizzle repository: administrators, authentication
+sessions, audit logs, CMS pages, navigation, settings, contact submissions, engagement,
+events and RSVPs, media, gallery, donations, and analytics. It also verifies database
+uniqueness and check constraints, token-family revocation, webhook idempotency, and rollback
+when a transactional audit write fails. No payment-provider network calls are made.
 
 OpenAPI JSON is available at `/api/v1/docs/openapi.json` and Swagger UI at
 `/api/v1/docs` when `SWAGGER_ENABLED=true`. Documentation defaults off in production.

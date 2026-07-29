@@ -1,20 +1,9 @@
 import { sql } from 'drizzle-orm';
 import { PostgresTestContext } from './postgres-test.helper';
-
-function assertDedicatedTestDatabase(): void {
-  const connectionString = process.env.TEST_DATABASE_URL;
-  if (!connectionString) throw new Error('TEST_DATABASE_URL is required');
-
-  const databaseName = new URL(connectionString).pathname.replace(/^\//, '');
-  if (!/(^|[_-])test($|[_-])/i.test(databaseName)) {
-    throw new Error(
-      `Refusing to clean a database not explicitly named for testing: ${databaseName}`,
-    );
-  }
-}
+import { requireDedicatedTestDatabase } from './test-database-safety.helper';
 
 export async function cleanTestDatabase(context: PostgresTestContext): Promise<void> {
-  assertDedicatedTestDatabase();
+  requireDedicatedTestDatabase();
   await context.db.execute(sql`
     do $$
     declare table_record record;
