@@ -8,6 +8,13 @@
       "when": 1785333254690,
       "tag": "0000_initialize_backend_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785336945651,
+      "tag": "0001_add_contact_submissions",
+      "breakpoints": true
     }
   ]
 }

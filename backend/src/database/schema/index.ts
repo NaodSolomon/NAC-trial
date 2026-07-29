@@ -6,3 +6,4 @@ export * from './cms-page.schema';
 export * from './navigation.schema';
 export * from './site-setting.schema';
 export * from './media.schema';
+export * from './contact-submission.schema';

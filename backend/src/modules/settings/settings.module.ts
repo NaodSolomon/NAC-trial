@@ -18,5 +18,6 @@ import { SiteSettingsService } from './services/site-settings.service';
       useClass: DrizzleSiteSettingsRepository,
     },
   ],
+  exports: [SiteSettingsService],
 })
 export class SettingsModule {}
