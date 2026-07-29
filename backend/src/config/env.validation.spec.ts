@@ -53,7 +53,9 @@ describe('validateEnvironment', () => {
         IP_HASH_SECRET: 'b'.repeat(32),
         INTERNAL_API_KEY: 'c'.repeat(32),
       }),
-    ).toThrow('JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, and IP_HASH_SECRET must be different');
+    ).toThrow(
+      'JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, IP_HASH_SECRET, and INTERNAL_API_KEY must be different',
+    );
   });
 
   it('rejects malformed token durations during startup', () => {
@@ -72,7 +74,27 @@ describe('validateEnvironment', () => {
         JWT_REFRESH_SECRET: 'b'.repeat(32),
         IP_HASH_SECRET: 'c'.repeat(32),
         INTERNAL_API_KEY: 'd'.repeat(32),
+        FRONTEND_URL: 'https://example.org',
       }),
     ).toThrow('STORAGE_ENDPOINT is required in production');
+  });
+
+  it('rejects oversized JSON request limits', () => {
+    expect(() => validateEnvironment({ REQUEST_BODY_LIMIT_BYTES: 6_000_000 })).toThrow(
+      'REQUEST_BODY_LIMIT_BYTES must be between 1024 and 5242880',
+    );
+  });
+
+  it('requires HTTPS frontend origins in production', () => {
+    expect(() =>
+      validateEnvironment({
+        NODE_ENV: 'production',
+        JWT_ACCESS_SECRET: 'a'.repeat(32),
+        JWT_REFRESH_SECRET: 'b'.repeat(32),
+        IP_HASH_SECRET: 'c'.repeat(32),
+        INTERNAL_API_KEY: 'd'.repeat(32),
+        FRONTEND_URL: 'http://example.org',
+      }),
+    ).toThrow('FRONTEND_URL origins must use HTTPS in production');
   });
 });

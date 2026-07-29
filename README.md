@@ -373,6 +373,27 @@ The ingestion body accepts `eventType` (`page_view`, `click`, or `submit`), a lo
 the documented `totalVisitors` and daily `visitors` values represent page-view counts rather
 than uniquely identified people.
 
+## Security Hardening
+
+Step 13 applies defense in depth across every API route. A global rate-limit guard provides a
+100-request-per-minute baseline while sensitive public write routes keep their lower limits.
+CORS uses an exact allowlist and production origins must use HTTPS. Responses include a
+restrictive API CSP, clickjacking, MIME-sniffing, referrer, permissions, cache, and correlation
+headers; production also enables HSTS.
+
+JSON bodies default to 1 MiB and can be configured with `REQUEST_BODY_LIMIT_BYTES` within the
+enforced 1 KiB–5 MiB range. Multipart uploads retain independent file-size limits and
+signature-based file validation. The global sanitization policy rejects control characters,
+prototype-pollution keys, script tags, inline event handlers, and JavaScript URLs in managed
+content instead of silently rewriting submitted data.
+
+Authentication keeps five-attempt/15-minute account lockout and rotating refresh-token
+families. Reuse of a revoked refresh token revokes the entire family. PayPal webhooks are
+accepted only after PayPal signature verification. Production startup rejects short,
+placeholder, whitespace-containing, or reused security secrets. HTTP logs contain method,
+query-free path, status context, duration, and request correlation only—never bodies, tokens,
+credentials, or query strings.
+
 ## CI/CD
 
 ### PR Flow

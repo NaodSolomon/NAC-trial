@@ -11,7 +11,7 @@ import {
   ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { FastifyReply } from 'fastify';
 import { CurrentAdmin } from '../../../common/decorators/current-admin.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
@@ -26,7 +26,6 @@ export class PublicDonationController {
   constructor(private readonly service: DonationService) {}
 
   @Post()
-  @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   initiate(@Body() dto: CreateDonationDto) {
     return this.service.initiate(dto);

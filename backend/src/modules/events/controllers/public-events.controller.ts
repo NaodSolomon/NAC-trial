@@ -1,14 +1,5 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { CreateRsvpDto, EventLanguageQueryDto, EventQueryDto } from '../dto/event.dto';
 import { EventsService } from '../services/events.service';
 
@@ -27,7 +18,6 @@ export class PublicEventsController {
   }
 
   @Post(':id/rsvp')
-  @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   rsvp(@Param('id', new ParseUUIDPipe()) id: string, @Body() dto: CreateRsvpDto) {
     return this.eventsService.rsvp(id, dto);

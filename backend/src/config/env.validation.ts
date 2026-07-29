@@ -27,6 +27,7 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   STORAGE_SECRET_ACCESS_KEY: string;
   STORAGE_PUBLIC_URL: string;
   MEDIA_MAX_FILE_SIZE_BYTES: number;
+  REQUEST_BODY_LIMIT_BYTES: number;
   PAYPAL_ENABLED: boolean;
   PAYPAL_BASE_URL: string;
   PAYPAL_CLIENT_ID: string;
@@ -53,6 +54,20 @@ function parsePositiveInteger(value: unknown, name: string, fallback: number): n
     throw new Error(`${name} must be a positive integer`);
   }
 
+  return parsed;
+}
+
+function parseBoundedInteger(
+  value: unknown,
+  name: string,
+  fallback: number,
+  minimum: number,
+  maximum: number,
+): number {
+  const parsed = Number(value ?? fallback);
+  if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) {
+    throw new Error(`${name} must be between ${minimum} and ${maximum}`);
+  }
   return parsed;
 }
 
@@ -100,6 +115,12 @@ function validateSecret(
   if (environment === 'production' && (!suppliedSecret || suppliedSecret.length < 32)) {
     throw new Error(`${name} must contain at least 32 characters in production`);
   }
+  if (
+    environment === 'production' &&
+    (/replace|change-me|password|secret/i.test(secret) || /\s/.test(secret))
+  ) {
+    throw new Error(`${name} contains a placeholder or whitespace`);
+  }
 
   return secret;
 }
@@ -146,6 +167,9 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     'development-internal-api-key-change-me',
   );
   const paypalEnabled = parseBoolean(raw.PAYPAL_ENABLED);
+  const frontendOrigins = String(raw.FRONTEND_URL ?? 'http://localhost:3000')
+    .split(',')
+    .map((origin) => validateUrl(origin.trim(), 'FRONTEND_URL', 'http://localhost:3000'));
   const paypalRequired = (value: unknown, name: string, fallback = '') =>
     paypalEnabled
       ? requiredInProduction(value, name, 'production', fallback)
@@ -153,9 +177,17 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
 
   if (
     environment === 'production' &&
-    new Set([accessSecret, refreshSecret, ipHashSecret]).size !== 3
+    new Set([accessSecret, refreshSecret, ipHashSecret, internalApiKey]).size !== 4
   ) {
-    throw new Error('JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, and IP_HASH_SECRET must be different');
+    throw new Error(
+      'JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, IP_HASH_SECRET, and INTERNAL_API_KEY must be different',
+    );
+  }
+  if (
+    environment === 'production' &&
+    frontendOrigins.some((origin) => !origin.startsWith('https://'))
+  ) {
+    throw new Error('FRONTEND_URL origins must use HTTPS in production');
   }
 
   return {
@@ -163,7 +195,7 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     NODE_ENV: environment,
     API_HOST: String(raw.API_HOST ?? '0.0.0.0'),
     API_PORT: parsePort(raw.API_PORT, 'API_PORT', 8000),
-    FRONTEND_URL: String(raw.FRONTEND_URL ?? 'http://localhost:3000'),
+    FRONTEND_URL: frontendOrigins.join(','),
     DATABASE_HOST: String(raw.DATABASE_HOST ?? 'localhost'),
     DATABASE_PORT: parsePort(raw.DATABASE_PORT, 'DATABASE_PORT', 5432),
     DATABASE_USER: String(raw.DATABASE_USER ?? 'postgres'),
@@ -220,6 +252,13 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
       raw.MEDIA_MAX_FILE_SIZE_BYTES,
       'MEDIA_MAX_FILE_SIZE_BYTES',
       10_485_760,
+    ),
+    REQUEST_BODY_LIMIT_BYTES: parseBoundedInteger(
+      raw.REQUEST_BODY_LIMIT_BYTES,
+      'REQUEST_BODY_LIMIT_BYTES',
+      1_048_576,
+      1_024,
+      5_242_880,
     ),
     PAYPAL_ENABLED: paypalEnabled,
     PAYPAL_BASE_URL: validateUrl(

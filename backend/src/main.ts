@@ -12,7 +12,7 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({
       trustProxy: true,
-      bodyLimit: 1_048_576,
+      bodyLimit: requestBodyLimit(),
     }),
     {
       bufferLogs: true,
@@ -36,6 +36,14 @@ async function bootstrap() {
 
   await app.listen(port, host);
   logger.log(`API listening at http://${host}:${port}/api/v1`);
+}
+
+function requestBodyLimit(): number {
+  const value = Number(process.env.REQUEST_BODY_LIMIT_BYTES ?? 1_048_576);
+  if (!Number.isSafeInteger(value) || value < 1_024 || value > 5_242_880) {
+    throw new Error('REQUEST_BODY_LIMIT_BYTES must be between 1024 and 5242880');
+  }
+  return value;
 }
 
 void bootstrap();

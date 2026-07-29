@@ -35,7 +35,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
       const stack = exception instanceof Error ? exception.stack : String(exception);
-      this.logger.error(`${request.method} ${request.url} failed with ${statusCode}`, stack);
+      this.logger.error(
+        `${request.method} ${request.url.split('?')[0]} failed with ${statusCode}`,
+        stack,
+      );
     }
 
     reply.status(statusCode).send({

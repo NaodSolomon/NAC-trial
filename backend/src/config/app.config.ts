@@ -6,7 +6,7 @@ export default registerAs('app', () => ({
   env: process.env.NODE_ENV ?? 'development',
   corsOrigins: (process.env.FRONTEND_URL ?? 'http://localhost:3000')
     .split(',')
-    .map((origin) => origin.trim())
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
     .filter(Boolean),
   internalApiKey: process.env.INTERNAL_API_KEY ?? 'development-internal-api-key-change-me',
 }));
