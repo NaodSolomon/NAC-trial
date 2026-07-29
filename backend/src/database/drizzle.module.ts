@@ -13,12 +13,17 @@ export const DATABASE_POOL = 'DATABASE_POOL';
     {
       provide: DATABASE_POOL,
       useFactory: (config: ConfigService) => {
+        const connectionString = config.get<string>('database.url');
         return new Pool({
-          host: config.getOrThrow<string>('database.host'),
-          port: config.getOrThrow<number>('database.port'),
-          user: config.getOrThrow<string>('database.username'),
-          password: config.getOrThrow<string>('database.password'),
-          database: config.getOrThrow<string>('database.name'),
+          ...(connectionString
+            ? { connectionString }
+            : {
+                host: config.getOrThrow<string>('database.host'),
+                port: config.getOrThrow<number>('database.port'),
+                user: config.getOrThrow<string>('database.username'),
+                password: config.getOrThrow<string>('database.password'),
+                database: config.getOrThrow<string>('database.name'),
+              }),
           max: 20,
           idleTimeoutMillis: 30_000,
           connectionTimeoutMillis: 5_000,

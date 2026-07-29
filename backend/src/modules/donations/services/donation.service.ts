@@ -1,5 +1,7 @@
 import { Inject, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
-import PDFDocument from 'pdfkit';
+// PDFKit exposes its constructor through CommonJS rather than a runtime default export.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import PDFDocument = require('pdfkit');
 import { AdminPrincipal } from '../../auth/interfaces/auth.types';
 import { OBJECT_STORAGE, ObjectStorage } from '../../media/interfaces/object-storage.interface';
 import { CreateDonationDto, DonationQueryDto } from '../dto/donation.dto';

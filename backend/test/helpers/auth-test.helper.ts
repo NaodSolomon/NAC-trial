@@ -8,8 +8,21 @@ interface LoginResponse {
   expiresIn: number;
 }
 
+export interface TestSession extends LoginResponse {
+  authorization: string;
+}
+
 export function bearerAuthorization(accessToken: string): string {
   return `Bearer ${accessToken}`;
+}
+
+export async function authenticatedSession(
+  app: INestApplication,
+  email: string,
+  password: string,
+): Promise<TestSession> {
+  const tokens = await loginForTest(app, { email, password });
+  return { ...tokens, authorization: bearerAuthorization(tokens.accessToken) };
 }
 
 export async function loginForTest(
