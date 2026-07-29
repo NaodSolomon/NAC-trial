@@ -11,9 +11,6 @@ export function Navbar() {
           <Link href="/login" className="text-sm hover:text-primary">
             Sign In
           </Link>
-          <Link href="/register" className="text-sm hover:text-primary">
-            Register
-          </Link>
         </div>
       </div>
     </nav>

@@ -40,4 +40,38 @@ describe('Application conventions (e2e)', () => {
     });
     expect(response.body.timestamp).toBeDefined();
   });
+
+  it('validates login requests before accessing authentication services', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({
+        email: 'not-an-email',
+        password: 'short',
+      })
+      .expect(400);
+
+    expect(response.body).toMatchObject({
+      success: false,
+      statusCode: 400,
+      path: '/api/v1/auth/login',
+    });
+    expect(response.body.message).toEqual(
+      expect.arrayContaining([
+        'email must be an email',
+        'password must be longer than or equal to 8 characters',
+      ]),
+    );
+  });
+
+  it('protects the current-administrator endpoint', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/auth/me')
+      .expect(401);
+
+    expect(response.body).toMatchObject({
+      success: false,
+      statusCode: 401,
+      path: '/api/v1/auth/me',
+    });
+  });
 });
