@@ -403,9 +403,16 @@ Step 14 formalizes the release pipeline:
   RBAC, CORS, rate limits, request limits, security headers, OpenAPI, and smoke behavior.
 - `pnpm test:integration` applies every Drizzle migration to PostgreSQL and exercises real
   repository queries when `TEST_DATABASE_URL` is configured. The database-dependent suite
-  skips locally when that variable is absent; CI always supplies it.
+  prints an explicit warning and skips locally when that variable is absent; CI always
+  supplies it.
 - Migration-chain tests ensure every journal entry has its matching ordered SQL file.
-- `pnpm test:ci` runs the complete backend quality gate.
+- `pnpm test:coverage` enforces the initial unit-layer coverage baseline: 55% statements,
+  45% branches, 50% functions, and 55% lines. This gate covers services, guards, request
+  policies, payment contracts, and environment validation. Repository and controller
+  execution belong to the PostgreSQL integration and Fastify E2E suites.
+- `pnpm test:ci` is the canonical backend quality gate used both locally and by GitHub
+  Actions. It runs lint, coverage-gated unit tests, E2E tests, integration tests, migration
+  consistency checks, and the production build.
 
 Start the disposable local integration database with:
 
@@ -416,6 +423,9 @@ cd backend
 pnpm test:integration
 docker compose -f ../docker-compose.test.yml down
 ```
+
+Use only a disposable database whose name clearly contains `test`. The database cleanup
+helper refuses to truncate any other database name.
 
 OpenAPI JSON is available at `/api/v1/docs/openapi.json` and Swagger UI at
 `/api/v1/docs` when `SWAGGER_ENABLED=true`. Documentation defaults off in production.

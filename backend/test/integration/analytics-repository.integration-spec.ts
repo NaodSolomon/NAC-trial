@@ -1,7 +1,7 @@
-import { eq } from 'drizzle-orm';
 import { analyticsEvents } from '../../src/database/schema';
 import { DrizzleAnalyticsRepository } from '../../src/modules/analytics/repositories/drizzle-analytics.repository';
 import { analyticsEventFactory } from '../factories/analytics-event.factory';
+import { cleanTestDatabase } from '../helpers/database-cleaner.helper';
 import { connectTestPostgres, PostgresTestContext } from '../helpers/postgres-test.helper';
 
 const describeWithPostgres = process.env.TEST_DATABASE_URL ? describe : describe.skip;
@@ -16,7 +16,7 @@ describeWithPostgres('DrizzleAnalyticsRepository (PostgreSQL)', () => {
   });
 
   beforeEach(async () => {
-    await context.db.delete(analyticsEvents);
+    await cleanTestDatabase(context);
   });
 
   afterAll(async () => {
@@ -33,10 +33,7 @@ describeWithPostgres('DrizzleAnalyticsRepository (PostgreSQL)', () => {
       topCountries: [{ country: 'ET', visits: 2 }],
       topPages: [{ route: '/donate', visits: 2 }],
     });
-    const persisted = await context.db
-      .select()
-      .from(analyticsEvents)
-      .where(eq(analyticsEvents.pageUrl, '/donate'));
+    const persisted = await context.db.select().from(analyticsEvents);
     expect(persisted).toHaveLength(3);
   });
 });
