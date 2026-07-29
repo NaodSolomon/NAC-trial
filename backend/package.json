@@ -15,6 +15,7 @@
     "test:ci": "pnpm lint && pnpm test:coverage --runInBand && pnpm test:e2e --runInBand && pnpm test:integration && pnpm db:check && pnpm build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:local": "ts-node src/database/migrate.ts",
     "db:check": "drizzle-kit check",
     "db:studio": "drizzle-kit studio",
     "db:seed": "ts-node src/database/seeds/seed.ts"

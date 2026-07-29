@@ -13,7 +13,11 @@ export class PayPalGateway implements PaymentGateway {
   constructor(private readonly config: ConfigService) {}
 
   isEnabled(): boolean {
-    return this.config.get<boolean>('payment.paypal.enabled') === true;
+    return (
+      this.config.get<string>('payment.driver') === 'paypal' &&
+      this.config.get<boolean>('payment.enabled') === true &&
+      this.config.get<boolean>('payment.paypal.enabled') === true
+    );
   }
 
   async createCheckout(donation: Donation): Promise<GatewayCheckout> {

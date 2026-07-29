@@ -24,6 +24,11 @@ import { GalleryModule } from './modules/gallery/gallery.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SecurityHeadersMiddleware } from './common/middleware/security-headers.middleware';
 import { SystemModule } from './modules/system/system.module';
+import runtimeConfig from './config/runtime.config';
+import mailConfig from './config/mail.config';
+import cacheConfig from './config/cache.config';
+import { MailModule } from './modules/mail/mail.module';
+import { CacheModule } from './modules/cache/cache.module';
 
 @Module({
   imports: [
@@ -32,7 +37,16 @@ import { SystemModule } from './modules/system/system.module';
       envFilePath: '.env',
       cache: true,
       expandVariables: true,
-      load: [appConfig, databaseConfig, jwtConfig, storageConfig, paymentConfig],
+      load: [
+        appConfig,
+        databaseConfig,
+        jwtConfig,
+        storageConfig,
+        paymentConfig,
+        runtimeConfig,
+        mailConfig,
+        cacheConfig,
+      ],
       validate: validateEnvironment,
     }),
     DrizzleModule,
@@ -56,6 +70,8 @@ import { SystemModule } from './modules/system/system.module';
     GalleryModule,
     AnalyticsModule,
     SystemModule,
+    MailModule,
+    CacheModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
