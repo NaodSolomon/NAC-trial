@@ -25,8 +25,21 @@ describe('validateEnvironment', () => {
         JWT_ACCESS_SECRET: 'too-short',
         JWT_REFRESH_SECRET: 'a'.repeat(32),
         IP_HASH_SECRET: 'b'.repeat(32),
+        INTERNAL_API_KEY: 'c'.repeat(32),
       }),
     ).toThrow('JWT_ACCESS_SECRET must contain at least 32 characters in production');
+  });
+
+  it('requires a strong internal API key in production', () => {
+    expect(() =>
+      validateEnvironment({
+        NODE_ENV: 'production',
+        JWT_ACCESS_SECRET: 'a'.repeat(32),
+        JWT_REFRESH_SECRET: 'b'.repeat(32),
+        IP_HASH_SECRET: 'c'.repeat(32),
+        INTERNAL_API_KEY: 'too-short',
+      }),
+    ).toThrow('INTERNAL_API_KEY must contain at least 32 characters in production');
   });
 
   it('requires distinct secrets in production', () => {
@@ -38,6 +51,7 @@ describe('validateEnvironment', () => {
         JWT_ACCESS_SECRET: sharedSecret,
         JWT_REFRESH_SECRET: sharedSecret,
         IP_HASH_SECRET: 'b'.repeat(32),
+        INTERNAL_API_KEY: 'c'.repeat(32),
       }),
     ).toThrow('JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, and IP_HASH_SECRET must be different');
   });

@@ -73,16 +73,30 @@ describe('Application conventions (e2e)', () => {
     });
   });
 
-  it.each(['/api/v1/admin/users', '/api/v1/admin/audit-logs'])(
-    'protects the private administration endpoint %s',
-    async (endpoint) => {
-      const response = await request(app.getHttpServer()).get(endpoint).expect(401);
+  it.each([
+    '/api/v1/admin/users',
+    '/api/v1/admin/audit-logs',
+    '/api/v1/admin/cms/pages',
+    '/api/v1/admin/navigation',
+    '/api/v1/admin/settings',
+  ])('protects the private administration endpoint %s', async (endpoint) => {
+    const response = await request(app.getHttpServer()).get(endpoint).expect(401);
 
-      expect(response.body).toMatchObject({
-        success: false,
-        statusCode: 401,
-        path: endpoint,
-      });
-    },
-  );
+    expect(response.body).toMatchObject({
+      success: false,
+      statusCode: 401,
+      path: endpoint,
+    });
+  });
+
+  it('protects the scheduled-publishing job with an internal API key', async () => {
+    const endpoint = '/api/v1/internal/jobs/publish-scheduled';
+    const response = await request(app.getHttpServer()).post(endpoint).expect(401);
+
+    expect(response.body).toMatchObject({
+      success: false,
+      statusCode: 401,
+      path: endpoint,
+    });
+  });
 });

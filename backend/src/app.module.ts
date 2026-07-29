@@ -8,6 +8,9 @@ import { DrizzleModule } from './database/drizzle.module';
 import { AdminsModule } from './modules/admins/admins.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CmsModule } from './modules/cms/cms.module';
+import { NavigationModule } from './modules/navigation/navigation.module';
+import { SettingsModule } from './modules/settings/settings.module';
 
 @Module({
   imports: [
@@ -23,6 +26,9 @@ import { AuthModule } from './modules/auth/auth.module';
     AuthModule,
     AdminsModule,
     AuditModule,
+    CmsModule,
+    NavigationModule,
+    SettingsModule,
   ],
 })
 export class AppModule {}
