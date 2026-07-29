@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, isNull } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DRIZZLE } from '../../../database/drizzle.module';
-import { AuthSession, authSessions, NewAuthSession } from '../../../database/schema';
+import { AuthSession, authSessions, auditLogs, NewAuthSession } from '../../../database/schema';
 import * as schema from '../../../database/schema';
 import { AuthSessionRepository } from '../interfaces/auth-session-repository.interface';
 
@@ -51,10 +51,23 @@ export class DrizzleAuthSessionRepository implements AuthSessionRepository {
   }
 
   async revokeByTokenHash(tokenHash: string): Promise<void> {
-    await this.db
-      .update(authSessions)
-      .set({ revokedAt: new Date() })
-      .where(and(eq(authSessions.tokenHash, tokenHash), isNull(authSessions.revokedAt)));
+    await this.db.transaction(async (transaction) => {
+      const [revoked] = await transaction
+        .update(authSessions)
+        .set({ revokedAt: new Date() })
+        .where(and(eq(authSessions.tokenHash, tokenHash), isNull(authSessions.revokedAt)))
+        .returning();
+
+      if (revoked) {
+        await transaction.insert(auditLogs).values({
+          adminId: revoked.adminId,
+          action: 'LOGOUT',
+          entityType: 'AUTH_SESSION',
+          entityId: revoked.id,
+          metadata: {},
+        });
+      }
+    });
   }
 
   async revokeFamily(tokenFamilyId: string): Promise<void> {

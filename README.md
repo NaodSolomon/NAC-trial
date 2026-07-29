@@ -187,6 +187,23 @@ The platform has no public user registration. Administrator authentication uses:
 
 To create the first super administrator, set `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL`, and `SEED_ADMIN_PASSWORD`, then run `pnpm db:seed` from `backend/`. Seed credentials are never given default values, and an existing administrator is never overwritten.
 
+## Authorization and Audit
+
+Private administration endpoints require both a valid access JWT and an explicitly allowed database-backed role. Administrator account management and audit-log access are restricted to `SUPER_ADMIN`.
+
+| Method | Endpoint                    | Required role | Purpose                    |
+|--------|-----------------------------|---------------|----------------------------|
+| GET    | `/api/v1/admin/users`       | `SUPER_ADMIN` | List administrator accounts|
+| POST   | `/api/v1/admin/users`       | `SUPER_ADMIN` | Create an administrator    |
+| GET    | `/api/v1/admin/users/:id`   | `SUPER_ADMIN` | Read an administrator      |
+| PATCH  | `/api/v1/admin/users/:id`   | `SUPER_ADMIN` | Update an administrator    |
+| DELETE | `/api/v1/admin/users/:id`   | `SUPER_ADMIN` | Delete an administrator    |
+| GET    | `/api/v1/admin/audit-logs`  | `SUPER_ADMIN` | Search immutable audit logs|
+
+Administrator create, update, and delete operations write their audit records in the same database transaction. Login and logout events are also recorded. Password hashes, raw tokens, and raw IP addresses are never included in audit metadata.
+
+The final active super administrator cannot be demoted, deactivated, or deleted. Administrators also cannot delete their own account.
+
 ## CI/CD
 
 ### PR Flow

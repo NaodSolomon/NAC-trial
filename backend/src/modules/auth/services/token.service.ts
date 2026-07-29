@@ -30,6 +30,7 @@ export class TokenService {
 
     const accessPayload: AccessTokenPayload = {
       sub: admin.id,
+      sid: sessionId,
       role: admin.role,
       type: 'access',
     };

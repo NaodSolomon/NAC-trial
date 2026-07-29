@@ -64,9 +64,7 @@ describe('Application conventions (e2e)', () => {
   });
 
   it('protects the current-administrator endpoint', async () => {
-    const response = await request(app.getHttpServer())
-      .get('/api/v1/auth/me')
-      .expect(401);
+    const response = await request(app.getHttpServer()).get('/api/v1/auth/me').expect(401);
 
     expect(response.body).toMatchObject({
       success: false,
@@ -74,4 +72,17 @@ describe('Application conventions (e2e)', () => {
       path: '/api/v1/auth/me',
     });
   });
+
+  it.each(['/api/v1/admin/users', '/api/v1/admin/audit-logs'])(
+    'protects the private administration endpoint %s',
+    async (endpoint) => {
+      const response = await request(app.getHttpServer()).get(endpoint).expect(401);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        statusCode: 401,
+        path: endpoint,
+      });
+    },
+  );
 });

@@ -4,6 +4,7 @@ export type AdminRole = Admin['role'];
 
 export interface AccessTokenPayload {
   sub: string;
+  sid: string;
   role: AdminRole;
   type: 'access';
 }

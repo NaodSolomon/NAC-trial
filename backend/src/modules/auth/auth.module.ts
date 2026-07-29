@@ -28,6 +28,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       useClass: DrizzleAuthSessionRepository,
     },
   ],
-  exports: [JwtAuthGuard],
+  exports: [JwtAuthGuard, ADMIN_REPOSITORY],
 })
 export class AuthModule {}
