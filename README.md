@@ -204,6 +204,33 @@ Administrator create, update, and delete operations write their audit records in
 
 The final active super administrator cannot be demoted, deactivated, or deleted. Administrators also cannot delete their own account.
 
+## Content Management
+
+Step 5 adds the first complete content-management slice. English and Amharic pages share a
+`translationKey`, while each language keeps its own unique slug and content. Authors work in
+drafts, can publish immediately, or schedule future publication. Editing published content
+returns it to draft so unreviewed changes never become public automatically.
+
+| Method | Endpoint                                      | Access                         | Purpose                         |
+|--------|-----------------------------------------------|--------------------------------|---------------------------------|
+| GET    | `/api/v1/public/pages/:slug?languageCode=en` | Public                         | Read a published page           |
+| GET    | `/api/v1/admin/slugs/check`                  | Editor or super administrator  | Check localized slug availability |
+| GET    | `/api/v1/admin/cms/pages`                    | Editor or super administrator  | List and filter pages           |
+| POST   | `/api/v1/admin/cms/pages`                    | Editor or super administrator  | Create a draft                  |
+| PATCH  | `/api/v1/admin/cms/pages/:id`                | Editor or super administrator  | Edit a page                     |
+| POST   | `/api/v1/admin/cms/pages/:id/publish`        | Editor or super administrator  | Publish immediately             |
+| POST   | `/api/v1/admin/cms/pages/:id/schedule`       | Editor or super administrator  | Schedule publication            |
+| DELETE | `/api/v1/admin/cms/pages/:id`                | Editor or super administrator  | Delete a page                   |
+
+Navigation has public localized reads and protected management endpoints under
+`/api/v1/admin/navigation`. Public site settings are available at `/api/v1/settings`; only a
+super administrator can update them at `/api/v1/admin/settings`. All content, navigation, and
+settings mutations write an audit record in the same database transaction.
+
+A trusted scheduler should call `POST /api/v1/internal/jobs/publish-scheduled` with the
+`x-internal-api-key` header. Set a separate, randomly generated `INTERNAL_API_KEY` of at least
+32 characters in production. This endpoint is intended for a cron service, not browsers.
+
 ## CI/CD
 
 ### PR Flow

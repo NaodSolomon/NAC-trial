@@ -8,4 +8,5 @@ export default registerAs('app', () => ({
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
+  internalApiKey: process.env.INTERNAL_API_KEY ?? 'development-internal-api-key-change-me',
 }));

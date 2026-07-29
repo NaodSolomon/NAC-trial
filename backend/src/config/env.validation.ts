@@ -19,6 +19,7 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   JWT_ISSUER: string;
   JWT_AUDIENCE: string;
   IP_HASH_SECRET: string;
+  INTERNAL_API_KEY: string;
 }
 
 function parsePort(value: unknown, name: string, fallback: number): number {
@@ -82,6 +83,12 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     environment,
     'development-ip-hash-secret-change-me',
   );
+  const internalApiKey = validateSecret(
+    raw.INTERNAL_API_KEY,
+    'INTERNAL_API_KEY',
+    environment,
+    'development-internal-api-key-change-me',
+  );
 
   if (
     environment === 'production' &&
@@ -108,5 +115,6 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     JWT_ISSUER: String(raw.JWT_ISSUER ?? 'nehemiah-api'),
     JWT_AUDIENCE: String(raw.JWT_AUDIENCE ?? 'nehemiah-admin'),
     IP_HASH_SECRET: ipHashSecret,
+    INTERNAL_API_KEY: internalApiKey,
   };
 }
