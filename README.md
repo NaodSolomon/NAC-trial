@@ -249,6 +249,25 @@ Uploads use `multipart/form-data` with a required `file` and optional `languageC
 `STORAGE_*` variables for Cloudflare R2 in production; the example values target MinIO during
 local development. Set `STORAGE_PUBLIC_URL` to the public CDN or custom-domain base URL.
 
+## Contact Form
+
+Step 7 composes the public Contact page from the published `contact` CMS page and global site
+settings, so editors do not maintain the same address and phone number in multiple places.
+Public submissions are validated, normalized, rate-limited to five requests per minute per
+client, and stored without IP addresses or user-agent fingerprints.
+
+| Method | Endpoint                    | Access                      | Purpose                         |
+|--------|-----------------------------|-----------------------------|---------------------------------|
+| GET    | `/api/v1/public/contact`    | Public                      | Read localized contact content  |
+| POST   | `/api/v1/public/contact`    | Public, rate-limited        | Submit a contact message        |
+| GET    | `/api/v1/admin/contact`     | Editor or super administrator | Search and list submissions   |
+| DELETE | `/api/v1/admin/contact/:id` | `SUPER_ADMIN`               | Permanently delete a submission |
+
+The public request accepts `name`, `email`, `message`, optional `subject`, and optional
+`languageCode` (`en` or `am`). Deletion is audited without copying the sender's personal data
+into audit metadata. Outbound email is intentionally deferred to a queued mail/outbox slice;
+contact persistence must succeed independently of temporary email-provider failures.
+
 ## CI/CD
 
 ### PR Flow

@@ -27,5 +27,6 @@ import { CmsPagesService } from './services/cms-pages.service';
       useClass: DrizzleCmsPageRepository,
     },
   ],
+  exports: [CmsPagesService],
 })
 export class CmsModule {}

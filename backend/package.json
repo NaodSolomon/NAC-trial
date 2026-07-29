@@ -26,6 +26,7 @@
     "@nestjs/jwt": "latest",
     "@nestjs/passport": "latest",
     "@nestjs/platform-fastify": "latest",
+    "@nestjs/throttler": "^6.5.0",
     "bcrypt": "latest",
     "class-transformer": "latest",
     "class-validator": "latest",

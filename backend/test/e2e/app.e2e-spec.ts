@@ -80,6 +80,7 @@ describe('Application conventions (e2e)', () => {
     '/api/v1/admin/navigation',
     '/api/v1/admin/settings',
     '/api/v1/admin/media',
+    '/api/v1/admin/contact',
   ])('protects the private administration endpoint %s', async (endpoint) => {
     const response = await request(app.getHttpServer()).get(endpoint).expect(401);
 
@@ -99,5 +100,32 @@ describe('Application conventions (e2e)', () => {
       statusCode: 401,
       path: endpoint,
     });
+  });
+
+  it('validates public contact submissions before persistence', async () => {
+    const endpoint = '/api/v1/public/contact';
+    const response = await request(app.getHttpServer())
+      .post(endpoint)
+      .send({
+        name: 'J',
+        email: 'not-an-email',
+        message: 'short',
+        languageCode: 'unsupported',
+      })
+      .expect(400);
+
+    expect(response.body).toMatchObject({
+      success: false,
+      statusCode: 400,
+      path: endpoint,
+    });
+    expect(response.body.message).toEqual(
+      expect.arrayContaining([
+        'name must be longer than or equal to 2 characters',
+        'email must be an email',
+        'message must be longer than or equal to 10 characters',
+        'languageCode must be one of the following values: en, am',
+      ]),
+    );
   });
 });

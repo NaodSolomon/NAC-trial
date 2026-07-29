@@ -4,6 +4,7 @@ import {
   admins,
   authSessions,
   cmsPages,
+  contactSubmissions,
   languageCodeEnum,
   mediaAssets,
   mediaTranslations,
@@ -34,5 +35,14 @@ describe('database schema foundation', () => {
     );
     expect(mediaForeignKeys).toHaveLength(1);
     expect(getTableConfig(mediaAssets).indexes).not.toHaveLength(0);
+  });
+
+  it('indexes contact submissions without storing network identifiers', () => {
+    const config = getTableConfig(contactSubmissions);
+    const columns = config.columns.map((column) => column.name);
+
+    expect(columns).toEqual(expect.arrayContaining(['name', 'email', 'message', 'language_code']));
+    expect(columns).not.toEqual(expect.arrayContaining(['ip_address', 'user_agent']));
+    expect(config.indexes).toHaveLength(2);
   });
 });

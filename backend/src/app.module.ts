@@ -13,6 +13,8 @@ import { CmsModule } from './modules/cms/cms.module';
 import { NavigationModule } from './modules/navigation/navigation.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { MediaModule } from './modules/media/media.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ContactModule } from './modules/contact/contact.module';
 
 @Module({
   imports: [
@@ -25,6 +27,12 @@ import { MediaModule } from './modules/media/media.module';
       validate: validateEnvironment,
     }),
     DrizzleModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
     AuthModule,
     AdminsModule,
     AuditModule,
@@ -32,6 +40,7 @@ import { MediaModule } from './modules/media/media.module';
     NavigationModule,
     SettingsModule,
     MediaModule,
+    ContactModule,
   ],
 })
 export class AppModule {}
