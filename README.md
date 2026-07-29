@@ -28,8 +28,8 @@ Full-stack monorepo — Next.js frontend + NestJS backend with PostgreSQL, Redis
 
 ```bash
 # Clone and enter
-git clone <your-repo-url>
-cd nehemiah
+git clone https://github.com/NaodSolomon/NAC-trial.git
+cd NAC-trial
 
 # Copy env files
 cp frontend/.env.example frontend/.env
@@ -128,7 +128,7 @@ nehemiah/
 | `pnpm test:e2e`      | Run E2E tests                      |
 | `pnpm db:generate`   | Generate migration from schema diff|
 | `pnpm db:migrate`    | Apply pending migrations           |
-| `pnpm db:push`       | Push schema directly (dev only)    |
+| `pnpm db:check`      | Check migration history consistency |
 | `pnpm db:studio`     | Open Drizzle Studio (visual DB)    |
 | `pnpm db:seed`       | Seed the database                  |
 | `pnpm lint`          | Lint with ESLint                   |
@@ -139,7 +139,7 @@ nehemiah/
 Both apps use `@shared/*` path alias to import from `shared/types/`:
 
 ```typescript
-import type { ApiResponse, BaseUser, PaginatedResponse } from '@shared/types';
+import type { AdminUser, ApiResponse, PaginatedResponse } from '@shared/types';
 ```
 
 ## Backend Architecture
@@ -156,6 +156,17 @@ Module
 ```
 
 Database schemas are defined in `src/database/schema/` using Drizzle's `pgTable()` builder. Services depend on repository **interfaces**, not implementations. Repositories are injected via NestJS DI using tokens.
+
+All database changes must be represented by a committed migration:
+
+```bash
+cd backend
+pnpm db:generate --name=<descriptive_name>
+pnpm db:check
+pnpm db:migrate
+```
+
+Do not use schema push commands. Migration files are reviewed and deployed in order so every environment has a reproducible database history.
 
 ## CI/CD
 
@@ -196,7 +207,3 @@ Production uses Traefik for automatic SSL via Let's Encrypt. Update `yourdomain.
 ## Environment Variables
 
 See [backend/.env.example](backend/.env.example) and [frontend/.env.example](frontend/.env.example) for all available config options.
-
-
-Environment Variables
-See backend/.env.example and frontend/.env.example for all available config options.
