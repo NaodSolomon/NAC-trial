@@ -34,6 +34,7 @@
     "fastify": "latest",
     "passport": "latest",
     "passport-jwt": "latest",
+    "pdfkit": "^0.19.1",
     "pg": "latest",
     "reflect-metadata": "latest",
     "rxjs": "latest"
@@ -46,6 +47,7 @@
     "@types/jest": "30.0.0",
     "@types/node": "latest",
     "@types/passport-jwt": "latest",
+    "@types/pdfkit": "^0.17.6",
     "@types/pg": "latest",
     "@types/supertest": "latest",
     "@typescript-eslint/eslint-plugin": "latest",

@@ -84,6 +84,7 @@ describe('Application conventions (e2e)', () => {
     '/api/v1/admin/volunteers',
     '/api/v1/admin/testimonials',
     '/api/v1/admin/newsletter',
+    '/api/v1/admin/donations',
   ])('protects the private administration endpoint %s', async (endpoint) => {
     const response = await request(app.getHttpServer()).get(endpoint).expect(401);
 
@@ -175,4 +176,31 @@ describe('Application conventions (e2e)', () => {
       statusCode: 400,
     });
   });
+
+  it('validates donation initiation before payment-provider access', async () => {
+    const endpoint = '/api/v1/public/donations';
+    const response = await request(app.getHttpServer())
+      .post(endpoint)
+      .send({
+        amount: -1,
+        currency: 'GBP',
+        gateway: 'CBE',
+        donorName: 'Donor',
+        donorEmail: 'not-an-email',
+      })
+      .expect(400);
+
+    expect(response.body).toMatchObject({
+      success: false,
+      statusCode: 400,
+      path: endpoint,
+    });
+  });
+
+  it.each(['/api/v1/webhooks/telebirr', '/api/v1/webhooks/cbe'])(
+    'fails closed for the unconfigured provider route %s',
+    async (endpoint) => {
+      await request(app.getHttpServer()).post(endpoint).send({}).expect(503);
+    },
+  );
 });
