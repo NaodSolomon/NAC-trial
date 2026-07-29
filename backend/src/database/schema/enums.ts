@@ -35,3 +35,6 @@ export const outboxStatusEnum = pgEnum('outbox_status', [
   'SENT',
   'FAILED',
 ]);
+
+export const eventStatusEnum = pgEnum('event_status', ['DRAFT', 'PUBLISHED']);
+export const eventRsvpStatusEnum = pgEnum('event_rsvp_status', ['CONFIRMED', 'CANCELLED']);

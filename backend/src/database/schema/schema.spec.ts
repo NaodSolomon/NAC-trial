@@ -13,6 +13,9 @@ import {
   testimonials,
   volunteerApplicationStatusEnum,
   volunteerApplications,
+  eventStatusEnum,
+  events,
+  eventRsvps,
 } from '.';
 
 describe('database schema foundation', () => {
@@ -59,5 +62,13 @@ describe('database schema foundation', () => {
     expect(getTableConfig(newsletterSubscribers).indexes.some((index) => index.config.unique)).toBe(
       true,
     );
+  });
+
+  it('enforces event publication and RSVP ownership constraints', () => {
+    expect(eventStatusEnum.enumValues).toEqual(['DRAFT', 'PUBLISHED']);
+    expect(getTableConfig(events).foreignKeys).toHaveLength(1);
+    expect(getTableConfig(events).indexes.filter((index) => index.config.unique)).toHaveLength(2);
+    expect(getTableConfig(eventRsvps).foreignKeys).toHaveLength(1);
+    expect(getTableConfig(eventRsvps).indexes.some((index) => index.config.unique)).toBe(true);
   });
 });

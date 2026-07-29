@@ -18,6 +18,7 @@ import { ContactModule } from './modules/contact/contact.module';
 import { EngagementModule } from './modules/engagement/engagement.module';
 import paymentConfig from './config/payment.config';
 import { DonationsModule } from './modules/donations/donations.module';
+import { EventsModule } from './modules/events/events.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { DonationsModule } from './modules/donations/donations.module';
     ContactModule,
     EngagementModule,
     DonationsModule,
+    EventsModule,
   ],
 })
 export class AppModule {}

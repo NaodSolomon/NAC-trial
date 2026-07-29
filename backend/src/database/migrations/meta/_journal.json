@@ -29,6 +29,13 @@
       "when": 1785343146228,
       "tag": "0003_add_donation_payments",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785343615110,
+      "tag": "0004_add_events_rsvps",
+      "breakpoints": true
     }
   ]
 }
