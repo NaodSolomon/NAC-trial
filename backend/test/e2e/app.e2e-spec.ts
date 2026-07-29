@@ -79,6 +79,7 @@ describe('Application conventions (e2e)', () => {
     '/api/v1/admin/cms/pages',
     '/api/v1/admin/navigation',
     '/api/v1/admin/settings',
+    '/api/v1/admin/media',
   ])('protects the private administration endpoint %s', async (endpoint) => {
     const response = await request(app.getHttpServer()).get(endpoint).expect(401);
 

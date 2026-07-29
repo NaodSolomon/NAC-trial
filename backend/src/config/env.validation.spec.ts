@@ -63,4 +63,16 @@ describe('validateEnvironment', () => {
       }),
     ).toThrow('JWT_ACCESS_EXPIRY must use a duration such as 15m, 1h, or 7d');
   });
+
+  it('requires explicit object-storage configuration in production', () => {
+    expect(() =>
+      validateEnvironment({
+        NODE_ENV: 'production',
+        JWT_ACCESS_SECRET: 'a'.repeat(32),
+        JWT_REFRESH_SECRET: 'b'.repeat(32),
+        IP_HASH_SECRET: 'c'.repeat(32),
+        INTERNAL_API_KEY: 'd'.repeat(32),
+      }),
+    ).toThrow('STORAGE_ENDPOINT is required in production');
+  });
 });
