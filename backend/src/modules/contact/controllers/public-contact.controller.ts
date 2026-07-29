@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ContactPageQueryDto } from '../dto/contact-page-query.dto';
 import { CreateContactSubmissionDto } from '../dto/create-contact-submission.dto';
 import { ContactService } from '../services/contact.service';
@@ -14,7 +14,6 @@ export class PublicContactController {
   }
 
   @Post()
-  @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   submit(@Body() dto: CreateContactSubmissionDto) {
     return this.contactService.submit(dto);

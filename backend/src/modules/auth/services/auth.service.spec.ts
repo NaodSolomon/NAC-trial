@@ -161,6 +161,32 @@ describe('AuthService', () => {
     expect(result.refreshToken).toBe(tokenPair.refreshToken);
   });
 
+  it('revokes the token family when a rotated refresh token is reused', async () => {
+    const session = {
+      id: '52aa8e0d-99cf-4f9a-ad28-a5ec713922af',
+      adminId: admin.id,
+      tokenHash: 'a'.repeat(64),
+      tokenFamilyId: '3d735e55-4f70-4cea-b841-cbb748b50cbc',
+      userAgent: null,
+      ipHash: null,
+      expiresAt: new Date(Date.now() + 60_000),
+      lastUsedAt: new Date(),
+      revokedAt: new Date(),
+      createdAt: now,
+    };
+    tokens.verifyRefreshToken.mockResolvedValue({
+      sub: admin.id,
+      sid: session.id,
+      fid: session.tokenFamilyId,
+      type: 'refresh',
+    });
+    sessions.findById.mockResolvedValue(session);
+    await expect(service.refresh('reused-token', context)).rejects.toThrow(
+      'Refresh token reuse detected',
+    );
+    expect(sessions.revokeFamily).toHaveBeenCalledWith(session.tokenFamilyId);
+  });
+
   it('revokes a refresh token during logout', async () => {
     await expect(service.logout('refresh-token')).resolves.toEqual({
       message: 'Logged out successfully',

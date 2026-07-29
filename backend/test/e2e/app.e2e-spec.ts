@@ -1,22 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import * as request from 'supertest';
-import { AppModule } from '../../src/app.module';
-import { configureApp } from '../../src/app.setup';
+import { createTestApp } from '../helpers/test-app.helper';
 
 describe('Application conventions (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
-    configureApp(app);
-    await app.init();
-    await app.getHttpAdapter().getInstance().ready();
+    app = await createTestApp();
   });
 
   afterAll(async () => {
@@ -39,6 +29,61 @@ describe('Application conventions (e2e)', () => {
       path: '/api/v1/users',
     });
     expect(response.body.timestamp).toBeDefined();
+  });
+
+  it('publishes machine-readable OpenAPI documentation outside production', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/docs/openapi.json')
+      .expect(200);
+    expect(response.body).toMatchObject({
+      openapi: expect.stringMatching(/^3\./),
+      info: { title: 'Nehemiah Autism Center API', version: '1.0' },
+    });
+    expect(response.body.paths['/api/v1/auth/login']).toBeDefined();
+  });
+
+  it('passes the unauthenticated API version smoke test', async () => {
+    const response = await request(app.getHttpServer()).get('/api/v1/system/version').expect(200);
+    expect(response.body.data).toMatchObject({
+      name: 'Nehemiah Autism Center API',
+      version: '0.1.0',
+      environment: 'test',
+    });
+  });
+
+  it('sets hardened response headers and a request correlation id', async () => {
+    const response = await request(app.getHttpServer()).get('/api/v1/users').expect(404);
+    expect(response.headers).toMatchObject({
+      'x-content-type-options': 'nosniff',
+      'x-frame-options': 'DENY',
+      'referrer-policy': 'no-referrer',
+      'cross-origin-resource-policy': 'same-site',
+      'cache-control': 'no-store',
+    });
+    expect(response.headers['content-security-policy']).toContain("default-src 'none'");
+    expect(response.headers['x-request-id']).toBeDefined();
+  });
+
+  it('rejects untrusted browser origins while allowing the configured frontend', async () => {
+    await request(app.getHttpServer())
+      .options('/api/v1/auth/login')
+      .set('Origin', 'http://localhost:3000')
+      .set('Access-Control-Request-Method', 'POST')
+      .expect(204);
+    const rejected = await request(app.getHttpServer())
+      .options('/api/v1/auth/login')
+      .set('Origin', 'https://attacker.example')
+      .set('Access-Control-Request-Method', 'POST')
+      .expect(404);
+    expect(rejected.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
+  it('rejects oversized JSON bodies before controller execution', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .set('Content-Type', 'application/json')
+      .send({ email: 'admin@example.com', password: 'x'.repeat(1_050_000) })
+      .expect(413);
   });
 
   it('validates login requests before accessing authentication services', async () => {
@@ -224,4 +269,13 @@ describe('Application conventions (e2e)', () => {
       await request(app.getHttpServer()).post(endpoint).send({}).expect(503);
     },
   );
+
+  it('enforces the lower rate limit on sensitive public writes', async () => {
+    const endpoint = '/api/v1/public/contact';
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      await request(app.getHttpServer()).post(endpoint).send({}).expect(400);
+    }
+    const response = await request(app.getHttpServer()).post(endpoint).send({}).expect(429);
+    expect(response.body).toMatchObject({ success: false, statusCode: 429, path: endpoint });
+  });
 });
