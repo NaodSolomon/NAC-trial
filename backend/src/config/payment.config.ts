@@ -1,8 +1,13 @@
 import { registerAs } from '@nestjs/config';
 
 export default registerAs('payment', () => ({
+  driver: process.env.PAYMENT_DRIVER ?? 'fake',
+  enabled: process.env.PAYMENTS_ENABLED === 'true',
   paypal: {
-    enabled: process.env.PAYPAL_ENABLED === 'true',
+    enabled:
+      process.env.PAYMENT_DRIVER === 'paypal' &&
+      process.env.PAYMENTS_ENABLED === 'true' &&
+      process.env.PAYPAL_ENABLED === 'true',
     baseUrl: process.env.PAYPAL_BASE_URL ?? 'https://api-m.sandbox.paypal.com',
     clientId: process.env.PAYPAL_CLIENT_ID ?? '',
     clientSecret: process.env.PAYPAL_CLIENT_SECRET ?? '',

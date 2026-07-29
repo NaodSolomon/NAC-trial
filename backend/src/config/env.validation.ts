@@ -36,6 +36,27 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   PAYPAL_RETURN_URL: string;
   PAYPAL_CANCEL_URL: string;
   SWAGGER_ENABLED: boolean;
+  STORAGE_DRIVER: 'minio' | 'r2';
+  MAIL_DRIVER: 'mailpit';
+  PAYMENT_DRIVER: 'fake' | 'paypal';
+  CACHE_DRIVER: 'redis';
+  PAYMENTS_ENABLED: boolean;
+  MAIL_HOST: string;
+  MAIL_PORT: number;
+  MAIL_FROM: string;
+  REDIS_HOST: string;
+  REDIS_PORT: number;
+}
+
+function parseChoice<T extends string>(
+  value: unknown,
+  name: string,
+  allowed: readonly T[],
+  fallback: T,
+): T {
+  const selected = String(value ?? fallback) as T;
+  if (!allowed.includes(selected)) throw new Error(`${name} must be one of: ${allowed.join(', ')}`);
+  return selected;
 }
 
 function parsePort(value: unknown, name: string, fallback: number): number {
@@ -168,11 +189,16 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     'development-internal-api-key-change-me',
   );
   const paypalEnabled = parseBoolean(raw.PAYPAL_ENABLED);
+  const paymentsEnabled = parseBoolean(raw.PAYMENTS_ENABLED);
+  const paymentDriver = parseChoice(raw.PAYMENT_DRIVER, 'PAYMENT_DRIVER', ['fake', 'paypal'], 'fake');
+  if (paymentDriver === 'paypal' && paymentsEnabled && !paypalEnabled) {
+    throw new Error('PAYPAL_ENABLED must be true when real PayPal payments are enabled');
+  }
   const frontendOrigins = String(raw.FRONTEND_URL ?? 'http://localhost:3000')
     .split(',')
     .map((origin) => validateUrl(origin.trim(), 'FRONTEND_URL', 'http://localhost:3000'));
   const paypalRequired = (value: unknown, name: string, fallback = '') =>
-    paypalEnabled
+    paymentDriver === 'paypal' && paymentsEnabled && paypalEnabled
       ? requiredInProduction(value, name, 'production', fallback)
       : String(value ?? fallback);
 
@@ -262,6 +288,16 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
       5_242_880,
     ),
     PAYPAL_ENABLED: paypalEnabled,
+    PAYMENTS_ENABLED: paymentsEnabled,
+    PAYMENT_DRIVER: paymentDriver,
+    STORAGE_DRIVER: parseChoice(raw.STORAGE_DRIVER, 'STORAGE_DRIVER', ['minio', 'r2'], 'minio'),
+    MAIL_DRIVER: parseChoice(raw.MAIL_DRIVER, 'MAIL_DRIVER', ['mailpit'], 'mailpit'),
+    CACHE_DRIVER: parseChoice(raw.CACHE_DRIVER, 'CACHE_DRIVER', ['redis'], 'redis'),
+    MAIL_HOST: String(raw.MAIL_HOST ?? 'mailpit'),
+    MAIL_PORT: parsePort(raw.MAIL_PORT, 'MAIL_PORT', 1025),
+    MAIL_FROM: String(raw.MAIL_FROM ?? 'noreply@nehemiah.local'),
+    REDIS_HOST: String(raw.REDIS_HOST ?? 'redis'),
+    REDIS_PORT: parsePort(raw.REDIS_PORT, 'REDIS_PORT', 6379),
     PAYPAL_BASE_URL: validateUrl(
       raw.PAYPAL_BASE_URL,
       'PAYPAL_BASE_URL',

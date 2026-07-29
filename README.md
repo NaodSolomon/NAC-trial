@@ -472,6 +472,24 @@ the Compose rollout.
 | `PROD_SSH_KEY`    | SSH private key for production           |
 | `GHCR_TOKEN`      | GitHub PAT with `write:packages` scope   |
 
+## Free Local Trial Runtime
+
+Copy `backend/.env.example` to `backend/.env`, then start the complete local stack:
+
+```bash
+docker compose up --build
+```
+
+The trial stack uses PostgreSQL, MinIO object storage, Mailpit SMTP, Redis, and the fake
+payment gateway. Mailpit is available at `http://localhost:8025` and the MinIO console at
+`http://localhost:9001`. The API health and version endpoints identify `mode: trial` and
+list the selected adapters. Fake checkouts persist donation workflows but cannot collect
+money or contact PayPal, Telebirr, or CBE.
+
+Real PayPal traffic requires all three explicit switches:
+`PAYMENT_DRIVER=paypal`, `PAYMENTS_ENABLED=true`, and `PAYPAL_ENABLED=true`, plus valid
+credentials. Leaving any switch disabled keeps the production gateway closed.
+
 ## Production Deployment
 
 ```bash

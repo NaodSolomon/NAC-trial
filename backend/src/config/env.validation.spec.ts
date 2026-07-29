@@ -9,7 +9,28 @@ describe('validateEnvironment', () => {
       DATABASE_PORT: 5432,
       JWT_ACCESS_EXPIRY: '15m',
       JWT_REFRESH_EXPIRY: '7d',
+      STORAGE_DRIVER: 'minio',
+      MAIL_DRIVER: 'mailpit',
+      PAYMENT_DRIVER: 'fake',
+      CACHE_DRIVER: 'redis',
+      PAYMENTS_ENABLED: false,
     });
+  });
+
+  it('rejects unsupported local adapter drivers', () => {
+    expect(() => validateEnvironment({ PAYMENT_DRIVER: 'unknown' })).toThrow(
+      'PAYMENT_DRIVER must be one of: fake, paypal',
+    );
+  });
+
+  it('requires an explicit PayPal enable switch for real payment mode', () => {
+    expect(() =>
+      validateEnvironment({
+        PAYMENT_DRIVER: 'paypal',
+        PAYMENTS_ENABLED: true,
+        PAYPAL_ENABLED: false,
+      }),
+    ).toThrow('PAYPAL_ENABLED must be true when real PayPal payments are enabled');
   });
 
   it('rejects invalid ports', () => {
