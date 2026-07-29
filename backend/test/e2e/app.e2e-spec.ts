@@ -81,6 +81,9 @@ describe('Application conventions (e2e)', () => {
     '/api/v1/admin/settings',
     '/api/v1/admin/media',
     '/api/v1/admin/contact',
+    '/api/v1/admin/volunteers',
+    '/api/v1/admin/testimonials',
+    '/api/v1/admin/newsletter',
   ])('protects the private administration endpoint %s', async (endpoint) => {
     const response = await request(app.getHttpServer()).get(endpoint).expect(401);
 
@@ -127,5 +130,49 @@ describe('Application conventions (e2e)', () => {
         'languageCode must be one of the following values: en, am',
       ]),
     );
+  });
+
+  it('validates volunteer applications before persistence', async () => {
+    const endpoint = '/api/v1/public/volunteer/apply';
+    const response = await request(app.getHttpServer())
+      .post(endpoint)
+      .send({
+        name: 'J',
+        email: 'not-an-email',
+        phone: '12',
+        roleInterest: '',
+        message: 'Too short',
+      })
+      .expect(400);
+
+    expect(response.body).toMatchObject({
+      success: false,
+      statusCode: 400,
+      path: endpoint,
+    });
+  });
+
+  it('validates newsletter signup before persistence', async () => {
+    const endpoint = '/api/v1/public/newsletter';
+    const response = await request(app.getHttpServer())
+      .post(endpoint)
+      .send({ email: 'not-an-email' })
+      .expect(400);
+
+    expect(response.body).toMatchObject({
+      success: false,
+      statusCode: 400,
+      path: endpoint,
+    });
+  });
+
+  it('does not accept draft-status filtering on public testimonials', async () => {
+    const endpoint = '/api/v1/public/testimonials?status=DRAFT';
+    const response = await request(app.getHttpServer()).get(endpoint).expect(400);
+
+    expect(response.body).toMatchObject({
+      success: false,
+      statusCode: 400,
+    });
   });
 });

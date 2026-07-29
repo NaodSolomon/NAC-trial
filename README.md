@@ -268,6 +268,33 @@ The public request accepts `name`, `email`, `message`, optional `subject`, and o
 into audit metadata. Outbound email is intentionally deferred to a queued mail/outbox slice;
 contact persistence must succeed independently of temporary email-provider failures.
 
+## Volunteer Engagement
+
+Step 8 completes the volunteer-page engagement workflow. The localized page body comes from
+the published `volunteer` CMS page. Applications and newsletter subscriptions are validated,
+normalized, rate-limited, and stored without network identifiers. Duplicate newsletter
+signup returns the same success response, preventing account enumeration.
+
+| Method | Endpoint                              | Access                         | Purpose                        |
+|--------|---------------------------------------|--------------------------------|--------------------------------|
+| GET    | `/api/v1/public/volunteer`            | Public                         | Read volunteer-page content    |
+| POST   | `/api/v1/public/volunteer/apply`      | Public, rate-limited           | Submit a volunteer application |
+| GET    | `/api/v1/admin/volunteers`            | Editor or super administrator  | Review applications            |
+| DELETE | `/api/v1/admin/volunteers/:id`        | `SUPER_ADMIN`                  | Delete an application          |
+| GET    | `/api/v1/public/testimonials`         | Public                         | Read published testimonials    |
+| GET    | `/api/v1/admin/testimonials`          | Editor or super administrator  | Review all testimonials        |
+| POST   | `/api/v1/admin/testimonials`          | Editor or super administrator  | Create a testimonial           |
+| PATCH  | `/api/v1/admin/testimonials/:id`      | Editor or super administrator  | Edit or publish a testimonial  |
+| DELETE | `/api/v1/admin/testimonials/:id`      | Editor or super administrator  | Delete a testimonial           |
+| POST   | `/api/v1/public/newsletter`           | Public, rate-limited           | Subscribe an email address     |
+| GET    | `/api/v1/admin/newsletter`            | `SUPER_ADMIN`                  | List subscribers               |
+| DELETE | `/api/v1/admin/newsletter/:email`     | `SUPER_ADMIN`                  | Remove a subscriber            |
+
+Testimonials start as drafts unless explicitly published. Public queries cannot request draft
+status, and repository filtering independently enforces `PUBLISHED`. Audit metadata for
+application and subscriber deletion excludes names, email addresses, phone numbers, and
+message content.
+
 ## CI/CD
 
 ### PR Flow
