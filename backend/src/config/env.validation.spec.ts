@@ -39,9 +39,7 @@ describe('validateEnvironment', () => {
         JWT_REFRESH_SECRET: sharedSecret,
         IP_HASH_SECRET: 'b'.repeat(32),
       }),
-    ).toThrow(
-      'JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, and IP_HASH_SECRET must be different',
-    );
+    ).toThrow('JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, and IP_HASH_SECRET must be different');
   });
 
   it('rejects malformed token durations during startup', () => {

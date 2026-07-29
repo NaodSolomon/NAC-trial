@@ -37,25 +37,17 @@ function validateSecret(
   environment: Environment,
   developmentFallback: string,
 ): string {
-  const suppliedSecret =
-    typeof value === 'string' && value.trim() ? value.trim() : undefined;
+  const suppliedSecret = typeof value === 'string' && value.trim() ? value.trim() : undefined;
   const secret = suppliedSecret ?? developmentFallback;
 
-  if (
-    environment === 'production' &&
-    (!suppliedSecret || suppliedSecret.length < 32)
-  ) {
+  if (environment === 'production' && (!suppliedSecret || suppliedSecret.length < 32)) {
     throw new Error(`${name} must contain at least 32 characters in production`);
   }
 
   return secret;
 }
 
-function validateDuration(
-  value: unknown,
-  name: string,
-  fallback: string,
-): string {
+function validateDuration(value: unknown, name: string, fallback: string): string {
   const duration = String(value ?? fallback);
 
   if (!/^\d+[smhd]$/.test(duration)) {
@@ -95,9 +87,7 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     environment === 'production' &&
     new Set([accessSecret, refreshSecret, ipHashSecret]).size !== 3
   ) {
-    throw new Error(
-      'JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, and IP_HASH_SECRET must be different',
-    );
+    throw new Error('JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, and IP_HASH_SECRET must be different');
   }
 
   return {
@@ -113,16 +103,8 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     DATABASE_NAME: String(raw.DATABASE_NAME ?? 'appdb'),
     JWT_ACCESS_SECRET: accessSecret,
     JWT_REFRESH_SECRET: refreshSecret,
-    JWT_ACCESS_EXPIRY: validateDuration(
-      raw.JWT_ACCESS_EXPIRY,
-      'JWT_ACCESS_EXPIRY',
-      '15m',
-    ),
-    JWT_REFRESH_EXPIRY: validateDuration(
-      raw.JWT_REFRESH_EXPIRY,
-      'JWT_REFRESH_EXPIRY',
-      '7d',
-    ),
+    JWT_ACCESS_EXPIRY: validateDuration(raw.JWT_ACCESS_EXPIRY, 'JWT_ACCESS_EXPIRY', '15m'),
+    JWT_REFRESH_EXPIRY: validateDuration(raw.JWT_REFRESH_EXPIRY, 'JWT_REFRESH_EXPIRY', '7d'),
     JWT_ISSUER: String(raw.JWT_ISSUER ?? 'nehemiah-api'),
     JWT_AUDIENCE: String(raw.JWT_AUDIENCE ?? 'nehemiah-admin'),
     IP_HASH_SECRET: ipHashSecret,

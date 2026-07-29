@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DRIZZLE } from '../../../database/drizzle.module';
-import { Admin, admins } from '../../../database/schema';
+import { Admin, admins, auditLogs } from '../../../database/schema';
 import * as schema from '../../../database/schema';
 import { AdminRepository } from '../interfaces/admin-repository.interface';
 
@@ -50,14 +50,23 @@ export class DrizzleAdminRepository implements AdminRepository {
   }
 
   async recordSuccessfulLogin(id: string): Promise<void> {
-    await this.db
-      .update(admins)
-      .set({
-        failedLoginAttempts: 0,
-        lockedUntil: null,
-        lastLoginAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(admins.id, id));
+    await this.db.transaction(async (transaction) => {
+      await transaction
+        .update(admins)
+        .set({
+          failedLoginAttempts: 0,
+          lockedUntil: null,
+          lastLoginAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(admins.id, id));
+
+      await transaction.insert(auditLogs).values({
+        adminId: id,
+        action: 'LOGIN',
+        entityType: 'AUTH_SESSION',
+        metadata: {},
+      });
+    });
   }
 }

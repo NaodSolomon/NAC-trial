@@ -5,6 +5,8 @@ import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import { validateEnvironment } from './config/env.validation';
 import { DrizzleModule } from './database/drizzle.module';
+import { AdminsModule } from './modules/admins/admins.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
@@ -19,6 +21,8 @@ import { AuthModule } from './modules/auth/auth.module';
     }),
     DrizzleModule,
     AuthModule,
+    AdminsModule,
+    AuditModule,
   ],
 })
 export class AppModule {}
