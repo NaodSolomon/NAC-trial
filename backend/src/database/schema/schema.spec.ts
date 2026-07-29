@@ -16,6 +16,7 @@ import {
   eventStatusEnum,
   events,
   eventRsvps,
+  galleryItems,
 } from '.';
 
 describe('database schema foundation', () => {
@@ -70,5 +71,11 @@ describe('database schema foundation', () => {
     expect(getTableConfig(events).indexes.filter((index) => index.config.unique)).toHaveLength(2);
     expect(getTableConfig(eventRsvps).foreignKeys).toHaveLength(1);
     expect(getTableConfig(eventRsvps).indexes.some((index) => index.config.unique)).toBe(true);
+  });
+
+  it('owns every gallery entry through a media asset and administrator', () => {
+    const config = getTableConfig(galleryItems);
+    expect(config.foreignKeys).toHaveLength(2);
+    expect(config.indexes.some((index) => index.config.unique)).toBe(true);
   });
 });

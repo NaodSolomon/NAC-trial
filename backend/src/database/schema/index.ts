@@ -10,3 +10,4 @@ export * from './contact-submission.schema';
 export * from './engagement.schema';
 export * from './donation.schema';
 export * from './event.schema';
+export * from './gallery.schema';

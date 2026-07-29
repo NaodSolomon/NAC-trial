@@ -36,6 +36,10 @@ export class MediaService {
     });
   }
 
+  findById(id: string) {
+    return this.media.findById(id);
+  }
+
   async upload(input: MediaUpload, actor: AdminPrincipal) {
     const policy = this.filePolicy.validate(input.mimeType, input.buffer);
     const languageCode = input.languageCode ?? 'en';
