@@ -295,6 +295,24 @@ status, and repository filtering independently enforces `PUBLISHED`. Audit metad
 application and subscriber deletion excludes names, email addresses, phone numbers, and
 message content.
 
+## Donations and Payments
+
+Step 9 adds a payment-safe donation workflow without storing card or bank credentials. PayPal
+uses the server-side Orders v2 API and PayPal's official webhook verification endpoint.
+Provider order IDs, capture IDs, and webhook event IDs are uniquely constrained for
+idempotency. Telebirr and CBE routes fail closed until verified provider adapters are added.
+
+Public endpoints under `/api/v1/public/donations` support initiation, status, cancellation,
+recent anonymous donations, and configured gateway discovery. PayPal webhooks are received at
+`/api/v1/webhooks/paypal`. Administrative endpoints under `/api/v1/admin/donations` provide
+finance-restricted listing, detail, statistics, CSV export, PDF receipt generation, and queued
+receipt delivery. Only `SUPER_ADMIN` can manually verify a pending donation.
+
+Set `PAYPAL_ENABLED=true` only after configuring sandbox or production client credentials,
+webhook ID, return URL, and cancel URL. Receipt PDFs are stored through the existing R2/MinIO
+storage abstraction. Receipt emails use a transactional outbox so email-provider downtime
+does not roll back or corrupt confirmed payments.
+
 ## CI/CD
 
 ### PR Flow

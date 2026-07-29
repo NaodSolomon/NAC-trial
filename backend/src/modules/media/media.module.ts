@@ -23,5 +23,6 @@ import { S3ObjectStorageService } from './storage/s3-object-storage.service';
       useClass: S3ObjectStorageService,
     },
   ],
+  exports: [OBJECT_STORAGE],
 })
 export class MediaModule {}

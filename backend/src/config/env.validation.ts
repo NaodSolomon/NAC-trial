@@ -27,6 +27,13 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   STORAGE_SECRET_ACCESS_KEY: string;
   STORAGE_PUBLIC_URL: string;
   MEDIA_MAX_FILE_SIZE_BYTES: number;
+  PAYPAL_ENABLED: boolean;
+  PAYPAL_BASE_URL: string;
+  PAYPAL_CLIENT_ID: string;
+  PAYPAL_CLIENT_SECRET: string;
+  PAYPAL_WEBHOOK_ID: string;
+  PAYPAL_RETURN_URL: string;
+  PAYPAL_CANCEL_URL: string;
 }
 
 function parsePort(value: unknown, name: string, fallback: number): number {
@@ -72,6 +79,13 @@ function requiredInProduction(
     throw new Error(`${name} is required in production`);
   }
   return supplied || developmentFallback;
+}
+
+function parseBoolean(value: unknown, fallback = false): boolean {
+  if (value === undefined) return fallback;
+  if (value === true || value === 'true') return true;
+  if (value === false || value === 'false') return false;
+  throw new Error('Boolean environment values must be true or false');
 }
 
 function validateSecret(
@@ -131,6 +145,11 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     environment,
     'development-internal-api-key-change-me',
   );
+  const paypalEnabled = parseBoolean(raw.PAYPAL_ENABLED);
+  const paypalRequired = (value: unknown, name: string, fallback = '') =>
+    paypalEnabled
+      ? requiredInProduction(value, name, 'production', fallback)
+      : String(value ?? fallback);
 
   if (
     environment === 'production' &&
@@ -201,6 +220,33 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
       raw.MEDIA_MAX_FILE_SIZE_BYTES,
       'MEDIA_MAX_FILE_SIZE_BYTES',
       10_485_760,
+    ),
+    PAYPAL_ENABLED: paypalEnabled,
+    PAYPAL_BASE_URL: validateUrl(
+      raw.PAYPAL_BASE_URL,
+      'PAYPAL_BASE_URL',
+      'https://api-m.sandbox.paypal.com',
+    ),
+    PAYPAL_CLIENT_ID: paypalRequired(raw.PAYPAL_CLIENT_ID, 'PAYPAL_CLIENT_ID'),
+    PAYPAL_CLIENT_SECRET: paypalRequired(raw.PAYPAL_CLIENT_SECRET, 'PAYPAL_CLIENT_SECRET'),
+    PAYPAL_WEBHOOK_ID: paypalRequired(raw.PAYPAL_WEBHOOK_ID, 'PAYPAL_WEBHOOK_ID'),
+    PAYPAL_RETURN_URL: validateUrl(
+      paypalRequired(
+        raw.PAYPAL_RETURN_URL,
+        'PAYPAL_RETURN_URL',
+        'http://localhost:3000/donate/success',
+      ),
+      'PAYPAL_RETURN_URL',
+      'http://localhost:3000/donate/success',
+    ),
+    PAYPAL_CANCEL_URL: validateUrl(
+      paypalRequired(
+        raw.PAYPAL_CANCEL_URL,
+        'PAYPAL_CANCEL_URL',
+        'http://localhost:3000/donate/cancel',
+      ),
+      'PAYPAL_CANCEL_URL',
+      'http://localhost:3000/donate/cancel',
     ),
   };
 }

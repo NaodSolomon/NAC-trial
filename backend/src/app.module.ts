@@ -16,6 +16,8 @@ import { MediaModule } from './modules/media/media.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ContactModule } from './modules/contact/contact.module';
 import { EngagementModule } from './modules/engagement/engagement.module';
+import paymentConfig from './config/payment.config';
+import { DonationsModule } from './modules/donations/donations.module';
 
 @Module({
   imports: [
@@ -24,7 +26,7 @@ import { EngagementModule } from './modules/engagement/engagement.module';
       envFilePath: '.env',
       cache: true,
       expandVariables: true,
-      load: [appConfig, databaseConfig, jwtConfig, storageConfig],
+      load: [appConfig, databaseConfig, jwtConfig, storageConfig, paymentConfig],
       validate: validateEnvironment,
     }),
     DrizzleModule,
@@ -43,6 +45,7 @@ import { EngagementModule } from './modules/engagement/engagement.module';
     MediaModule,
     ContactModule,
     EngagementModule,
+    DonationsModule,
   ],
 })
 export class AppModule {}

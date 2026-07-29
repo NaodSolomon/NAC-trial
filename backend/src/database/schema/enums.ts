@@ -19,3 +19,19 @@ export const volunteerApplicationStatusEnum = pgEnum('volunteer_application_stat
 ]);
 
 export const testimonialStatusEnum = pgEnum('testimonial_status', ['DRAFT', 'PUBLISHED']);
+
+export const donationStatusEnum = pgEnum('donation_status', [
+  'INITIATED',
+  'PENDING',
+  'CONFIRMED',
+  'FAILED',
+  'CANCELLED',
+]);
+export const donationCurrencyEnum = pgEnum('donation_currency', ['USD', 'ETB']);
+export const donationGatewayEnum = pgEnum('donation_gateway', ['PAYPAL', 'TELEBIRR', 'CBE']);
+export const outboxStatusEnum = pgEnum('outbox_status', [
+  'PENDING',
+  'PROCESSING',
+  'SENT',
+  'FAILED',
+]);
