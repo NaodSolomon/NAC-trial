@@ -23,6 +23,7 @@ import { EventsModule } from './modules/events/events.module';
 import { GalleryModule } from './modules/gallery/gallery.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SecurityHeadersMiddleware } from './common/middleware/security-headers.middleware';
+import { SystemModule } from './modules/system/system.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { SecurityHeadersMiddleware } from './common/middleware/security-headers.
     EventsModule,
     GalleryModule,
     AnalyticsModule,
+    SystemModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

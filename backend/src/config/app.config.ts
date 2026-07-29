@@ -9,4 +9,8 @@ export default registerAs('app', () => ({
     .map((origin) => origin.trim().replace(/\/+$/, ''))
     .filter(Boolean),
   internalApiKey: process.env.INTERNAL_API_KEY ?? 'development-internal-api-key-change-me',
+  swaggerEnabled:
+    process.env.SWAGGER_ENABLED !== undefined
+      ? process.env.SWAGGER_ENABLED === 'true'
+      : process.env.NODE_ENV !== 'production',
 }));

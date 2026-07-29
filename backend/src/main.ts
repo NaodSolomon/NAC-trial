@@ -5,6 +5,7 @@ import { Logger } from '@nestjs/common';
 import multipart from '@fastify/multipart';
 import { AppModule } from './app.module';
 import { configureApp } from './app.setup';
+import { setupOpenApi } from './openapi/setup-openapi';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -29,6 +30,7 @@ async function bootstrap() {
     },
   });
   configureApp(app);
+  setupOpenApi(app);
   app.enableShutdownHooks();
 
   const port = config.getOrThrow<number>('app.port');

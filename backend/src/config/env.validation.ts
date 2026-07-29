@@ -35,6 +35,7 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   PAYPAL_WEBHOOK_ID: string;
   PAYPAL_RETURN_URL: string;
   PAYPAL_CANCEL_URL: string;
+  SWAGGER_ENABLED: boolean;
 }
 
 function parsePort(value: unknown, name: string, fallback: number): number {
@@ -287,5 +288,6 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
       'PAYPAL_CANCEL_URL',
       'http://localhost:3000/donate/cancel',
     ),
+    SWAGGER_ENABLED: parseBoolean(raw.SWAGGER_ENABLED, environment !== 'production'),
   };
 }

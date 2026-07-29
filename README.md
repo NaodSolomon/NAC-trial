@@ -394,6 +394,41 @@ placeholder, whitespace-containing, or reused security secrets. HTTP logs contai
 query-free path, status context, duration, and request correlation only—never bodies, tokens,
 credentials, or query strings.
 
+## Testing, API Documentation, and Deployment
+
+Step 14 formalizes the release pipeline:
+
+- `pnpm test` runs isolated service, guard, policy, and payment-contract unit tests.
+- `pnpm test:e2e` boots the Fastify application and verifies controllers, authentication,
+  RBAC, CORS, rate limits, request limits, security headers, OpenAPI, and smoke behavior.
+- `pnpm test:integration` applies every Drizzle migration to PostgreSQL and exercises real
+  repository queries when `TEST_DATABASE_URL` is configured. The database-dependent suite
+  skips locally when that variable is absent; CI always supplies it.
+- Migration-chain tests ensure every journal entry has its matching ordered SQL file.
+- `pnpm test:ci` runs the complete backend quality gate.
+
+Start the disposable local integration database with:
+
+```bash
+docker compose -f docker-compose.test.yml up -d --wait
+$env:TEST_DATABASE_URL="postgresql://nehemiah_test:nehemiah_test@localhost:5434/nehemiah_test"
+cd backend
+pnpm test:integration
+docker compose -f ../docker-compose.test.yml down
+```
+
+OpenAPI JSON is available at `/api/v1/docs/openapi.json` and Swagger UI at
+`/api/v1/docs` when `SWAGGER_ENABLED=true`. Documentation defaults off in production.
+Unauthenticated monitoring endpoints are `/api/v1/system/health` and
+`/api/v1/system/version`.
+
+The restored CI workflow runs backend tests with PostgreSQL, validates migrations, builds the
+production backend image, and verifies the frontend. Production deployment is manual,
+restricted to `main`, and protected by the GitHub `production` environment. Configure
+`PROD_HOST`, `PROD_USER`, `PROD_SSH_KEY`, and `PROD_APP_PATH` before running it. The workflow
+builds immutable SHA-tagged images, runs migrations as a one-off container, and then performs
+the Compose rollout.
+
 ## CI/CD
 
 ### PR Flow
@@ -401,9 +436,10 @@ credentials, or query strings.
 2. CI runs lint + tests + build for both apps (checks only, no deploy)
 
 ### Prod Flow
-1. Merge PR into `main`
-2. Docker images auto-built and pushed to GHCR
-3. Auto-deploys to production VPS via SSH
+1. Merge the reviewed PR into `main`
+2. Manually start the production workflow after CI succeeds
+3. SHA-tagged images are pushed to GHCR
+4. Migrations run before the Compose application rollout
 
 ### Required GitHub Secrets
 

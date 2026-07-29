@@ -1,22 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import * as request from 'supertest';
-import { AppModule } from '../../src/app.module';
-import { configureApp } from '../../src/app.setup';
+import { createTestApp } from '../helpers/test-app.helper';
 
 describe('Application conventions (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
-    configureApp(app);
-    await app.init();
-    await app.getHttpAdapter().getInstance().ready();
+    app = await createTestApp();
   });
 
   afterAll(async () => {
@@ -39,6 +29,26 @@ describe('Application conventions (e2e)', () => {
       path: '/api/v1/users',
     });
     expect(response.body.timestamp).toBeDefined();
+  });
+
+  it('publishes machine-readable OpenAPI documentation outside production', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/docs/openapi.json')
+      .expect(200);
+    expect(response.body).toMatchObject({
+      openapi: expect.stringMatching(/^3\./),
+      info: { title: 'Nehemiah Autism Center API', version: '1.0' },
+    });
+    expect(response.body.paths['/api/v1/auth/login']).toBeDefined();
+  });
+
+  it('passes the unauthenticated API version smoke test', async () => {
+    const response = await request(app.getHttpServer()).get('/api/v1/system/version').expect(200);
+    expect(response.body.data).toMatchObject({
+      name: 'Nehemiah Autism Center API',
+      version: '0.1.0',
+      environment: 'test',
+    });
   });
 
   it('sets hardened response headers and a request correlation id', async () => {

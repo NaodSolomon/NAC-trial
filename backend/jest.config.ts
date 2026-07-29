@@ -8,6 +8,9 @@ const config: Config = {
   collectCoverageFrom: ['**/*.(t|j)s', '!**/*.module.ts', '!**/main.ts'],
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
+  clearMocks: true,
+  restoreMocks: true,
+  maxWorkers: '50%',
 };
 
 export default config;

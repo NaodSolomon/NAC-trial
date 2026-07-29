@@ -1,7 +1,4 @@
-version: '3.9'
-
 services:
-
   traefik:
     image: traefik:v3
     restart: always
@@ -29,7 +26,7 @@ services:
       - traefik.http.routers.dashboard.service=api@internal
 
   frontend:
-    image: ghcr.io/yourusername/nehemiah-frontend:latest
+    image: ${FRONTEND_IMAGE:-ghcr.io/yourusername/nehemiah-frontend:latest}
     restart: always
     env_file:
       - ./frontend/.env
@@ -42,7 +39,7 @@ services:
       - backend
 
   backend:
-    image: ghcr.io/yourusername/nehemiah-backend:latest
+    image: ${BACKEND_IMAGE:-ghcr.io/yourusername/nehemiah-backend:latest}
     restart: always
     env_file:
       - ./backend/.env
@@ -56,6 +53,13 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test:
+        ["CMD", "wget", "-qO-", "http://localhost:8000/api/v1/system/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   postgres:
     image: postgres:16-alpine
@@ -65,7 +69,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DATABASE_USER:-nehemiah} -d ${DATABASE_NAME:-nehemiah}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5

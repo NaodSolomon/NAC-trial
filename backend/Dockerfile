@@ -35,4 +35,6 @@ COPY --chown=nestjs:nestjs package.json ./
 
 USER nestjs
 EXPOSE 8000
-CMD ["dumb-init", "node", "dist/main.js"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:8000/api/v1/system/health >/dev/null || exit 1
+CMD ["dumb-init", "node", "dist/src/main.js"]

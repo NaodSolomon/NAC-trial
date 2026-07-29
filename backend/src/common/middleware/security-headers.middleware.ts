@@ -14,9 +14,12 @@ export class SecurityHeadersMiddleware implements NestMiddleware {
     response.setHeader('X-Frame-Options', 'DENY');
     response.setHeader('Referrer-Policy', 'no-referrer');
     response.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    const isDocumentation = request.url?.startsWith('/api/v1/docs');
     response.setHeader(
       'Content-Security-Policy',
-      "default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+      isDocumentation
+        ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
+        : "default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
     );
     response.setHeader('Cross-Origin-Resource-Policy', 'same-site');
     response.setHeader('Cache-Control', 'no-store');
