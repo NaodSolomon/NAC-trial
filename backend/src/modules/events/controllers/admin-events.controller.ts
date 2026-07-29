@@ -3,12 +3,12 @@ import {
   Controller,
   Delete,
   Get,
-  Header,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { CurrentAdmin } from '../../../common/decorators/current-admin.decorator';
@@ -16,6 +16,7 @@ import { Roles } from '../../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { AdminPrincipal } from '../../auth/interfaces/auth.types';
+import { FastifyReply } from 'fastify';
 import { CreateEventDto, EventQueryDto, RsvpQueryDto, UpdateEventDto } from '../dto/event.dto';
 import { EventsService } from '../services/events.service';
 
@@ -56,9 +57,14 @@ export class AdminEventsController {
   }
 
   @Get(':id/rsvps/export')
-  @Header('Content-Type', 'text/csv; charset=utf-8')
-  @Header('Content-Disposition', 'attachment; filename="event-rsvps.csv"')
-  async export(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.eventsService.exportRsvps(id);
+  async export(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Res() reply: FastifyReply,
+  ) {
+    const csv = await this.eventsService.exportRsvps(id);
+    return reply
+      .header('Content-Type', 'text/csv; charset=utf-8')
+      .header('Content-Disposition', 'attachment; filename="event-rsvps.csv"')
+      .send(csv);
   }
 }

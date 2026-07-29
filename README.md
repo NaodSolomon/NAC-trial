@@ -399,8 +399,11 @@ credentials, or query strings.
 Step 14 formalizes the release pipeline:
 
 - `pnpm test` runs isolated service, guard, policy, and payment-contract unit tests.
-- `pnpm test:e2e` boots the Fastify application and verifies controllers, authentication,
-  RBAC, CORS, rate limits, request limits, security headers, OpenAPI, and smoke behavior.
+- `pnpm test:e2e` boots the real Fastify application against the dedicated PostgreSQL test
+  database. It verifies successful JWT login, refresh rotation, logout and revocation,
+  role boundaries, public-data privacy, every implemented vertical slice, CORS, rate limits,
+  request limits, security headers, OpenAPI, and smoke behavior. Object storage and PayPal
+  are deterministic in-process simulations; no paid or external service is contacted.
 - `pnpm test:integration` applies every Drizzle migration to PostgreSQL and exercises real
   repository queries when `TEST_DATABASE_URL` is configured. The database-dependent suite
   prints an explicit warning and skips locally when that variable is absent; CI always
@@ -421,6 +424,7 @@ docker compose -f docker-compose.test.yml up -d --wait
 $env:TEST_DATABASE_URL="postgresql://nehemiah_test:nehemiah_test@localhost:5434/nehemiah_test"
 cd backend
 pnpm test:integration
+pnpm test:e2e
 docker compose -f ../docker-compose.test.yml down
 ```
 
