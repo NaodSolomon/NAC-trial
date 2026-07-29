@@ -313,6 +313,28 @@ webhook ID, return URL, and cancel URL. Receipt PDFs are stored through the exis
 storage abstraction. Receipt emails use a transactional outbox so email-provider downtime
 does not roll back or corrupt confirmed payments.
 
+## Events and RSVP
+
+Step 10 adds localized event publishing and RSVP management. Public queries expose only
+published events, while editors can manage drafts and translations. Event slugs are unique per
+language, end times must follow start times, and each email can RSVP only once per event.
+
+| Method | Endpoint                                | Access                        | Purpose |
+|--------|-----------------------------------------|-------------------------------|---------|
+| GET    | `/api/v1/public/events`                 | Public                        | List published events |
+| GET    | `/api/v1/public/events/:slug`           | Public                        | Read a localized event |
+| POST   | `/api/v1/public/events/:id/rsvp`        | Public, rate-limited          | Submit an RSVP |
+| GET    | `/api/v1/admin/events`                  | Editor or super administrator | Manage event inventory |
+| POST   | `/api/v1/admin/events`                  | Editor or super administrator | Create an event |
+| PATCH  | `/api/v1/admin/events/:id`              | Editor or super administrator | Update an event |
+| DELETE | `/api/v1/admin/events/:id`              | `SUPER_ADMIN`                 | Delete an event and its RSVPs |
+| GET    | `/api/v1/admin/events/:id/rsvps`        | Editor or super administrator | Review RSVPs |
+| GET    | `/api/v1/admin/events/:id/rsvps/export` | Editor or super administrator | Export RSVP CSV |
+
+Use `languageCode=en|am` for localized reads and `timeframe=upcoming|past|all` for event lists.
+RSVP closes when an event ends and personal RSVP data is never returned by public routes.
+Automated reminders and calendar-file generation remain separate future slices.
+
 ## CI/CD
 
 ### PR Flow
