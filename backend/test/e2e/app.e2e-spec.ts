@@ -95,6 +95,12 @@ describe('Application conventions (e2e)', () => {
     });
   });
 
+  it('protects the gallery upload endpoint', async () => {
+    const endpoint = '/api/v1/admin/gallery';
+    const response = await request(app.getHttpServer()).post(endpoint).expect(401);
+    expect(response.body).toMatchObject({ success: false, statusCode: 401, path: endpoint });
+  });
+
   it('protects the scheduled-publishing job with an internal API key', async () => {
     const endpoint = '/api/v1/internal/jobs/publish-scheduled';
     const response = await request(app.getHttpServer()).post(endpoint).expect(401);

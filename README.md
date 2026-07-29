@@ -335,6 +335,24 @@ Use `languageCode=en|am` for localized reads and `timeframe=upcoming|past|all` f
 RSVP closes when an event ends and personal RSVP data is never returned by public routes.
 Automated reminders and calendar-file generation remain separate future slices.
 
+## Gallery
+
+Step 11 adds a localized public gallery backed by the existing secure media pipeline. Gallery
+uploads accept validated images and videos only; file signatures must match declared MIME
+types, image alternative text is mandatory, and objects are stored under the `gallery`
+namespace in the configured R2 or MinIO bucket.
+
+| Method | Endpoint                    | Access                        | Purpose |
+|--------|-----------------------------|-------------------------------|---------|
+| GET    | `/api/v1/public/gallery`    | Public                        | List localized images and videos |
+| POST   | `/api/v1/admin/gallery`     | Editor or super administrator | Upload a gallery item |
+| PATCH  | `/api/v1/admin/gallery/:id` | Editor or super administrator | Update title or alternative text |
+| DELETE | `/api/v1/admin/gallery/:id` | `SUPER_ADMIN`                 | Delete the item and stored media |
+
+The upload is `multipart/form-data` with `file`, `title`, `altText`, and `languageCode`
+(`en` or `am`). Public listing supports pagination, language, media-type filtering, and never
+exposes storage object keys or administrator identifiers. Mutations are audit logged.
+
 ## CI/CD
 
 ### PR Flow
