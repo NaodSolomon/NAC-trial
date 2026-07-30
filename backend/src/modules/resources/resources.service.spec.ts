@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { AdminPrincipal } from '../auth/interfaces/auth.types';
 import { ApplicationCache } from '../cache/cache.interface';
 import { ResourceRepository } from './interfaces/resource-repository.interface';
@@ -27,6 +28,43 @@ describe('ResourcesService', () => {
   };
 
   beforeEach(() => jest.clearAllMocks());
+
+  it('caches public lists while keeping administrative lists authoritative', async () => {
+    repository.list.mockResolvedValue({ data: [], meta: { total: 0 } });
+    const query = {
+      page: 2,
+      limit: 10,
+      offset: 10,
+      sortOrder: 'desc' as const,
+      languageCode: 'en' as const,
+    };
+
+    await service.listPublic(query);
+    expect(cache.remember).toHaveBeenCalledWith(
+      'resources',
+      JSON.stringify(query),
+      120,
+      expect.any(Function),
+    );
+    expect(repository.list).toHaveBeenCalledWith({
+      page: 2,
+      limit: 10,
+      offset: 10,
+      languageCode: 'en',
+      publicOnly: true,
+    });
+
+    jest.clearAllMocks();
+    await service.listAdmin(query);
+    expect(repository.list).toHaveBeenCalledWith({
+      page: 2,
+      limit: 10,
+      offset: 10,
+      languageCode: 'en',
+      publicOnly: false,
+    });
+    expect(cache.remember).not.toHaveBeenCalled();
+  });
 
   it('passes the acting administrator to every administrative mutation', async () => {
     repository.create.mockResolvedValue({ id: 'resource-id' });
@@ -62,5 +100,18 @@ describe('ResourcesService', () => {
 
     await expect(service.download('resource-id')).resolves.toMatchObject({ downloadCount: 1 });
     expect(repository.incrementPublishedDownload).toHaveBeenCalledWith('resource-id');
+    expect(cache.invalidate).toHaveBeenCalledWith('resources');
+  });
+
+  it.each([
+    ['publish', () => service.publish('missing-id', actor)],
+    ['download', () => service.download('missing-id')],
+    ['delete', () => service.delete('missing-id', actor)],
+  ])('rejects a missing resource during %s', async (_operation, execute) => {
+    repository.publish.mockResolvedValue(null);
+    repository.incrementPublishedDownload.mockResolvedValue(null);
+    repository.delete.mockResolvedValue(false);
+
+    await expect(execute()).rejects.toBeInstanceOf(NotFoundException);
   });
 });
