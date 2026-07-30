@@ -1,11 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import { TestingModuleBuilder, Test } from '@nestjs/testing';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
-import multipart from '@fastify/multipart';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/app.setup';
 import { setupOpenApi } from '../../src/openapi/setup-openapi';
+import { registerFastifyPlugins } from '../../src/platform/register-fastify-plugins';
 
 export interface TestAppOptions {
   configureModule?: (builder: TestingModuleBuilder) => TestingModuleBuilder;
@@ -19,14 +19,7 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<INest
   const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
   const config = app.get(ConfigService);
-  await app.register(multipart, {
-    limits: {
-      files: 1,
-      fileSize: config.getOrThrow<number>('storage.maxFileSizeBytes'),
-      fields: 4,
-      fieldSize: 2_000,
-    },
-  });
+  await registerFastifyPlugins(app, config);
   configureApp(app);
   setupOpenApi(app);
   await app.init();

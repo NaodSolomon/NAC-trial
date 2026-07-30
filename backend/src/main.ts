@@ -2,10 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
-import multipart from '@fastify/multipart';
 import { AppModule } from './app.module';
 import { configureApp } from './app.setup';
 import { setupOpenApi } from './openapi/setup-openapi';
+import { registerFastifyPlugins } from './platform/register-fastify-plugins';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -21,14 +21,7 @@ async function bootstrap() {
   );
 
   const config = app.get(ConfigService);
-  await app.register(multipart, {
-    limits: {
-      files: 1,
-      fileSize: config.getOrThrow<number>('storage.maxFileSizeBytes'),
-      fields: 4,
-      fieldSize: 2_000,
-    },
-  });
+  await registerFastifyPlugins(app, config);
   configureApp(app);
   setupOpenApi(app);
   app.enableShutdownHooks();

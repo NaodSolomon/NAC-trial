@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1096.0",
+    "@fastify/compress": "^9.1.0",
     "@fastify/multipart": "^10.1.0",
     "@fastify/static": "^10.1.2",
     "@nestjs/common": "latest",
