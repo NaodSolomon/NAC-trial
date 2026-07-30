@@ -18,7 +18,8 @@
     "db:migrate:local": "ts-node src/database/migrate.ts",
     "db:check": "drizzle-kit check",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "ts-node src/database/seeds/seed.ts"
+    "db:seed": "ts-node src/database/seeds/seed.ts",
+    "db:seed:demo": "ts-node src/database/seeds/seed-demo.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1096.0",

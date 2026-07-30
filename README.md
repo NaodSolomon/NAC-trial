@@ -131,6 +131,7 @@ nehemiah/
 | `pnpm db:check`      | Check migration history consistency |
 | `pnpm db:studio`     | Open Drizzle Studio (visual DB)    |
 | `pnpm db:seed`       | Seed the database                  |
+| `pnpm db:seed:demo`  | Seed local trial homepage and FAQ  |
 | `pnpm lint`          | Lint with ESLint                   |
 | `pnpm format`        | Format with Prettier               |
 
@@ -186,6 +187,13 @@ The platform has no public user registration. Administrator authentication uses:
 | GET    | `/api/v1/auth/me`      | Return the current administrator|
 
 To create the first super administrator, set `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL`, and `SEED_ADMIN_PASSWORD`, then run `pnpm db:seed` from `backend/`. Seed credentials are never given default values, and an existing administrator is never overwritten.
+
+For a local trial environment, run `pnpm db:seed:demo` after migrations and the bootstrap seed.
+This separate, idempotent seed publishes the English `home` and `faq` CMS pages used by the
+homepage and FAQ composition endpoints. It creates an inactive technical content author with
+no usable login credential, never creates a default administrator, and leaves existing pages
+unchanged when the script is run again. Demonstration content is not part of the production
+bootstrap seed.
 
 ## Authorization and Audit
 
