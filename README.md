@@ -526,6 +526,21 @@ uses `status: degraded` when either dependency is unavailable. Super administrat
 started by local Compose but is not a hard backend startup dependency, so the API continues
 to serve database-backed content during an outage.
 
+### Step 21: Complete OpenAPI contract
+
+Swagger UI at `http://localhost:8000/api/v1/docs` now documents request DTO fields,
+validation constraints, success envelopes, reusable pagination metadata, and the standard
+error envelope. Every operation receives a tag, summary, and response contract. Protected
+administrator routes show the `admin-jwt` bearer requirement, while scheduled internal jobs
+show the `X-Internal-API-Key` requirement.
+
+The media and gallery upload operations describe their `multipart/form-data` fields and
+binary file part. The PayPal webhook operation documents all five required signature
+headers. Trial confirmation and failure operations are identified as local-only simulation
+routes and document their idempotency and terminal-state responses. The E2E suite validates
+the generated document, resolves component references, and asserts these representative
+security, request, upload, webhook, pagination, and response schemas.
+
 ## Production Deployment
 
 ```bash

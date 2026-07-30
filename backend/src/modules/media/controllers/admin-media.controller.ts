@@ -20,7 +20,17 @@ import { RolesGuard } from '../../../common/guards/roles.guard';
 import { AdminPrincipal } from '../../auth/interfaces/auth.types';
 import { MediaQueryDto } from '../dto/media-query.dto';
 import { MediaService } from '../services/media.service';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
+@ApiTags('Admin Media')
+@ApiBearerAuth('admin-jwt')
 @Controller('admin/media')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('SUPER_ADMIN', 'CONTENT_EDITOR')
@@ -33,6 +43,23 @@ export class AdminMediaController {
   }
 
   @Post('upload')
+  @ApiOperation({ summary: 'Upload one validated media file to object storage' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'languageCode', 'altText'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        languageCode: { type: 'string', enum: ['en', 'am'] },
+        altText: { type: 'string', maxLength: 500 },
+        caption: { type: 'string', maxLength: 1000 },
+        folder: { type: 'string', example: 'pages' },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Media metadata and public URL' })
+  @ApiResponse({ status: 413, description: 'File exceeds configured upload limit' })
   async upload(@Req() request: FastifyRequest, @CurrentAdmin() actor: AdminPrincipal) {
     if (!request.isMultipart()) {
       throw new BadRequestException('Content-Type must be multipart/form-data');

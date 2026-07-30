@@ -1,6 +1,13 @@
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import {
+  ApiErrorResponseDto,
+  ApiSuccessResponseDto,
+  PaginatedDataDto,
+  PaginationMetaDto,
+} from '../common/dto/api-response.dto';
+import { completeOpenApiContract } from './complete-contract';
 
 export function setupOpenApi(app: INestApplication): void {
   const config = app.get(ConfigService);
@@ -13,16 +20,18 @@ export function setupOpenApi(app: INestApplication): void {
       .setDescription('Versioned API for the Nehemiah Autism Center website and administration.')
       .setVersion('1.0')
       .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'admin-jwt')
+      .addApiKey({ type: 'apiKey', in: 'header', name: 'X-Internal-API-Key' }, 'internal-api-key')
       .build(),
+    {
+      extraModels: [
+        ApiErrorResponseDto,
+        ApiSuccessResponseDto,
+        PaginatedDataDto,
+        PaginationMetaDto,
+      ],
+    },
   );
-  for (const [path, operations] of Object.entries(document.paths)) {
-    if (!path.startsWith('/api/v1/admin/')) continue;
-    for (const operation of Object.values(operations ?? {})) {
-      if (operation && typeof operation === 'object' && 'responses' in operation) {
-        operation.security = [{ 'admin-jwt': [] }];
-      }
-    }
-  }
+  completeOpenApiContract(document);
   SwaggerModule.setup('docs', app, document, {
     useGlobalPrefix: true,
     jsonDocumentUrl: 'docs/openapi.json',

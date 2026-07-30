@@ -1,0 +1,164 @@
+import { OpenAPIObject } from '@nestjs/swagger';
+import {
+  OperationObject,
+  SchemaObject,
+} from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
+
+const successSchema: SchemaObject = {
+  type: 'object',
+  required: ['success', 'data', 'statusCode', 'timestamp'],
+  properties: {
+    success: { type: 'boolean', enum: [true] },
+    data: {},
+    statusCode: { type: 'integer', example: 200 },
+    timestamp: { type: 'string', format: 'date-time' },
+  },
+};
+
+const errorRef = { $ref: '#/components/schemas/ApiErrorResponseDto' };
+const HTTP_METHODS = ['get', 'post', 'patch', 'put', 'delete'] as const;
+
+export function completeOpenApiContract(document: OpenAPIObject): OpenAPIObject {
+  document.components ??= {};
+  document.components.schemas ??= {};
+  document.components.schemas.PaginationMetaDto = {
+    type: 'object',
+    required: ['total', 'page', 'limit', 'totalPages'],
+    properties: {
+      total: { type: 'integer' },
+      page: { type: 'integer', minimum: 1 },
+      limit: { type: 'integer', minimum: 1, maximum: 100 },
+      totalPages: { type: 'integer', minimum: 0 },
+    },
+  };
+  document.components.schemas.PaginatedResponse = {
+    allOf: [
+      successSchema,
+      {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'object',
+            required: ['data', 'meta'],
+            properties: {
+              data: { type: 'array', items: { type: 'object', additionalProperties: true } },
+              meta: { $ref: '#/components/schemas/PaginationMetaDto' },
+            },
+          },
+        },
+      },
+    ],
+  };
+
+  for (const [path, pathItem] of Object.entries(document.paths)) {
+    for (const method of HTTP_METHODS) {
+      const operation = pathItem?.[method] as OperationObject | undefined;
+      if (!operation) continue;
+      operation.tags ??= [tagFor(path)];
+      operation.summary ??= summaryFor(method, path);
+      operation.responses ??= {};
+      const successCode = method === 'post' ? '201' : '200';
+      operation.responses[successCode] ??= {
+        description: 'Successful response',
+      };
+      const successResponse = operation.responses[successCode];
+      if ('$ref' in successResponse === false && !successResponse.content) {
+        successResponse.content = {
+          'application/json': {
+            schema: isPaginated(operation)
+              ? { $ref: '#/components/schemas/PaginatedResponse' }
+              : successSchema,
+          },
+        };
+      }
+      operation.responses['400'] ??= errorResponse('Invalid request');
+      operation.responses['404'] ??= errorResponse('Resource not found');
+      operation.responses['429'] ??= errorResponse('Rate limit exceeded');
+
+      if (path.startsWith('/api/v1/admin/') || protectedAuthPath(path)) {
+        operation.security = [{ 'admin-jwt': [] }];
+        operation.responses['401'] ??= errorResponse('Authentication required');
+        operation.responses['403'] ??= errorResponse('Insufficient role');
+      }
+      if (path.startsWith('/api/v1/internal/')) {
+        operation.security = [{ 'internal-api-key': [] }];
+        operation.responses['401'] ??= errorResponse('Internal API key required');
+      }
+    }
+  }
+  return document;
+}
+
+export function validateOpenApiContract(document: OpenAPIObject): string[] {
+  const errors: string[] = [];
+  if (!/^3\./.test(document.openapi)) errors.push('openapi must declare version 3.x');
+  if (!document.info?.title || !document.info?.version) errors.push('info title/version required');
+  const schemas = document.components?.schemas ?? {};
+
+  for (const [path, pathItem] of Object.entries(document.paths ?? {})) {
+    if (!path.startsWith('/')) errors.push(`path must start with /: ${path}`);
+    for (const method of HTTP_METHODS) {
+      const operation = pathItem?.[method] as OperationObject | undefined;
+      if (!operation) continue;
+      const location = `${method.toUpperCase()} ${path}`;
+      if (!operation.tags?.length) errors.push(`${location} requires a tag`);
+      if (!operation.summary) errors.push(`${location} requires a summary`);
+      if (!Object.keys(operation.responses ?? {}).length) {
+        errors.push(`${location} requires responses`);
+      }
+      visitRefs(operation, (ref) => {
+        const name = ref.replace('#/components/schemas/', '');
+        if (ref.startsWith('#/components/schemas/') && !schemas[name]) {
+          errors.push(`${location} has unresolved schema reference ${ref}`);
+        }
+      });
+    }
+  }
+  return errors;
+}
+
+function errorResponse(description: string) {
+  return {
+    description,
+    content: { 'application/json': { schema: errorRef } },
+  };
+}
+
+function tagFor(path: string): string {
+  const segments = path.split('/').filter(Boolean);
+  const scope = segments[2] === 'admin' || segments[2] === 'public' ? segments[2] : 'API';
+  const resource = segments[3] ?? segments[2] ?? 'system';
+  return `${scope === 'API' ? '' : `${scope[0].toUpperCase()}${scope.slice(1)} `}${resource}`;
+}
+
+function summaryFor(method: string, path: string): string {
+  const action = { get: 'Get', post: 'Create or execute', patch: 'Update', put: 'Replace', delete: 'Delete' }[
+    method
+  ];
+  return `${action} ${path.replace('/api/v1/', '').replaceAll(/[{}]/g, '')}`;
+}
+
+function protectedAuthPath(path: string): boolean {
+  return path === '/api/v1/auth/me' || path === '/api/v1/auth/logout';
+}
+
+function isPaginated(operation: OperationObject): boolean {
+  const queryNames = new Set(
+    (operation.parameters ?? [])
+      .filter(
+        (parameter): parameter is Exclude<typeof parameter, { $ref: string }> =>
+          !('$ref' in parameter) && parameter.in === 'query',
+      )
+      .map((parameter) => parameter.name),
+  );
+  return queryNames.has('page') && queryNames.has('limit');
+}
+
+function visitRefs(value: unknown, visitor: (ref: string) => void): void {
+  if (Array.isArray(value)) return value.forEach((item) => visitRefs(item, visitor));
+  if (!value || typeof value !== 'object') return;
+  for (const [key, nested] of Object.entries(value)) {
+    if (key === '$ref' && typeof nested === 'string') visitor(nested);
+    else visitRefs(nested, visitor);
+  }
+}
