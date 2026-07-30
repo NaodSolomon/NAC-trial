@@ -600,6 +600,7 @@ cp frontend/.env.example frontend/.env # fill prod values
 
 # Start with Traefik SSL
 docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml build media-backup media-backup-verify
 docker compose -f docker-compose.prod.yml up -d
 ```
 
@@ -628,6 +629,44 @@ the optional container with
 `docker compose -f docker-compose.prod.yml --profile ops rm --stop --force dozzle`.
 Never change the binding to `0.0.0.0` or add a public Traefik router without adding strong
 authentication and an IP allowlist or VPN.
+
+### Production backups and restore verification
+
+The production stack starts two free scheduled backup services by default:
+
+- `postgres-backup` creates a compressed custom-format `pg_dump`;
+- `media-backup` creates a timestamped snapshot of the configured S3-compatible
+  `STORAGE_BUCKET`, including MinIO or R2.
+
+Both run immediately at startup and then every `BACKUP_INTERVAL_SECONDS` seconds. The default
+is daily, retention defaults to 14 days, and every snapshot receives SHA-256 integrity data.
+No database password or object-storage secret is written to the backup files or logs.
+
+Backups are written beneath `${BACKUP_HOST_PATH:-./backups}` on the host. The repository ignores
+the local default directory. For an actual production deployment, set `BACKUP_HOST_PATH` in the
+VPS shell to a separately mounted encrypted disk or NAS path so the only backup is not stored on
+the same physical disk as PostgreSQL. Replicate that mount to a second off-host location
+according to the organization's retention policy.
+
+Check recent backup activity with:
+
+```bash
+find "${BACKUP_HOST_PATH:-./backups}" -name .last-success -print
+docker compose -f docker-compose.prod.yml logs postgres-backup media-backup
+```
+
+At least monthly, verify that the newest backups can be restored:
+
+```bash
+docker compose -f docker-compose.prod.yml --profile backup-verify run --rm postgres-backup-verify
+docker compose -f docker-compose.prod.yml --profile backup-verify run --rm media-backup-verify
+```
+
+PostgreSQL verification restores into a temporary database whose name must end in
+`_restore_verify`. Media verification restores into a temporary bucket whose name must end in
+`-restore-verify`. The scripts reject the live database or bucket name, validate the restored
+schema or object count, and remove the temporary target afterward. A failed verification must
+be investigated before older snapshots expire.
 
 ## Environment Variables
 

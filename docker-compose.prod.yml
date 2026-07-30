@@ -73,6 +73,33 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres-backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    entrypoint: ["/bin/sh", "/scripts/postgres-backup.sh"]
+    volumes:
+      - ${BACKUP_HOST_PATH:-./backups}:/backups
+      - ./ops/backup/postgres-backup.sh:/scripts/postgres-backup.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres-backup-verify:
+    image: postgres:16-alpine
+    restart: "no"
+    profiles: ["backup-verify"]
+    env_file:
+      - ./backend/.env
+    entrypoint: ["/bin/sh", "/scripts/postgres-restore-verify.sh"]
+    volumes:
+      - ${BACKUP_HOST_PATH:-./backups}:/backups:ro
+      - ./ops/backup/postgres-restore-verify.sh:/scripts/postgres-restore-verify.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   redis:
     image: redis:7-alpine
     restart: always
@@ -84,6 +111,33 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  media-backup:
+    build:
+      context: .
+      dockerfile: ops/backup/media-backup.Dockerfile
+    image: nehemiah-media-backup:local
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    entrypoint: ["/bin/sh", "/scripts/media-backup.sh"]
+    volumes:
+      - ${BACKUP_HOST_PATH:-./backups}:/backups
+      - ./ops/backup/media-backup.sh:/scripts/media-backup.sh:ro
+
+  media-backup-verify:
+    build:
+      context: .
+      dockerfile: ops/backup/media-backup.Dockerfile
+    image: nehemiah-media-backup:local
+    restart: "no"
+    profiles: ["backup-verify"]
+    env_file:
+      - ./backend/.env
+    entrypoint: ["/bin/sh", "/scripts/media-restore-verify.sh"]
+    volumes:
+      - ${BACKUP_HOST_PATH:-./backups}:/backups:ro
+      - ./ops/backup/media-restore-verify.sh:/scripts/media-restore-verify.sh:ro
 
   uptime-kuma:
     image: louislam/uptime-kuma:latest
