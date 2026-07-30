@@ -12,6 +12,7 @@ import { connectTestPostgres, PostgresTestContext } from './postgres-test.helper
 import { requireDedicatedTestDatabase } from './test-database-safety.helper';
 import { createTestApp } from './test-app.helper';
 import { MAILER, Mailer } from '../../src/modules/mail/mail.interface';
+import { ApplicationCache, CACHE } from '../../src/modules/cache/cache.interface';
 
 export const E2E_PASSWORD = 'TestingPassword123';
 
@@ -27,6 +28,12 @@ export interface E2eTestContext extends PostgresTestContext {
   storage: jest.Mocked<ObjectStorage>;
   gateway: jest.Mocked<PaymentGateway>;
   mailer: jest.Mocked<Mailer>;
+  cache: {
+    ping: jest.Mock;
+    remember: jest.Mock;
+    invalidate: jest.Mock;
+    clear: jest.Mock;
+  };
 }
 
 export async function createE2eTestContext(): Promise<E2eTestContext> {
@@ -96,6 +103,12 @@ export async function createE2eTestContext(): Promise<E2eTestContext> {
     })),
   };
   const mailer: jest.Mocked<Mailer> = { send: jest.fn().mockResolvedValue(undefined) };
+  const cache = {
+    ping: jest.fn().mockResolvedValue(true),
+    remember: jest.fn(async (_namespace, _key, _ttl, loader) => loader()),
+    invalidate: jest.fn().mockResolvedValue(undefined),
+    clear: jest.fn().mockResolvedValue(undefined),
+  };
   const app = await createTestApp({
     databaseUrl,
     configureModule: (builder) =>
@@ -105,9 +118,11 @@ export async function createE2eTestContext(): Promise<E2eTestContext> {
         .overrideProvider(PAYMENT_GATEWAY)
         .useValue(gateway)
         .overrideProvider(MAILER)
-        .useValue(mailer),
+        .useValue(mailer)
+        .overrideProvider(CACHE)
+        .useValue(cache as unknown as ApplicationCache),
   });
-  return { ...postgres, app, actors, storage, gateway, mailer };
+  return { ...postgres, app, actors, storage, gateway, mailer, cache };
 }
 
 export async function closeE2eTestContext(context: E2eTestContext): Promise<void> {

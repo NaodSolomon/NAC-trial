@@ -3,20 +3,34 @@ import { sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DRIZZLE } from '../../database/drizzle.module';
 import { ConfigService } from '@nestjs/config';
+import { ApplicationCache, CACHE } from '../cache/cache.interface';
 
 @Controller('system')
 export class SystemController {
   constructor(
     @Inject(DRIZZLE) private readonly db: NodePgDatabase,
     private readonly config: ConfigService,
+    @Inject(CACHE) private readonly cache: ApplicationCache,
   ) {}
 
   @Get('health')
   async health() {
-    await this.db.execute(sql`select 1`);
+    const [database, redis] = await Promise.all([
+      this.db
+        .execute(sql`select 1`)
+        .then(() => 'connected' as const)
+        .catch(() => 'unavailable' as const),
+      this.cache
+        .ping()
+        .then((connected) => (connected ? ('connected' as const) : ('unavailable' as const)))
+        .catch(() => 'unavailable' as const),
+    ]);
     return {
-      status: 'ok',
-      database: 'connected',
+      status: database === 'connected' && redis === 'connected' ? 'ok' : 'degraded',
+      checks: { postgresql: database, redis },
+      // Kept for clients using the original Step 14 health shape.
+      database,
+      redis,
       mode: this.config.get<boolean>('runtime.trialMode') ? 'trial' : 'production',
       timestamp: new Date().toISOString(),
     };

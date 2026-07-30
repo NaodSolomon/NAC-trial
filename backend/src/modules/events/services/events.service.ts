@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AdminPrincipal } from '../../auth/interfaces/auth.types';
+import { ApplicationCache, CACHE, NOOP_CACHE } from '../../cache/cache.interface';
 import {
   CreateEventDto,
   CreateRsvpDto,
@@ -17,10 +18,15 @@ import { EVENT_REPOSITORY, EventRepository } from '../interfaces/event-repositor
 
 @Injectable()
 export class EventsService {
-  constructor(@Inject(EVENT_REPOSITORY) private readonly events: EventRepository) {}
+  constructor(
+    @Inject(EVENT_REPOSITORY) private readonly events: EventRepository,
+    @Inject(CACHE) private readonly cache: ApplicationCache = NOOP_CACHE,
+  ) {}
 
   listPublic(query: EventQueryDto) {
-    return this.events.list(this.criteria(query), true);
+    return this.cache.remember('events', `list:${JSON.stringify(this.criteria(query))}`, 120, () =>
+      this.events.list(this.criteria(query), true),
+    );
   }
 
   listAdmin(query: EventQueryDto) {
@@ -28,7 +34,9 @@ export class EventsService {
   }
 
   async findPublic(slug: string, languageCode: 'en' | 'am') {
-    const event = await this.events.findPublicBySlug(slug, languageCode);
+    const event = await this.cache.remember('events', `detail:${languageCode}:${slug}`, 300, () =>
+      this.events.findPublicBySlug(slug, languageCode),
+    );
     if (!event) throw new NotFoundException(`Published event ${slug} was not found`);
     return event;
   }
@@ -36,7 +44,7 @@ export class EventsService {
   async create(dto: CreateEventDto, actor: AdminPrincipal) {
     this.assertDateRange(dto.startDate, dto.endDate);
     try {
-      return await this.events.create(
+      const created = await this.events.create(
         {
           slug: dto.slug,
           title: dto.title.trim(),
@@ -52,6 +60,8 @@ export class EventsService {
         },
         actor.id,
       );
+      await this.cache.invalidate('events');
+      return created;
     } catch (error) {
       this.rethrowUnique(error);
     }
@@ -80,6 +90,7 @@ export class EventsService {
         },
         actor.id,
       );
+      await this.cache.invalidate('events');
       return updated;
     } catch (error) {
       this.rethrowUnique(error);
@@ -89,6 +100,7 @@ export class EventsService {
   async delete(id: string, actor: AdminPrincipal) {
     if (!(await this.events.delete(id, actor.id)))
       throw new NotFoundException(`Event ${id} was not found`);
+    await this.cache.invalidate('events');
     return { deleted: true };
   }
 

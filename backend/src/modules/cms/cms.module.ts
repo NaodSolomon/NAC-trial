@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { InternalApiKeyGuard } from '../../common/guards/internal-api-key.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AuthModule } from '../auth/auth.module';
+import { CacheModule } from '../cache/cache.module';
 import { AdminCmsPagesController } from './controllers/admin-cms-pages.controller';
 import { InternalPublishingJobsController } from './controllers/internal-publishing-jobs.controller';
 import { PublicCmsPagesController } from './controllers/public-cms-pages.controller';
@@ -11,7 +12,7 @@ import { DrizzleCmsPageRepository } from './repositories/drizzle-cms-page.reposi
 import { CmsPagesService } from './services/cms-pages.service';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, CacheModule],
   controllers: [
     AdminCmsPagesController,
     PublicCmsPagesController,

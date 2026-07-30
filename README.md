@@ -511,6 +511,21 @@ The `/test/payments` controller is registered only for `NODE_ENV=test` or when
 and independently omits these routes. Repeating a confirmation uses the same fake event ID:
 the database accepts it once, returns `duplicate: true` thereafter, and sends only one email.
 
+### Step 20: Redis caching and health
+
+Public settings, navigation, published CMS pages, published events, and gallery results use
+Redis cache-aside reads with short TTLs. PostgreSQL remains authoritative: a cache miss or
+Redis outage runs the original repository query, and a Redis write or invalidation failure
+never rolls back a successful database mutation. Mutations increment a namespace version,
+making every older key in that content area immediately unreachable.
+
+`GET /api/v1/system/health` reports `checks.postgresql` and `checks.redis` independently and
+uses `status: degraded` when either dependency is unavailable. Super administrators can use
+`POST /api/v1/admin/cache/clear` to invalidate all application namespaces and
+`POST /api/v1/admin/cache/warm` to prefill settings and English/Amharic navigation. Redis is
+started by local Compose but is not a hard backend startup dependency, so the API continues
+to serve database-backed content during an outage.
+
 ## Production Deployment
 
 ```bash

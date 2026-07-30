@@ -2,6 +2,7 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import { PaginatedResult } from '../../../common/types/api-response.type';
 import { NavigationItem } from '../../../database/schema';
 import { AdminPrincipal } from '../../auth/interfaces/auth.types';
+import { ApplicationCache, CACHE, NOOP_CACHE } from '../../cache/cache.interface';
 import { CreateNavigationItemDto } from '../dto/create-navigation-item.dto';
 import { NavigationQueryDto } from '../dto/navigation-query.dto';
 import { UpdateNavigationItemDto } from '../dto/update-navigation-item.dto';
@@ -15,10 +16,13 @@ export class NavigationService {
   constructor(
     @Inject(NAVIGATION_REPOSITORY)
     private readonly navigation: NavigationRepository,
+    @Inject(CACHE) private readonly cache: ApplicationCache = NOOP_CACHE,
   ) {}
 
   publicList(languageCode: 'en' | 'am'): Promise<NavigationItem[]> {
-    return this.navigation.publicList(languageCode);
+    return this.cache.remember('navigation', languageCode, 300, () =>
+      this.navigation.publicList(languageCode),
+    );
   }
 
   list(query: NavigationQueryDto): Promise<PaginatedResult<NavigationItem>> {
@@ -30,8 +34,8 @@ export class NavigationService {
     });
   }
 
-  create(dto: CreateNavigationItemDto, actor: AdminPrincipal): Promise<NavigationItem> {
-    return this.navigation.create(
+  async create(dto: CreateNavigationItemDto, actor: AdminPrincipal): Promise<NavigationItem> {
+    const created = await this.navigation.create(
       {
         label: dto.label.trim(),
         url: dto.url.trim(),
@@ -41,6 +45,8 @@ export class NavigationService {
       },
       actor.id,
     );
+    await this.cache.invalidate('navigation');
+    return created;
   }
 
   async update(
@@ -67,6 +73,7 @@ export class NavigationService {
       throw new NotFoundException(`Navigation item ${id} was not found`);
     }
 
+    await this.cache.invalidate('navigation');
     return updated;
   }
 
@@ -74,6 +81,7 @@ export class NavigationService {
     if (!(await this.navigation.delete(id, actor.id))) {
       throw new NotFoundException(`Navigation item ${id} was not found`);
     }
+    await this.cache.invalidate('navigation');
 
     return { message: 'Navigation item deleted successfully' };
   }

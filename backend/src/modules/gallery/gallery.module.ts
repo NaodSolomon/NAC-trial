@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { CacheModule } from '../cache/cache.module';
 import { MediaModule } from '../media/media.module';
 import { AdminGalleryController } from './controllers/admin-gallery.controller';
 import { PublicGalleryController } from './controllers/public-gallery.controller';
@@ -8,7 +9,7 @@ import { DrizzleGalleryRepository } from './repositories/drizzle-gallery.reposit
 import { GalleryService } from './services/gallery.service';
 
 @Module({
-  imports: [AuthModule, MediaModule],
+  imports: [AuthModule, MediaModule, CacheModule],
   controllers: [PublicGalleryController, AdminGalleryController],
   providers: [GalleryService, { provide: GALLERY_REPOSITORY, useClass: DrizzleGalleryRepository }],
 })
