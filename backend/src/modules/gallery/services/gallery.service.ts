@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { AdminPrincipal } from '../../auth/interfaces/auth.types';
+import { ApplicationCache, CACHE, NOOP_CACHE } from '../../cache/cache.interface';
 import { OBJECT_STORAGE, ObjectStorage } from '../../media/interfaces/object-storage.interface';
 import { MediaService } from '../../media/services/media.service';
 import { GalleryQueryDto, GalleryUploadDto, UpdateGalleryItemDto } from '../dto/gallery.dto';
@@ -11,17 +12,21 @@ export class GalleryService {
     @Inject(GALLERY_REPOSITORY) private readonly gallery: GalleryRepository,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
     private readonly media: MediaService,
+    @Inject(CACHE) private readonly cache: ApplicationCache = NOOP_CACHE,
   ) {}
 
   list(query: GalleryQueryDto) {
-    return this.gallery.list({
+    const criteria = {
       page: query.page,
       limit: query.limit,
       offset: query.offset,
       sortOrder: query.sortOrder,
       languageCode: query.languageCode,
       type: query.type,
-    });
+    };
+    return this.cache.remember('gallery', JSON.stringify(criteria), 120, () =>
+      this.gallery.list(criteria),
+    );
   }
 
   async upload(input: GalleryUploadDto, actor: AdminPrincipal) {
@@ -41,7 +46,7 @@ export class GalleryService {
       actor,
     );
     try {
-      return await this.gallery.create(
+      const created = await this.gallery.create(
         {
           mediaId: media.id,
           title: input.title.trim(),
@@ -51,6 +56,8 @@ export class GalleryService {
         },
         actor.id,
       );
+      await this.cache.invalidate('gallery');
+      return created;
     } catch (error) {
       await this.media.delete(media.id, actor).catch(() => undefined);
       throw error;
@@ -70,6 +77,7 @@ export class GalleryService {
       actor.id,
     );
     if (!updated) throw new NotFoundException(`Gallery item ${id} was not found`);
+    await this.cache.invalidate('gallery');
     return updated;
   }
 
@@ -82,6 +90,7 @@ export class GalleryService {
     if (!(await this.gallery.delete(id, actor.id))) {
       throw new NotFoundException(`Gallery item ${id} was not found`);
     }
+    await this.cache.invalidate('gallery');
     return { deleted: true };
   }
 }

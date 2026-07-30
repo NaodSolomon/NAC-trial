@@ -8,6 +8,7 @@ import {
 import { PaginatedResult } from '../../../common/types/api-response.type';
 import { CmsPage } from '../../../database/schema';
 import { AdminPrincipal } from '../../auth/interfaces/auth.types';
+import { ApplicationCache, CACHE, NOOP_CACHE } from '../../cache/cache.interface';
 import { CmsPageQueryDto } from '../dto/cms-page-query.dto';
 import { CreateCmsPageDto } from '../dto/create-cms-page.dto';
 import { UpdateCmsPageDto } from '../dto/update-cms-page.dto';
@@ -21,6 +22,7 @@ export class CmsPagesService {
   constructor(
     @Inject(CMS_PAGE_REPOSITORY)
     private readonly pages: CmsPageRepository,
+    @Inject(CACHE) private readonly cache: ApplicationCache = NOOP_CACHE,
   ) {}
 
   list(query: CmsPageQueryDto): Promise<PaginatedResult<CmsPage>> {
@@ -45,7 +47,12 @@ export class CmsPagesService {
   }
 
   async findPublicPage(slug: string, languageCode: 'en' | 'am'): Promise<CmsPage> {
-    const page = await this.pages.findPublished(slug, languageCode);
+    const page = await this.cache.remember(
+      'cms',
+      `${languageCode}:${slug}`,
+      300,
+      () => this.pages.findPublished(slug, languageCode),
+    );
 
     if (!page) {
       throw new NotFoundException('Published page was not found');
@@ -105,6 +112,7 @@ export class CmsPagesService {
         throw new NotFoundException(`CMS page ${id} was not found`);
       }
 
+      await this.cache.invalidate('cms');
       return updated;
     } catch (error: unknown) {
       this.rethrowUniqueViolation(error);
@@ -118,6 +126,7 @@ export class CmsPagesService {
       throw new NotFoundException(`CMS page ${id} was not found`);
     }
 
+    await this.cache.invalidate('cms');
     return published;
   }
 
@@ -134,6 +143,7 @@ export class CmsPagesService {
       throw new NotFoundException(`CMS page ${id} was not found`);
     }
 
+    await this.cache.invalidate('cms');
     return scheduled;
   }
 
@@ -141,12 +151,15 @@ export class CmsPagesService {
     if (!(await this.pages.delete(id, actor.id))) {
       throw new NotFoundException(`CMS page ${id} was not found`);
     }
+    await this.cache.invalidate('cms');
 
     return { message: 'CMS page deleted successfully' };
   }
 
-  publishScheduled(): Promise<number> {
-    return this.pages.publishScheduled(new Date());
+  async publishScheduled(): Promise<number> {
+    const count = await this.pages.publishScheduled(new Date());
+    if (count) await this.cache.invalidate('cms');
+    return count;
   }
 
   private rethrowUniqueViolation(error: unknown): never {
