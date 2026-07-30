@@ -14,37 +14,69 @@ export class BlogLanguageDto {
 }
 
 export class CreateBlogPostDto {
-  @IsString() @MinLength(2) @MaxLength(180)
+  @IsString()
+  @MinLength(2)
+  @MaxLength(180)
   slug!: string;
   @IsIn(['en', 'am'])
   languageCode!: 'en' | 'am';
-  @IsString() @MinLength(1) @MaxLength(255)
+  @IsString()
+  @MinLength(1)
+  @MaxLength(255)
   title!: string;
-  @IsString() @MinLength(1) @MaxLength(500)
+  @IsString()
+  @MinLength(1)
+  @MaxLength(500)
   excerpt!: string;
-  @IsString() @MinLength(1) @MaxLength(200_000)
+  @IsString()
+  @MinLength(1)
+  @MaxLength(200_000)
   content!: string;
-  @IsOptional() @IsString() @MaxLength(70)
+  @IsOptional()
+  @IsString()
+  @MaxLength(70)
   seoTitle?: string;
-  @IsOptional() @IsString() @MaxLength(160)
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
   seoDescription?: string;
-  @IsOptional() @IsString() @MaxLength(2048)
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
   seoImageUrl?: string;
 }
 
 export class UpdateBlogPostDto {
-  @IsOptional() @IsString() @MinLength(2) @MaxLength(180)
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(180)
   slug?: string;
-  @IsOptional() @IsString() @MinLength(1) @MaxLength(255)
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(255)
   title?: string;
-  @IsOptional() @IsString() @MinLength(1) @MaxLength(500)
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(500)
   excerpt?: string;
-  @IsOptional() @IsString() @MinLength(1) @MaxLength(200_000)
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(200_000)
   content?: string;
-  @IsOptional() @IsString() @MaxLength(70)
+  @IsOptional()
+  @IsString()
+  @MaxLength(70)
   seoTitle?: string;
-  @IsOptional() @IsString() @MaxLength(160)
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
   seoDescription?: string;
-  @IsOptional() @IsString() @MaxLength(2048)
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
   seoImageUrl?: string;
 }
