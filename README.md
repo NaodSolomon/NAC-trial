@@ -441,8 +441,11 @@ when a transactional audit write fails. No payment-provider network calls are ma
 
 OpenAPI JSON is available at `/api/v1/docs/openapi.json` and Swagger UI at
 `/api/v1/docs` when `SWAGGER_ENABLED=true`. Documentation defaults off in production.
-Unauthenticated monitoring endpoints are `/api/v1/system/health` and
-`/api/v1/system/version`.
+Unauthenticated monitoring endpoints are `/api/v1/system/health/live`,
+`/api/v1/system/health/ready`, and `/api/v1/system/version`. Liveness only confirms that the
+API process can accept requests. Readiness returns `503` when PostgreSQL is unavailable and
+remains `200` with a `degraded` status when only the optional Redis cache is unavailable.
+`/api/v1/system/health` remains a backwards-compatible alias for readiness.
 
 The restored CI workflow runs backend tests with PostgreSQL, validates migrations, builds the
 production backend image, and verifies the frontend. Production deployment is manual,

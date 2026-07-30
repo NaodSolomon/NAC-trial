@@ -1,4 +1,4 @@
-import { Global, Inject, Module, OnApplicationShutdown } from '@nestjs/common';
+import { Global, Inject, Logger, Module, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
@@ -7,28 +7,40 @@ import * as schema from './schema';
 export const DRIZZLE = 'DRIZZLE';
 export const DATABASE_POOL = 'DATABASE_POOL';
 
+export function createDatabasePool(config: ConfigService): Pool {
+  const connectionString = config.get<string>('database.url');
+  const pool = new Pool({
+    ...(connectionString
+      ? { connectionString }
+      : {
+          host: config.getOrThrow<string>('database.host'),
+          port: config.getOrThrow<number>('database.port'),
+          user: config.getOrThrow<string>('database.username'),
+          password: config.getOrThrow<string>('database.password'),
+          database: config.getOrThrow<string>('database.name'),
+        }),
+    max: 20,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 5_000,
+  });
+  const logger = new Logger('DatabasePool');
+
+  // node-postgres emits errors from idle clients on the Pool EventEmitter.
+  // A listener prevents a transient database outage from becoming an uncaught process error.
+  pool.on('error', (error: Error & { code?: string }) => {
+    const code = error.code ? ` (${error.code})` : '';
+    logger.error(`PostgreSQL pool reported an idle client error${code}: ${error.message}`);
+  });
+
+  return pool;
+}
+
 @Global()
 @Module({
   providers: [
     {
       provide: DATABASE_POOL,
-      useFactory: (config: ConfigService) => {
-        const connectionString = config.get<string>('database.url');
-        return new Pool({
-          ...(connectionString
-            ? { connectionString }
-            : {
-                host: config.getOrThrow<string>('database.host'),
-                port: config.getOrThrow<number>('database.port'),
-                user: config.getOrThrow<string>('database.username'),
-                password: config.getOrThrow<string>('database.password'),
-                database: config.getOrThrow<string>('database.name'),
-              }),
-          max: 20,
-          idleTimeoutMillis: 30_000,
-          connectionTimeoutMillis: 5_000,
-        });
-      },
+      useFactory: createDatabasePool,
       inject: [ConfigService],
     },
     {

@@ -12,13 +12,14 @@ export interface Response<T> {
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
   intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
-    const statusCode = context.switchToHttp().getResponse().statusCode as number;
+    const response = context.switchToHttp().getResponse();
 
     return next.handle().pipe(
       map((data) => ({
-        success: true,
+        success: response.statusCode < 400,
         data,
-        statusCode,
+        // Controllers may select a status dynamically, so read it after the handler completes.
+        statusCode: response.statusCode as number,
         timestamp: new Date().toISOString(),
       })),
     );
