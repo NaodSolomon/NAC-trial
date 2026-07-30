@@ -596,6 +596,30 @@ docker compose -f docker-compose.prod.yml up -d
 
 Production uses Traefik for automatic SSL via Let's Encrypt. Update `yourdomain.com` and `your@email.com` in `docker-compose.prod.yml`.
 
+The production Traefik dashboard is disabled and no infrastructure dashboard is routed through
+the public reverse proxy. Application logs remain available over SSH with
+`docker compose -f docker-compose.prod.yml logs backend`.
+
+Dozzle is an optional operations profile. When temporary browser-based log inspection is
+needed, start it on the VPS with:
+
+```bash
+docker compose -f docker-compose.prod.yml --profile ops up -d dozzle
+```
+
+Dozzle binds only to the VPS loopback interface. Reach it through an authenticated SSH tunnel,
+not through a public DNS record:
+
+```bash
+ssh -L 8080:127.0.0.1:8080 <user>@<vps-host>
+```
+
+Then open `http://127.0.0.1:8080` locally. When the investigation is complete, stop and remove
+the optional container with
+`docker compose -f docker-compose.prod.yml --profile ops rm --stop --force dozzle`.
+Never change the binding to `0.0.0.0` or add a public Traefik router without adding strong
+authentication and an IP allowlist or VPN.
+
 ## Environment Variables
 
 See [backend/.env.example](backend/.env.example) and [frontend/.env.example](frontend/.env.example) for all available config options.
