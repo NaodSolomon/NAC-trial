@@ -81,6 +81,9 @@ export class CmsPagesService {
           title: dto.title.trim(),
           content: dto.content,
           metadata: dto.metadata ?? {},
+          seoTitle: dto.seoTitle?.trim() || null,
+          seoDescription: dto.seoDescription?.trim() || null,
+          seoImageUrl: dto.seoImageUrl?.trim() || null,
           translationKey: dto.translationKey,
           createdBy: actor.id,
         },
@@ -104,6 +107,11 @@ export class CmsPagesService {
           ...(dto.title !== undefined && { title: dto.title.trim() }),
           ...(dto.content !== undefined && { content: dto.content }),
           ...(dto.metadata !== undefined && { metadata: dto.metadata }),
+          ...(dto.seoTitle !== undefined && { seoTitle: dto.seoTitle.trim() || null }),
+          ...(dto.seoDescription !== undefined && {
+            seoDescription: dto.seoDescription.trim() || null,
+          }),
+          ...(dto.seoImageUrl !== undefined && { seoImageUrl: dto.seoImageUrl.trim() || null }),
         },
         actor.id,
       );

@@ -541,6 +541,30 @@ routes and document their idempotency and terminal-state responses. The E2E suit
 the generated document, resolves component references, and asserts these representative
 security, request, upload, webhook, pagination, and response schemas.
 
+### Step 22: Demonstration content features
+
+The backend now includes the content needed to exercise a complete frontend without adding
+the deferred enterprise features:
+
+- `/api/v1/public/blog` serves only published posts; administrators can create, edit,
+  publish, and delete posts under `/api/v1/admin/blog`.
+- `/api/v1/public/content/homepage` and `/api/v1/public/content/faqs` compose the published
+  `home` and `faq` CMS pages. Homepage sections and FAQ items are stored in each page's
+  structured `metadata`; CMS pages and blogs carry bounded SEO title, description, and image
+  fields.
+- `/api/v1/public/search?q=support` searches published CMS pages, events, and blog posts
+  directly in PostgreSQL. No external indexing account is required.
+- `/api/v1/public/resources` lists published downloads. A request to
+  `/api/v1/public/resources/:id/download` atomically increments the persisted counter and
+  returns the local file metadata.
+- `/api/v1/public/events/:slug/calendar.ics` downloads a standards-compatible calendar
+  event for published events.
+
+Migration `0007_add_demo_content_features.sql` adds blog posts, resources, and CMS SEO
+columns. Earlier migrations and snapshots remain unchanged. Search indexing, reminder
+emails, session dashboards, recurring donations, MFA/OAuth, and paid monitoring remain
+explicitly deferred.
+
 ## Production Deployment
 
 ```bash

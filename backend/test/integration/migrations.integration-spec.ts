@@ -7,6 +7,7 @@ const expectedTables = [
   'analytics_events',
   'audit_logs',
   'auth_sessions',
+  'blog_posts',
   'cms_pages',
   'contact_submissions',
   'donations',
@@ -19,6 +20,7 @@ const expectedTables = [
   'newsletter_subscribers',
   'notification_outbox',
   'payment_webhook_events',
+  'resources',
   'site_settings',
   'testimonials',
   'volunteer_applications',
@@ -53,7 +55,7 @@ describe('Drizzle migration chain', () => {
       const migrations = await context.pool.query<{ count: string }>(
         'select count(*) from drizzle.__drizzle_migrations',
       );
-      expect(Number(migrations.rows[0].count)).toBe(7);
+      expect(Number(migrations.rows[0].count)).toBe(8);
     } finally {
       await context.pool.end();
     }

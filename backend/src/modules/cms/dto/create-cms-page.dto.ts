@@ -38,4 +38,19 @@ export class CreateCmsPageDto {
   @IsOptional()
   @IsUUID()
   translationKey?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(70)
+  seoTitle?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
+  seoDescription?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  seoImageUrl?: string;
 }

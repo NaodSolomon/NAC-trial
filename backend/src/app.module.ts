@@ -29,6 +29,9 @@ import mailConfig from './config/mail.config';
 import cacheConfig from './config/cache.config';
 import { MailModule } from './modules/mail/mail.module';
 import { CacheModule } from './modules/cache/cache.module';
+import { BlogModule } from './modules/blog/blog.module';
+import { SearchModule } from './modules/search/search.module';
+import { ResourcesModule } from './modules/resources/resources.module';
 
 @Module({
   imports: [
@@ -72,6 +75,9 @@ import { CacheModule } from './modules/cache/cache.module';
     SystemModule,
     MailModule,
     CacheModule,
+    BlogModule,
+    SearchModule,
+    ResourcesModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

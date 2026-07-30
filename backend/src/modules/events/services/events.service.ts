@@ -41,6 +41,32 @@ export class EventsService {
     return event;
   }
 
+  async calendar(slug: string, languageCode: 'en' | 'am') {
+    const event = await this.findPublic(slug, languageCode);
+    const escape = (value: string) =>
+      value.replaceAll('\\', '\\\\').replaceAll(',', '\\,').replaceAll(';', '\\;').replaceAll('\n', '\\n');
+    const date = (value: Date | string) =>
+      new Date(value).toISOString().replaceAll(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+    return [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Nehemiah Autism Center//Events//EN',
+      'CALSCALE:GREGORIAN',
+      'BEGIN:VEVENT',
+      `UID:${event.id}@nehemiah.local`,
+      `DTSTAMP:${date(new Date())}`,
+      `DTSTART:${date(event.startDate)}`,
+      `DTEND:${date(event.endDate)}`,
+      `SUMMARY:${escape(event.title)}`,
+      `DESCRIPTION:${escape(event.description)}`,
+      `LOCATION:${escape(event.location)}`,
+      `URL:/events/${event.slug}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+      '',
+    ].join('\r\n');
+  }
+
   async create(dto: CreateEventDto, actor: AdminPrincipal) {
     this.assertDateRange(dto.startDate, dto.endDate);
     try {
