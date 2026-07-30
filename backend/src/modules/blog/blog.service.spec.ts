@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { AdminPrincipal } from '../auth/interfaces/auth.types';
 import { ApplicationCache } from '../cache/cache.interface';
 import { BlogRepository } from './interfaces/blog-repository.interface';
@@ -29,6 +29,43 @@ describe('BlogService', () => {
   };
 
   beforeEach(() => jest.clearAllMocks());
+
+  it('caches public lists and bypasses the cache for administrative lists', async () => {
+    repository.list.mockResolvedValue({ data: [], meta: { total: 0 } });
+    const query = {
+      page: 1,
+      limit: 10,
+      offset: 0,
+      sortOrder: 'desc' as const,
+      languageCode: 'en' as const,
+    };
+
+    await service.listPublic(query);
+    expect(cache.remember).toHaveBeenCalledWith(
+      'blog',
+      JSON.stringify(query),
+      120,
+      expect.any(Function),
+    );
+    expect(repository.list).toHaveBeenCalledWith({
+      page: 1,
+      limit: 10,
+      offset: 0,
+      languageCode: 'en',
+      publicOnly: true,
+    });
+
+    jest.clearAllMocks();
+    await service.listAdmin(query);
+    expect(repository.list).toHaveBeenCalledWith({
+      page: 1,
+      limit: 10,
+      offset: 0,
+      languageCode: 'en',
+      publicOnly: false,
+    });
+    expect(cache.remember).not.toHaveBeenCalled();
+  });
 
   it('never exposes a missing or draft post through the public detail service', async () => {
     repository.findPublished.mockResolvedValue(null);
@@ -72,5 +109,49 @@ describe('BlogService', () => {
       actor.id,
     );
     expect(repository.delete).toHaveBeenCalledWith('post-id', actor.id);
+  });
+
+  it('normalizes author-controlled text when creating a post', async () => {
+    repository.create.mockResolvedValue({ id: 'post-id' });
+
+    await service.create(
+      {
+        slug: 'support',
+        languageCode: 'en',
+        title: '  Support  ',
+        excerpt: '  Guidance  ',
+        content: 'Content',
+        seoTitle: '  SEO title  ',
+        seoDescription: '  SEO description  ',
+      },
+      actor,
+    );
+
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Support',
+        excerpt: 'Guidance',
+        seoTitle: 'SEO title',
+        seoDescription: 'SEO description',
+      }),
+      actor.id,
+    );
+  });
+
+  it('rejects an empty update before repository access', async () => {
+    await expect(service.update('post-id', {}, actor)).rejects.toBeInstanceOf(BadRequestException);
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['update', () => service.update('missing-id', { title: 'Missing' }, actor)],
+    ['publish', () => service.publish('missing-id', actor)],
+    ['delete', () => service.delete('missing-id', actor)],
+  ])('rejects a missing post during %s', async (_operation, execute) => {
+    repository.update.mockResolvedValue(null);
+    repository.publish.mockResolvedValue(null);
+    repository.delete.mockResolvedValue(false);
+
+    await expect(execute()).rejects.toBeInstanceOf(NotFoundException);
   });
 });
