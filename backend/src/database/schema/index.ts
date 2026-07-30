@@ -12,3 +12,5 @@ export * from './donation.schema';
 export * from './event.schema';
 export * from './gallery.schema';
 export * from './analytics.schema';
+export * from './blog.schema';
+export * from './resource.schema';

@@ -22,6 +22,9 @@ export const cmsPages = pgTable(
     content: text('content').notNull(),
     status: contentStatusEnum('status').default('DRAFT').notNull(),
     metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}).notNull(),
+    seoTitle: varchar('seo_title', { length: 70 }),
+    seoDescription: varchar('seo_description', { length: 160 }),
+    seoImageUrl: varchar('seo_image_url', { length: 2048 }),
     createdBy: uuid('created_by')
       .notNull()
       .references(() => admins.id, { onDelete: 'restrict' }),

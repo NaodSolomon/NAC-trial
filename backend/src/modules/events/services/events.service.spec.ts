@@ -70,6 +70,20 @@ describe('EventsService', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
+  it('generates an interoperable iCalendar event for published content', async () => {
+    repository.findPublicBySlug.mockResolvedValue({
+      ...event,
+      title: 'Family, Workshop',
+      description: 'Line one\nLine two',
+      status: 'PUBLISHED',
+    });
+    const calendar = await service.calendar('family-workshop', 'en');
+    expect(calendar).toContain('BEGIN:VCALENDAR\r\n');
+    expect(calendar).toContain('SUMMARY:Family\\, Workshop');
+    expect(calendar).toContain('DESCRIPTION:Line one\\nLine two');
+    expect(calendar).toContain('END:VCALENDAR\r\n');
+  });
+
   it('maps duplicate RSVP email to a conflict', async () => {
     repository.findById.mockResolvedValue(event);
     repository.createRsvp.mockRejectedValue({ code: '23505' });

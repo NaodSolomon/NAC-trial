@@ -4,6 +4,8 @@ export const PUBLIC_CACHE_NAMESPACES = [
   'settings',
   'navigation',
   'cms',
+  'blog',
+  'resources',
   'events',
   'gallery',
   'analytics',

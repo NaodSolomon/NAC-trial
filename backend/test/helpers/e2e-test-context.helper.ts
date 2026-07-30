@@ -82,6 +82,28 @@ export async function createE2eTestContext(): Promise<E2eTestContext> {
       publishedAt: new Date(),
       createdBy: actors.superAdmin.id,
     },
+    {
+      slug: 'home',
+      languageCode: 'en',
+      title: 'Nehemiah Autism Center',
+      content: 'Welcome to our demonstration homepage.',
+      metadata: { sections: [{ type: 'hero', heading: 'Support starts here' }] },
+      seoTitle: 'Nehemiah Autism Center',
+      seoDescription: 'Autism support, education, and community.',
+      status: 'PUBLISHED',
+      publishedAt: new Date(),
+      createdBy: actors.superAdmin.id,
+    },
+    {
+      slug: 'faq',
+      languageCode: 'en',
+      title: 'Frequently asked questions',
+      content: 'Answers for families.',
+      metadata: { items: [{ question: 'How can I get help?', answer: 'Contact our team.' }] },
+      status: 'PUBLISHED',
+      publishedAt: new Date(),
+      createdBy: actors.superAdmin.id,
+    },
   ]);
   const storage: jest.Mocked<ObjectStorage> = {
     put: jest.fn().mockResolvedValue(undefined),
