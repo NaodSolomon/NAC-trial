@@ -3,7 +3,7 @@ services:
     image: traefik:v3
     restart: always
     command:
-      - --api.dashboard=true
+      - --api.dashboard=false
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
@@ -19,11 +19,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - letsencrypt:/letsencrypt
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.dashboard.rule=Host(`traefik.yourdomain.com`)
-      - traefik.http.routers.dashboard.tls.certresolver=letsencrypt
-      - traefik.http.routers.dashboard.service=api@internal
 
   frontend:
     image: ${FRONTEND_IMAGE:-ghcr.io/yourusername/nehemiah-frontend:latest}
@@ -103,14 +98,14 @@ services:
 
   dozzle:
     image: amir20/dozzle:latest
-    restart: always
+    restart: unless-stopped
+    profiles: ["ops"]
+    ports:
+      - "127.0.0.1:8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.dozzle.rule=Host(`logs.yourdomain.com`)
-      - traefik.http.routers.dozzle.tls.certresolver=letsencrypt
-      - traefik.http.services.dozzle.loadbalancer.server.port=8080
+      - traefik.enable=false
 
 volumes:
   letsencrypt:
