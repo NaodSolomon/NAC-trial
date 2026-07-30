@@ -1,5 +1,5 @@
 import { Controller, Param, ParseUUIDPipe, Post } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DonationService } from '../services/donation.service';
 
 export function trialPaymentRoutesEnabled(
@@ -20,12 +20,18 @@ export class TestPaymentController {
 
   @Post(':id/confirm')
   @ApiOperation({ summary: 'Confirm a fake donation and email its test receipt to Mailpit' })
+  @ApiResponse({
+    status: 201,
+    description: 'Fake confirmation result, duplicate flag, and local test receipt URL',
+  })
+  @ApiResponse({ status: 409, description: 'Donation is already in another terminal state' })
   confirm(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.donations.simulate(id, 'CONFIRMED');
   }
 
   @Post(':id/fail')
   @ApiOperation({ summary: 'Fail a fake donation without contacting a payment provider' })
+  @ApiResponse({ status: 201, description: 'Fake failure result; no money is transferred' })
   fail(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.donations.simulate(id, 'FAILED');
   }

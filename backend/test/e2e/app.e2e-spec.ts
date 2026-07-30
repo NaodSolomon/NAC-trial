@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { createTestApp } from '../helpers/test-app.helper';
+import { validateOpenApiContract } from '../../src/openapi/complete-contract';
 
 describe('Application conventions (e2e)', () => {
   let app: INestApplication;
@@ -40,6 +41,34 @@ describe('Application conventions (e2e)', () => {
       info: { title: 'Nehemiah Autism Center API', version: '1.0' },
     });
     expect(response.body.paths['/api/v1/auth/login']).toBeDefined();
+    expect(validateOpenApiContract(response.body)).toEqual([]);
+
+    const login = response.body.paths['/api/v1/auth/login'].post;
+    expect(login.requestBody.content['application/json'].schema).toEqual({
+      $ref: '#/components/schemas/LoginDto',
+    });
+    expect(response.body.components.schemas.LoginDto.required).toEqual(
+      expect.arrayContaining(['email', 'password']),
+    );
+    expect(response.body.components.schemas.PaginatedResponse).toBeDefined();
+
+    const admin = response.body.paths['/api/v1/admin/settings'].get;
+    expect(admin.security).toEqual([{ 'admin-jwt': [] }]);
+    expect(admin.responses['401']).toBeDefined();
+    expect(admin.responses['403']).toBeDefined();
+
+    const upload = response.body.paths['/api/v1/admin/media/upload'].post;
+    expect(upload.requestBody.content['multipart/form-data'].schema.properties.file).toMatchObject({
+      type: 'string',
+      format: 'binary',
+    });
+
+    const webhook = response.body.paths['/api/v1/webhooks/paypal'].post;
+    expect(webhook.parameters.filter((parameter: { in: string }) => parameter.in === 'header')).toHaveLength(5);
+
+    const trial = response.body.paths['/api/v1/test/payments/{id}/confirm'].post;
+    expect(trial.tags).toContain('Trial payment simulation (never production)');
+    expect(trial.responses['409']).toBeDefined();
   });
 
   it('passes the unauthenticated API version smoke test', async () => {

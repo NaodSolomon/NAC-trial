@@ -20,7 +20,17 @@ import { RolesGuard } from '../../../common/guards/roles.guard';
 import { AdminPrincipal } from '../../auth/interfaces/auth.types';
 import { UpdateGalleryItemDto } from '../dto/gallery.dto';
 import { GalleryService } from '../services/gallery.service';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
+@ApiTags('Admin Gallery')
+@ApiBearerAuth('admin-jwt')
 @Controller('admin/gallery')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('SUPER_ADMIN', 'CONTENT_EDITOR')
@@ -28,6 +38,22 @@ export class AdminGalleryController {
   constructor(private readonly galleryService: GalleryService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Upload an image or video and create its gallery item' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'title', 'altText'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        title: { type: 'string', minLength: 2, maxLength: 255 },
+        altText: { type: 'string', minLength: 2, maxLength: 500 },
+        languageCode: { type: 'string', enum: ['en', 'am'], default: 'en' },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Gallery item created' })
+  @ApiResponse({ status: 413, description: 'File exceeds configured upload limit' })
   async upload(@Req() request: FastifyRequest, @CurrentAdmin() actor: AdminPrincipal) {
     if (!request.isMultipart()) {
       throw new BadRequestException('Content-Type must be multipart/form-data');

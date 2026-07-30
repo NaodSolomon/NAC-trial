@@ -20,12 +20,22 @@ import { RolesGuard } from '../../../common/guards/roles.guard';
 import { AdminPrincipal } from '../../auth/interfaces/auth.types';
 import { CreateDonationDto, DonationQueryDto } from '../dto/donation.dto';
 import { DonationService } from '../services/donation.service';
+import {
+  ApiBearerAuth,
+  ApiHeader,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
+@ApiTags('Public Donations')
 @Controller('public/donations')
 export class PublicDonationController {
   constructor(private readonly service: DonationService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a donation checkout without collecting payment credentials' })
+  @ApiResponse({ status: 201, description: 'Donation ID and provider checkout URL' })
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   initiate(@Body() dto: CreateDonationDto) {
     return this.service.initiate(dto);
@@ -48,11 +58,20 @@ export class PublicDonationController {
   }
 }
 
+@ApiTags('Payment Webhooks')
 @Controller('webhooks')
 export class DonationWebhookController {
   constructor(private readonly service: DonationService) {}
 
   @Post('paypal')
+  @ApiOperation({ summary: 'Accept a signature-verified PayPal or local fake payment event' })
+  @ApiHeader({ name: 'paypal-transmission-id', required: true })
+  @ApiHeader({ name: 'paypal-transmission-time', required: true })
+  @ApiHeader({ name: 'paypal-transmission-sig', required: true })
+  @ApiHeader({ name: 'paypal-cert-url', required: true, schema: { format: 'uri' } })
+  @ApiHeader({ name: 'paypal-auth-algo', required: true, example: 'SHA256withRSA' })
+  @ApiResponse({ status: 201, description: 'Event accepted; duplicate delivery is idempotent' })
+  @ApiResponse({ status: 401, description: 'Webhook signature rejected' })
   paypal(
     @Headers() headers: Record<string, string | string[] | undefined>,
     @Body() event: Record<string, unknown>,
@@ -84,6 +103,8 @@ export class DonationWebhookController {
   }
 }
 
+@ApiTags('Admin Donations')
+@ApiBearerAuth('admin-jwt')
 @Controller('admin/donations')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('SUPER_ADMIN', 'FINANCE_VIEWER')
