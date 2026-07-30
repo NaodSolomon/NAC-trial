@@ -1,0 +1,83 @@
+name: nac-trial-benchmark
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: builder
+    command:
+      - /bin/sh
+      - -c
+      - pnpm db:migrate:local && pnpm db:seed && pnpm db:seed:demo && node dist/src/main.js
+    environment:
+      NODE_ENV: test
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      DATABASE_URL: postgresql://benchmark:benchmark@postgres:5432/nehemiah_benchmark
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      STORAGE_ENDPOINT: http://minio.invalid:9000
+      STORAGE_PUBLIC_URL: http://minio.invalid:9000/nehemiah-media
+      RATE_LIMIT_TTL_MS: 60000
+      # The benchmark has one source IP inside Compose. This high test-only ceiling
+      # keeps the production throttling code active without measuring HTTP 429s.
+      RATE_LIMIT_REQUESTS: 2000000
+      SWAGGER_ENABLED: "false"
+      TRIAL_MODE: "true"
+      PAYMENTS_ENABLED: "false"
+    ports:
+      - "127.0.0.1:8100:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/api/v1/system/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: benchmark
+      POSTGRES_PASSWORD: benchmark
+      POSTGRES_DB: nehemiah_benchmark
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U benchmark -d nehemiah_benchmark"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save ""
+    tmpfs:
+      - /data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  k6:
+    image: grafana/k6:0.54.0
+    profiles: ["benchmark"]
+    environment:
+      BASE_URL: http://backend:8000
+      TARGET_VUS: ${TARGET_VUS:-500}
+      RAMP_DURATION: ${RAMP_DURATION:-1m}
+      HOLD_DURATION: ${HOLD_DURATION:-2m}
+      RAMP_DOWN_DURATION: ${RAMP_DOWN_DURATION:-30s}
+      THINK_TIME_SECONDS: ${THINK_TIME_SECONDS:-1}
+    volumes:
+      - ./performance/k6:/scripts:ro
+    command: run /scripts/concurrency.js
+    depends_on:
+      backend:
+        condition: service_healthy

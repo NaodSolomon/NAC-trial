@@ -28,6 +28,8 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   STORAGE_PUBLIC_URL: string;
   MEDIA_MAX_FILE_SIZE_BYTES: number;
   REQUEST_BODY_LIMIT_BYTES: number;
+  RATE_LIMIT_TTL_MS: number;
+  RATE_LIMIT_REQUESTS: number;
   PAYPAL_ENABLED: boolean;
   PAYPAL_BASE_URL: string;
   PAYPAL_CLIENT_ID: string;
@@ -294,6 +296,20 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
       1_048_576,
       1_024,
       5_242_880,
+    ),
+    RATE_LIMIT_TTL_MS: parseBoundedInteger(
+      raw.RATE_LIMIT_TTL_MS,
+      'RATE_LIMIT_TTL_MS',
+      60_000,
+      1_000,
+      3_600_000,
+    ),
+    RATE_LIMIT_REQUESTS: parseBoundedInteger(
+      raw.RATE_LIMIT_REQUESTS,
+      'RATE_LIMIT_REQUESTS',
+      100,
+      1,
+      2_000_000,
     ),
     PAYPAL_ENABLED: paypalEnabled,
     PAYMENTS_ENABLED: paymentsEnabled,
