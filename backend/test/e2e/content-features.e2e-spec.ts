@@ -264,4 +264,31 @@ describe('Frontend demonstration content (e2e)', () => {
       .set('Authorization', editor.authorization)
       .expect(403);
   });
+
+  it('rejects resource locations and MIME types outside the local-safe allowlist', async () => {
+    const validResource = {
+      title: 'Unsafe resource',
+      description: 'Validation must reject this before persistence.',
+      fileName: 'unsafe.exe',
+      languageCode: 'en',
+    };
+    await request(context.app.getHttpServer())
+      .post('/api/v1/admin/resources')
+      .set('Authorization', admin.authorization)
+      .send({
+        ...validResource,
+        fileUrl: 'https://attacker.example/unsafe.pdf',
+        mimeType: 'application/pdf',
+      })
+      .expect(400);
+    await request(context.app.getHttpServer())
+      .post('/api/v1/admin/resources')
+      .set('Authorization', admin.authorization)
+      .send({
+        ...validResource,
+        fileUrl: 'http://localhost:9000/nehemiah-media/unsafe.exe',
+        mimeType: 'application/x-msdownload',
+      })
+      .expect(400);
+  });
 });

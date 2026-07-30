@@ -75,7 +75,7 @@ describe('ResourcesService', () => {
       description: 'A local guide',
       fileUrl: 'http://localhost/guide.pdf',
       fileName: 'guide.pdf',
-      mimeType: 'application/pdf',
+      mimeType: 'application/pdf' as const,
       languageCode: 'en' as const,
     };
 

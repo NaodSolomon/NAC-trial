@@ -1,13 +1,15 @@
+import { Type } from 'class-transformer';
 import {
   IsIn,
-  IsObject,
   IsOptional,
   IsString,
   IsUUID,
   Matches,
   MaxLength,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+import { CmsPageMetadataDto } from './cms-page-metadata.dto';
 
 export class CreateCmsPageDto {
   @IsString()
@@ -32,8 +34,9 @@ export class CreateCmsPageDto {
   content: string;
 
   @IsOptional()
-  @IsObject()
-  metadata?: Record<string, unknown>;
+  @ValidateNested()
+  @Type(() => CmsPageMetadataDto)
+  metadata?: CmsPageMetadataDto;
 
   @IsOptional()
   @IsUUID()
