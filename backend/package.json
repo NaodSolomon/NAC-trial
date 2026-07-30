@@ -41,6 +41,7 @@
     "passport-jwt": "latest",
     "pdfkit": "^0.19.1",
     "pg": "latest",
+    "redis": "5.8.2",
     "reflect-metadata": "latest",
     "rxjs": "latest"
   },

@@ -1,21 +1,37 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createConnection } from 'node:net';
 import {
   ApplicationCache,
   PUBLIC_CACHE_NAMESPACES,
   PublicCacheNamespace,
 } from './cache.interface';
+import { REDIS_CLIENT, RedisClient } from './redis-client.provider';
 
 @Injectable()
-export class RedisCacheService implements ApplicationCache {
+export class RedisCacheService implements ApplicationCache, OnApplicationShutdown {
   private readonly logger = new Logger(RedisCacheService.name);
   private readonly dirtyNamespaces = new Set<PublicCacheNamespace>();
+  private readonly commandTimeoutMs: number;
+  private readonly circuitCooldownMs: number;
+  private connectPromise: Promise<void> | null = null;
+  private circuitOpenUntil = 0;
+  private recoveryProbeActive = false;
+  private outageWarningLogged = false;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    @Inject(REDIS_CLIENT) private readonly client: RedisClient,
+  ) {
+    this.commandTimeoutMs = this.config.getOrThrow<number>('cache.commandTimeoutMs');
+    this.circuitCooldownMs = this.config.getOrThrow<number>('cache.circuitCooldownMs');
+  }
 
   async ping(): Promise<boolean> {
-    return (await this.execute(['PING'])) === 'PONG';
+    try {
+      return (await this.execute(() => this.client.ping())) === 'PONG';
+    } catch {
+      return false;
+    }
   }
 
   async remember<T>(
@@ -27,22 +43,23 @@ export class RedisCacheService implements ApplicationCache {
     let cacheKey: string | null = null;
     try {
       if (this.dirtyNamespaces.has(namespace)) {
-        await this.execute(['INCR', this.versionKey(namespace)]);
+        await this.execute(() => this.client.incr(this.versionKey(namespace)));
         this.dirtyNamespaces.delete(namespace);
       }
-      const version = (await this.execute(['GET', this.versionKey(namespace)])) ?? '1';
+      const version =
+        (await this.execute(() => this.client.get(this.versionKey(namespace)))) ?? '1';
       cacheKey = `nac:${namespace}:v${version}:${key}`;
-      const cached = await this.execute(['GET', cacheKey]);
-      if (cached !== null) return JSON.parse(cached) as T;
+      const cached = await this.execute(() => this.client.get(cacheKey));
+      if (cached !== null) return JSON.parse(String(cached)) as T;
     } catch {
       this.dirtyNamespaces.add(namespace);
-      this.logger.warn(`Redis unavailable for ${namespace}; using PostgreSQL`);
+      this.logOutage(`Redis unavailable for ${namespace}; using PostgreSQL`);
     }
 
     const value = await loader();
     if (cacheKey) {
-      await this.execute(['SET', cacheKey, JSON.stringify(value), 'EX', String(ttlSeconds)]).catch(
-        () => this.logger.warn(`Redis write unavailable for ${namespace}`),
+      await this.execute(() => this.client.setEx(cacheKey, ttlSeconds, JSON.stringify(value))).catch(
+        () => this.logOutage(`Redis write unavailable for ${namespace}`),
       );
     }
     return value;
@@ -50,11 +67,11 @@ export class RedisCacheService implements ApplicationCache {
 
   async invalidate(namespace: PublicCacheNamespace): Promise<void> {
     try {
-      await this.execute(['INCR', this.versionKey(namespace)]);
+      await this.execute(() => this.client.incr(this.versionKey(namespace)));
     } catch {
       // Cache invalidation must never roll back a successful database mutation.
       this.dirtyNamespaces.add(namespace);
-      this.logger.warn(`Redis invalidation unavailable for ${namespace}`);
+      this.logOutage(`Redis invalidation unavailable for ${namespace}`);
     }
   }
 
@@ -62,28 +79,73 @@ export class RedisCacheService implements ApplicationCache {
     await Promise.all(PUBLIC_CACHE_NAMESPACES.map((namespace) => this.invalidate(namespace)));
   }
 
-  private execute(parts: string[]): Promise<string | null> {
-    const payload = `*${parts.length}\r\n${parts
-      .map((part) => `$${Buffer.byteLength(part)}\r\n${part}\r\n`)
-      .join('')}`;
-    return new Promise((resolve, reject) => {
-      const socket = createConnection({
-        host: this.config.getOrThrow<string>('cache.host'),
-        port: this.config.getOrThrow<number>('cache.port'),
-      });
-      socket.setTimeout(2_000);
-      socket.once('connect', () => socket.write(payload));
-      socket.once('data', (chunk) => {
-        socket.end();
-        const response = chunk.toString('utf8');
-        if (response.startsWith('-')) return reject(new Error(response.slice(1).trim()));
-        if (response.startsWith('$-1')) return resolve(null);
-        if (response.startsWith('$')) return resolve(response.split('\r\n')[1] ?? null);
-        resolve(response.slice(1).trim());
-      });
-      socket.once('timeout', () => socket.destroy(new Error('Redis connection timed out')));
-      socket.once('error', reject);
+  async onApplicationShutdown(): Promise<void> {
+    if (this.client.isOpen) await this.client.close();
+  }
+
+  private async execute<T>(operation: () => Promise<T>): Promise<T> {
+    const now = Date.now();
+    if (now < this.circuitOpenUntil) throw new Error('Redis circuit is open');
+
+    const isRecoveryProbe = this.circuitOpenUntil !== 0;
+    if (isRecoveryProbe && this.recoveryProbeActive) {
+      throw new Error('Redis recovery probe is already running');
+    }
+    if (isRecoveryProbe) this.recoveryProbeActive = true;
+
+    try {
+      await this.withTimeout(this.ensureConnected());
+      const result = await this.withTimeout(operation());
+      this.circuitOpenUntil = 0;
+      this.outageWarningLogged = false;
+      return result;
+    } catch (error) {
+      this.circuitOpenUntil = Date.now() + this.circuitCooldownMs;
+      if (this.client.isOpen) this.client.destroy();
+      this.connectPromise = null;
+      throw error;
+    } finally {
+      if (isRecoveryProbe) this.recoveryProbeActive = false;
+    }
+  }
+
+  private ensureConnected(): Promise<void> {
+    if (this.client.isReady) return Promise.resolve();
+    if (!this.connectPromise) {
+      this.connectPromise = this.client
+        .connect()
+        .then(() => undefined)
+        .finally(() => {
+          this.connectPromise = null;
+        });
+    }
+    return this.connectPromise;
+  }
+
+  private withTimeout<T>(operation: Promise<T>): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`Redis operation exceeded ${this.commandTimeoutMs}ms`)),
+        this.commandTimeoutMs,
+      );
+      timer.unref();
+      operation.then(
+        (value) => {
+          clearTimeout(timer);
+          resolve(value);
+        },
+        (error: unknown) => {
+          clearTimeout(timer);
+          reject(error);
+        },
+      );
     });
+  }
+
+  private logOutage(message: string): void {
+    if (this.outageWarningLogged) return;
+    this.outageWarningLogged = true;
+    this.logger.warn(message);
   }
 
   private versionKey(namespace: PublicCacheNamespace): string {
