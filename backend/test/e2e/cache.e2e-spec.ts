@@ -1,4 +1,5 @@
 import * as request from 'supertest';
+import { DRIZZLE } from '../../src/database/drizzle.module';
 import { authenticatedSession, TestSession } from '../helpers/auth-test.helper';
 import {
   closeE2eTestContext,
@@ -25,7 +26,12 @@ describe('Cache administration and health (e2e)', () => {
 
   it('reports PostgreSQL and Redis independently', async () => {
     await request(context.app.getHttpServer())
-      .get('/api/v1/system/health')
+      .get('/api/v1/system/health/live')
+      .expect(200)
+      .expect(({ body }) => expect(body.data).toMatchObject({ status: 'ok', process: 'alive' }));
+
+    await request(context.app.getHttpServer())
+      .get('/api/v1/system/health/ready')
       .expect(200)
       .expect(({ body }) =>
         expect(body.data).toMatchObject({
@@ -33,6 +39,43 @@ describe('Cache administration and health (e2e)', () => {
           checks: { postgresql: 'connected', redis: 'connected' },
         }),
       );
+  });
+
+  it('keeps readiness available but degraded when Redis is unavailable', async () => {
+    context.cache.ping.mockRejectedValueOnce(new Error('redis unavailable'));
+
+    await request(context.app.getHttpServer())
+      .get('/api/v1/system/health/ready')
+      .expect(200)
+      .expect(({ body }) =>
+        expect(body.data).toMatchObject({
+          status: 'degraded',
+          checks: { postgresql: 'connected', redis: 'unavailable' },
+        }),
+      );
+  });
+
+  it('returns readiness 503 when PostgreSQL is unavailable', async () => {
+    const applicationDatabase = context.app.get(DRIZZLE) as typeof context.db;
+    const execute = jest
+      .spyOn(applicationDatabase, 'execute')
+      .mockRejectedValueOnce(new Error('database unavailable') as never);
+
+    await request(context.app.getHttpServer())
+      .get('/api/v1/system/health/ready')
+      .expect(503)
+      .expect(({ body }) =>
+        expect(body).toMatchObject({
+          success: false,
+          statusCode: 503,
+          data: {
+            status: 'unavailable',
+            checks: { postgresql: 'unavailable', redis: 'connected' },
+          },
+        }),
+      );
+
+    execute.mockRestore();
   });
 
   it('restricts cache clearing to super administrators', async () => {
@@ -53,11 +96,7 @@ describe('Cache administration and health (e2e)', () => {
       .set('Authorization', superAdmin.authorization)
       .expect(201)
       .expect(({ body }) =>
-        expect(body.data.warmed).toEqual([
-          'settings:public',
-          'navigation:en',
-          'navigation:am',
-        ]),
+        expect(body.data.warmed).toEqual(['settings:public', 'navigation:en', 'navigation:am']),
       );
   });
 

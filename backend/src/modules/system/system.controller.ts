@@ -1,10 +1,16 @@
-import { Controller, Get, Inject } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Inject, Res } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { FastifyReply } from 'fastify';
 import { sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DRIZZLE } from '../../database/drizzle.module';
-import { ConfigService } from '@nestjs/config';
 import { ApplicationCache, CACHE } from '../cache/cache.interface';
 
+type DependencyStatus = 'connected' | 'unavailable';
+const DEPENDENCY_PROBE_TIMEOUT_MS = 2_000;
+
+@ApiTags('System')
 @Controller('system')
 export class SystemController {
   constructor(
@@ -13,25 +19,40 @@ export class SystemController {
     @Inject(CACHE) private readonly cache: ApplicationCache,
   ) {}
 
-  @Get('health')
-  async health() {
-    const [database, redis] = await Promise.all([
-      this.db
-        .execute(sql`select 1`)
-        .then(() => 'connected' as const)
-        .catch(() => 'unavailable' as const),
-      this.cache
-        .ping()
-        .then((connected) => (connected ? ('connected' as const) : ('unavailable' as const)))
-        .catch(() => 'unavailable' as const),
-    ]);
+  @Get('health/live')
+  @ApiOperation({ summary: 'Check whether the API process is alive' })
+  @ApiResponse({ status: 200, description: 'The API process is accepting requests' })
+  liveness() {
     return {
-      status: database === 'connected' && redis === 'connected' ? 'ok' : 'degraded',
+      status: 'ok',
+      process: 'alive',
+      mode: this.mode(),
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Get(['health', 'health/ready'])
+  @ApiOperation({ summary: 'Check PostgreSQL readiness and optional Redis availability' })
+  @ApiResponse({ status: 200, description: 'PostgreSQL is ready; Redis may be degraded' })
+  @ApiResponse({ status: 503, description: 'PostgreSQL is unavailable' })
+  async health(@Res({ passthrough: true }) reply: FastifyReply) {
+    const [database, redis] = await Promise.all([
+      this.probe(() => this.db.execute(sql`select 1`).then(() => true)),
+      this.probe(() => this.cache.ping()),
+    ]);
+
+    if (database === 'unavailable') {
+      reply.status(HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    return {
+      status:
+        database === 'unavailable' ? 'unavailable' : redis === 'unavailable' ? 'degraded' : 'ok',
       checks: { postgresql: database, redis },
       // Kept for clients using the original Step 14 health shape.
       database,
       redis,
-      mode: this.config.get<boolean>('runtime.trialMode') ? 'trial' : 'production',
+      mode: this.mode(),
       timestamp: new Date().toISOString(),
     };
   }
@@ -42,7 +63,7 @@ export class SystemController {
       name: 'Nehemiah Autism Center API',
       version: process.env.npm_package_version ?? '0.1.0',
       environment: process.env.NODE_ENV ?? 'development',
-      mode: this.config.get<boolean>('runtime.trialMode') ? 'trial' : 'production',
+      mode: this.mode(),
       adapters: {
         storage: this.config.get<string>('runtime.storageDriver'),
         mail: this.config.get<string>('runtime.mailDriver'),
@@ -53,5 +74,27 @@ export class SystemController {
         this.config.get<string>('runtime.paymentDriver') === 'paypal' &&
         this.config.get<boolean>('runtime.paymentsEnabled') === true,
     };
+  }
+
+  private async probe(check: () => Promise<boolean>): Promise<DependencyStatus> {
+    let timeout: NodeJS.Timeout | undefined;
+
+    try {
+      const connected = await Promise.race([
+        check(),
+        new Promise<boolean>((resolve) => {
+          timeout = setTimeout(() => resolve(false), DEPENDENCY_PROBE_TIMEOUT_MS);
+        }),
+      ]);
+      return connected ? 'connected' : 'unavailable';
+    } catch {
+      return 'unavailable';
+    } finally {
+      if (timeout) clearTimeout(timeout);
+    }
+  }
+
+  private mode(): 'trial' | 'production' {
+    return this.config.get<boolean>('runtime.trialMode') ? 'trial' : 'production';
   }
 }
