@@ -8,6 +8,7 @@ describe('AuditLogsService', () => {
 
   beforeEach(() => {
     repository = {
+      append: jest.fn(),
       list: jest.fn().mockResolvedValue({
         data: [],
         meta: { total: 0, page: 1, limit: 20, totalPages: 0 },

@@ -17,5 +17,6 @@ import { AuditLogsService } from './services/audit-logs.service';
       useClass: DrizzleAuditLogRepository,
     },
   ],
+  exports: [AUDIT_LOG_REPOSITORY],
 })
 export class AuditModule {}

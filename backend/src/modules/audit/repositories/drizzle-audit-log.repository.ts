@@ -5,7 +5,11 @@ import { PaginatedResult } from '../../../common/types/api-response.type';
 import { DRIZZLE } from '../../../database/drizzle.module';
 import { AuditLog, auditLogs } from '../../../database/schema';
 import * as schema from '../../../database/schema';
-import { AuditLogCriteria, AuditLogRepository } from '../interfaces/audit-log-repository.interface';
+import {
+  AppendAuditEvent,
+  AuditLogCriteria,
+  AuditLogRepository,
+} from '../interfaces/audit-log-repository.interface';
 
 @Injectable()
 export class DrizzleAuditLogRepository implements AuditLogRepository {
@@ -13,6 +17,21 @@ export class DrizzleAuditLogRepository implements AuditLogRepository {
     @Inject(DRIZZLE)
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
+
+  async append(event: AppendAuditEvent): Promise<AuditLog> {
+    const [auditLog] = await this.db
+      .insert(auditLogs)
+      .values({
+        adminId: event.adminId,
+        action: event.action,
+        entityType: event.entityType,
+        entityId: event.entityId,
+        metadata: event.metadata ?? {},
+      })
+      .returning();
+
+    return auditLog;
+  }
 
   async list(criteria: AuditLogCriteria): Promise<PaginatedResult<AuditLog>> {
     const filters: SQL[] = [];
