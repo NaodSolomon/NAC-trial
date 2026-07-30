@@ -98,6 +98,34 @@ describe('Cache administration and health (e2e)', () => {
       .expect(({ body }) =>
         expect(body.data.warmed).toEqual(['settings:public', 'navigation:en', 'navigation:am']),
       );
+
+    const clearAudit = await request(context.app.getHttpServer())
+      .get('/api/v1/admin/audit-logs?entityType=CACHE&action=CLEAR')
+      .set('Authorization', superAdmin.authorization)
+      .expect(200);
+    expect(clearAudit.body.data.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          adminId: context.actors.superAdmin.id,
+          action: 'CLEAR',
+          entityType: 'CACHE',
+        }),
+      ]),
+    );
+
+    const warmAudit = await request(context.app.getHttpServer())
+      .get('/api/v1/admin/audit-logs?entityType=CACHE&action=WARM')
+      .set('Authorization', superAdmin.authorization)
+      .expect(200);
+    expect(warmAudit.body.data.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          adminId: context.actors.superAdmin.id,
+          action: 'WARM',
+          entityType: 'CACHE',
+        }),
+      ]),
+    );
   });
 
   it('uses cache-aside for public content and invalidates after a CMS mutation', async () => {

@@ -15,6 +15,15 @@ export interface AuditLogCriteria {
   to?: Date;
 }
 
+export interface AppendAuditEvent {
+  adminId: string;
+  action: string;
+  entityType: string;
+  entityId?: string;
+  metadata?: Record<string, unknown>;
+}
+
 export interface AuditLogRepository {
   list(criteria: AuditLogCriteria): Promise<PaginatedResult<AuditLog>>;
+  append(event: AppendAuditEvent): Promise<AuditLog>;
 }

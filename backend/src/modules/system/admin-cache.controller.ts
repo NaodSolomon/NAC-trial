@@ -1,27 +1,24 @@
-import { Controller, Inject, Post, UseGuards } from '@nestjs/common';
+import { Controller, Post, UseGuards } from '@nestjs/common';
+import { CurrentAdmin } from '../../common/decorators/current-admin.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { ApplicationCache, CACHE } from '../cache/cache.interface';
-import { CacheWarmService } from './cache-warm.service';
+import { AdminPrincipal } from '../auth/interfaces/auth.types';
+import { CacheAdministrationService } from './cache-administration.service';
 
 @Controller('admin/cache')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('SUPER_ADMIN')
 export class AdminCacheController {
-  constructor(
-    @Inject(CACHE) private readonly cache: ApplicationCache,
-    private readonly warmer: CacheWarmService,
-  ) {}
+  constructor(private readonly cacheAdministration: CacheAdministrationService) {}
 
   @Post('clear')
-  async clear() {
-    await this.cache.clear();
-    return { cleared: true };
+  clear(@CurrentAdmin() actor: AdminPrincipal) {
+    return this.cacheAdministration.clear(actor);
   }
 
   @Post('warm')
-  warm() {
-    return this.warmer.warm();
+  warm(@CurrentAdmin() actor: AdminPrincipal) {
+    return this.cacheAdministration.warm(actor);
   }
 }
