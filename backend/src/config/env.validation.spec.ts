@@ -15,6 +15,8 @@ describe('validateEnvironment', () => {
       CACHE_DRIVER: 'redis',
       PAYMENTS_ENABLED: false,
       TRIAL_MODE: true,
+      RATE_LIMIT_TTL_MS: 60_000,
+      RATE_LIMIT_REQUESTS: 100,
     });
   });
 
@@ -113,6 +115,15 @@ describe('validateEnvironment', () => {
   it('rejects oversized JSON request limits', () => {
     expect(() => validateEnvironment({ REQUEST_BODY_LIMIT_BYTES: 6_000_000 })).toThrow(
       'REQUEST_BODY_LIMIT_BYTES must be between 1024 and 5242880',
+    );
+  });
+
+  it('rejects invalid global rate-limit settings', () => {
+    expect(() => validateEnvironment({ RATE_LIMIT_REQUESTS: 0 })).toThrow(
+      'RATE_LIMIT_REQUESTS must be between 1 and 2000000',
+    );
+    expect(() => validateEnvironment({ RATE_LIMIT_TTL_MS: 999 })).toThrow(
+      'RATE_LIMIT_TTL_MS must be between 1000 and 3600000',
     );
   });
 

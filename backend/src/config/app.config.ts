@@ -14,4 +14,6 @@ export default registerAs('app', () => ({
     process.env.SWAGGER_ENABLED !== undefined
       ? process.env.SWAGGER_ENABLED === 'true'
       : process.env.NODE_ENV !== 'production',
+  rateLimitTtlMs: Number(process.env.RATE_LIMIT_TTL_MS ?? 60_000),
+  rateLimitRequests: Number(process.env.RATE_LIMIT_REQUESTS ?? 100),
 }));

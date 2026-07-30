@@ -46,6 +46,12 @@ jobs:
       - name: Build media backup image
         working-directory: .
         run: docker build -f ops/backup/media-backup.Dockerfile -t nehemiah-media-backup:test .
+      - name: Validate benchmark profile
+        working-directory: .
+        run: |
+          docker compose -f docker-compose.benchmark.yml config --quiet
+          docker run --rm -v "$GITHUB_WORKSPACE/performance/k6:/scripts:ro" \
+            grafana/k6:0.54.0 inspect /scripts/concurrency.js
 
   frontend:
     runs-on: ubuntu-latest

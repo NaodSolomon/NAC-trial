@@ -668,6 +668,51 @@ PostgreSQL verification restores into a temporary database whose name must end i
 schema or object count, and remove the temporary target afterward. A failed verification must
 be investigated before older snapshots expire.
 
+### Controlled concurrency benchmark
+
+The documented 500–1,000 concurrent-user target is measured with the repeatable k6 profile in
+`performance/k6/concurrency.js`. The profile exercises liveness plus representative cached and
+PostgreSQL-backed public reads. It ramps to the requested virtual-user count, holds that
+concurrency, and then ramps down. Each virtual user pauses for one second between requests to
+represent an active visitor rather than an unlimited request flood.
+
+Start the isolated benchmark stack and run the default 500-user profile:
+
+```bash
+docker compose -f docker-compose.benchmark.yml up -d --build backend
+docker compose -f docker-compose.benchmark.yml --profile benchmark run --rm k6
+```
+
+Run the upper 1,000-user profile:
+
+```bash
+docker compose -f docker-compose.benchmark.yml --profile benchmark run --rm \
+  -e TARGET_VUS=1000 k6
+```
+
+For a quick script and environment smoke test, shorten the stages without treating the result as
+capacity evidence:
+
+```bash
+docker compose -f docker-compose.benchmark.yml --profile benchmark run --rm \
+  -e TARGET_VUS=10 -e RAMP_DURATION=5s -e HOLD_DURATION=10s \
+  -e RAMP_DOWN_DURATION=5s k6
+```
+
+The benchmark fails when more than 1% of checks or requests fail, when p95 exceeds 750 ms, or
+when p99 exceeds 1,500 ms. Run it on hardware representative of the intended deployment and
+retain the complete k6 summary with the hardware, container limits, commit SHA, date, and profile.
+The isolated backend keeps the real throttling guard installed but raises its single-IP ceiling
+through benchmark-only environment variables; normal development and production defaults remain
+100 requests per minute per IP. HTTP 429 responses therefore fail the benchmark instead of being
+mistaken for successful capacity.
+
+Remove the isolated containers and temporary PostgreSQL/Redis data afterward:
+
+```bash
+docker compose -f docker-compose.benchmark.yml --profile benchmark down --volumes
+```
+
 ## Environment Variables
 
 See [backend/.env.example](backend/.env.example) and [frontend/.env.example](frontend/.env.example) for all available config options.

@@ -1,6 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
@@ -53,12 +53,15 @@ import { ResourcesModule } from './modules/resources/resources.module';
       validate: validateEnvironment,
     }),
     DrizzleModule,
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60_000,
-        limit: 100,
-      },
-    ]),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          ttl: config.getOrThrow<number>('app.rateLimitTtlMs'),
+          limit: config.getOrThrow<number>('app.rateLimitRequests'),
+        },
+      ],
+    }),
     AuthModule,
     AdminsModule,
     AuditModule,
