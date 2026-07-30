@@ -336,6 +336,7 @@ language, end times must follow start times, and each email can RSVP only once p
 |--------|-----------------------------------------|-------------------------------|---------|
 | GET    | `/api/v1/public/events`                 | Public                        | List published events |
 | GET    | `/api/v1/public/events/:slug`           | Public                        | Read a localized event |
+| GET    | `/api/v1/public/events/:slug/calendar.ics` | Public                     | Download an iCalendar event |
 | POST   | `/api/v1/public/events/:id/rsvp`        | Public, rate-limited          | Submit an RSVP |
 | GET    | `/api/v1/admin/events`                  | Editor or super administrator | Manage event inventory |
 | POST   | `/api/v1/admin/events`                  | Editor or super administrator | Create an event |
@@ -346,7 +347,8 @@ language, end times must follow start times, and each email can RSVP only once p
 
 Use `languageCode=en|am` for localized reads and `timeframe=upcoming|past|all` for event lists.
 RSVP closes when an event ends and personal RSVP data is never returned by public routes.
-Automated reminders and calendar-file generation remain separate future slices.
+Calendar-file generation is implemented by the public `.ics` endpoint. Automated reminder
+emails remain a separate future slice.
 
 ## Gallery
 
