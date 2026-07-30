@@ -69,5 +69,12 @@
     "ts-jest": "latest",
     "ts-node": "latest",
     "typescript": "^5.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "fast-uri@<3.1.4": "3.1.4",
+      "find-my-way@<9.7.0": "9.7.0",
+      "js-yaml@>=5.0.0 <5.2.2": "5.2.2"
+    }
   }
 }
