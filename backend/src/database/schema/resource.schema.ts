@@ -14,7 +14,9 @@ export const resources = pgTable(
     languageCode: languageCodeEnum('language_code').default('en').notNull(),
     status: contentStatusEnum('status').default('DRAFT').notNull(),
     downloadCount: integer('download_count').default(0).notNull(),
-    createdBy: uuid('created_by').notNull().references(() => admins.id, { onDelete: 'restrict' }),
+    createdBy: uuid('created_by')
+      .notNull()
+      .references(() => admins.id, { onDelete: 'restrict' }),
     createdAt: timestamp('created_at', { withTimezone: true, precision: 3 }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true, precision: 3 }).defaultNow().notNull(),
   },
@@ -22,3 +24,4 @@ export const resources = pgTable(
 );
 
 export type Resource = typeof resources.$inferSelect;
+export type NewResource = typeof resources.$inferInsert;

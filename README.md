@@ -563,6 +563,10 @@ the deferred enterprise features:
 - `/api/v1/public/events/:slug/calendar.ics` downloads a standards-compatible calendar
   event for published events.
 
+Blog and resource services follow the repository interfaces described above. Their
+administrative create, update, publish, and delete operations write the acting administrator's
+audit record in the same PostgreSQL transaction as the content mutation.
+
 Migration `0007_add_demo_content_features.sql` adds blog posts, resources, and CMS SEO
 columns. Earlier migrations and snapshots remain unchanged. Search indexing, reminder
 emails, session dashboards, recurring donations, MFA/OAuth, and paid monitoring remain
