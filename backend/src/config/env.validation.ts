@@ -47,6 +47,9 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   MAIL_FROM: string;
   REDIS_HOST: string;
   REDIS_PORT: number;
+  REDIS_CONNECT_TIMEOUT_MS: number;
+  REDIS_COMMAND_TIMEOUT_MS: number;
+  REDIS_CIRCUIT_COOLDOWN_MS: number;
 }
 
 function parseChoice<T extends string>(
@@ -304,6 +307,27 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     MAIL_FROM: String(raw.MAIL_FROM ?? 'noreply@nehemiah.local'),
     REDIS_HOST: String(raw.REDIS_HOST ?? 'redis'),
     REDIS_PORT: parsePort(raw.REDIS_PORT, 'REDIS_PORT', 6379),
+    REDIS_CONNECT_TIMEOUT_MS: parseBoundedInteger(
+      raw.REDIS_CONNECT_TIMEOUT_MS,
+      'REDIS_CONNECT_TIMEOUT_MS',
+      250,
+      50,
+      5_000,
+    ),
+    REDIS_COMMAND_TIMEOUT_MS: parseBoundedInteger(
+      raw.REDIS_COMMAND_TIMEOUT_MS,
+      'REDIS_COMMAND_TIMEOUT_MS',
+      250,
+      50,
+      5_000,
+    ),
+    REDIS_CIRCUIT_COOLDOWN_MS: parseBoundedInteger(
+      raw.REDIS_CIRCUIT_COOLDOWN_MS,
+      'REDIS_CIRCUIT_COOLDOWN_MS',
+      5_000,
+      100,
+      60_000,
+    ),
     PAYPAL_BASE_URL: validateUrl(
       raw.PAYPAL_BASE_URL,
       'PAYPAL_BASE_URL',
