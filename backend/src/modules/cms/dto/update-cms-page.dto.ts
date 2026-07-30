@@ -1,4 +1,13 @@
-import { IsObject, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
+import { CmsPageMetadataDto } from './cms-page-metadata.dto';
 
 export class UpdateCmsPageDto {
   @IsOptional()
@@ -23,8 +32,9 @@ export class UpdateCmsPageDto {
   content?: string;
 
   @IsOptional()
-  @IsObject()
-  metadata?: Record<string, unknown>;
+  @ValidateNested()
+  @Type(() => CmsPageMetadataDto)
+  metadata?: CmsPageMetadataDto;
 
   @IsOptional()
   @IsString()

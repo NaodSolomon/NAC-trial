@@ -31,6 +31,31 @@ describe('CMS pages and publishing (e2e)', () => {
       .expect(200);
   });
 
+  it('rejects malformed homepage and FAQ metadata before service execution', async () => {
+    await request(context.app.getHttpServer())
+      .post('/api/v1/admin/cms/pages')
+      .set('Authorization', editor.authorization)
+      .send({
+        slug: 'invalid-homepage',
+        languageCode: 'en',
+        title: 'Invalid homepage',
+        content: 'Invalid nested section.',
+        metadata: { sections: [{ type: 'hero', heading: 42 }] },
+      })
+      .expect(400);
+    await request(context.app.getHttpServer())
+      .post('/api/v1/admin/cms/pages')
+      .set('Authorization', editor.authorization)
+      .send({
+        slug: 'invalid-faq',
+        languageCode: 'en',
+        title: 'Invalid FAQ',
+        content: 'Invalid nested FAQ.',
+        metadata: { items: [{ question: 'Where is the answer?' }] },
+      })
+      .expect(400);
+  });
+
   it('keeps drafts private and supports the complete publishing workflow', async () => {
     const draft = await request(context.app.getHttpServer())
       .post('/api/v1/admin/cms/pages')

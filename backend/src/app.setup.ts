@@ -17,9 +17,6 @@ export function configureApp(app: INestApplication): void {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
     }),
   );
   const allowedOrigins = new Set(config.getOrThrow<string[]>('app.corsOrigins'));
