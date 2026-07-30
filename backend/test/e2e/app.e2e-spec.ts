@@ -55,11 +55,17 @@ describe('Application conventions (e2e)', () => {
     expect(login.responses['200']).toBeDefined();
     expect(login.responses['201']).toBeUndefined();
     expect(login.responses['401']).toBeDefined();
+    expect(login.responses['400']).toBeUndefined();
+    expect(login.responses['404']).toBeUndefined();
+    expect(login.security).toEqual([]);
 
     const refresh = response.body.paths['/api/v1/auth/refresh'].post;
     expect(refresh.responses['200']).toBeDefined();
     expect(refresh.responses['201']).toBeUndefined();
     expect(refresh.responses['401']).toBeDefined();
+    expect(refresh.responses['400']).toBeUndefined();
+    expect(refresh.responses['404']).toBeUndefined();
+    expect(response.body.servers).toEqual([{ url: '/', description: 'Current host' }]);
 
     const admin = response.body.paths['/api/v1/admin/settings'].get;
     expect(admin.security).toEqual([{ 'admin-jwt': [] }]);

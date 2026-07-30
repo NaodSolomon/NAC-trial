@@ -46,6 +46,9 @@ export function completeOpenApiContract(document: OpenAPIObject): OpenAPIObject 
       operation.tags ??= [tagFor(path)];
       operation.summary ??= summaryFor(method, path);
       operation.responses ??= {};
+      // OpenAPI security is inherited unless explicitly overridden. Declaring an
+      // empty requirement prevents public routes from appearing authenticated.
+      operation.security ??= [];
 
       // Swagger has already read Nest's @HttpCode and @ApiResponse metadata.
       // Enrich those declared success responses without guessing from the verb.
@@ -59,8 +62,8 @@ export function completeOpenApiContract(document: OpenAPIObject): OpenAPIObject 
           },
         };
       }
-      operation.responses['400'] ??= errorResponse('Invalid request');
-      operation.responses['404'] ??= errorResponse('Resource not found');
+      // The global throttler can reject every route, so this is a known global response.
+      // Other errors must be declared by controller metadata when the route can emit them.
       operation.responses['429'] ??= errorResponse('Rate limit exceeded');
 
       if (path.startsWith('/api/v1/admin/') || protectedAuthPath(path)) {
@@ -81,6 +84,7 @@ export function validateOpenApiContract(document: OpenAPIObject): string[] {
   const errors: string[] = [];
   if (!/^3\./.test(document.openapi)) errors.push('openapi must declare version 3.x');
   if (!document.info?.title || !document.info?.version) errors.push('info title/version required');
+  if (!document.servers?.length) errors.push('at least one server is required');
   const schemas = document.components?.schemas ?? {};
 
   for (const [path, pathItem] of Object.entries(document.paths ?? {})) {
@@ -91,6 +95,7 @@ export function validateOpenApiContract(document: OpenAPIObject): string[] {
       const location = `${method.toUpperCase()} ${path}`;
       if (!operation.tags?.length) errors.push(`${location} requires a tag`);
       if (!operation.summary) errors.push(`${location} requires a summary`);
+      if (!operation.security) errors.push(`${location} requires an explicit security declaration`);
       if (!Object.keys(operation.responses ?? {}).length) {
         errors.push(`${location} requires responses`);
       }
