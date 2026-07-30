@@ -3,22 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from './schema';
+import { DatabaseConnectionOptions } from './database-connection';
 
 export const DRIZZLE = 'DRIZZLE';
 export const DATABASE_POOL = 'DATABASE_POOL';
 
 export function createDatabasePool(config: ConfigService): Pool {
-  const connectionString = config.get<string>('database.url');
+  const connection = config.getOrThrow<DatabaseConnectionOptions>('database.connection');
   const pool = new Pool({
-    ...(connectionString
-      ? { connectionString }
-      : {
-          host: config.getOrThrow<string>('database.host'),
-          port: config.getOrThrow<number>('database.port'),
-          user: config.getOrThrow<string>('database.username'),
-          password: config.getOrThrow<string>('database.password'),
-          database: config.getOrThrow<string>('database.name'),
-        }),
+    ...connection,
     max: 20,
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 5_000,

@@ -169,6 +169,11 @@ pnpm db:migrate
 
 Do not use schema push commands. Migration files are reviewed and deployed in order so every environment has a reproducible database history.
 
+The API, Drizzle CLI, migration scripts, and seed scripts all use the same database connection
+precedence. `TEST_DATABASE_URL` takes precedence while `NODE_ENV=test`; otherwise
+`DATABASE_URL` is preferred. `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`,
+`DATABASE_PASSWORD`, and `DATABASE_NAME` remain supported together as a legacy fallback.
+
 ## Administrator Authentication
 
 The platform has no public user registration. Administrator authentication uses:
