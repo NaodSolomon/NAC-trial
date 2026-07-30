@@ -4,17 +4,6 @@ import {
   SchemaObject,
 } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 
-const successSchema: SchemaObject = {
-  type: 'object',
-  required: ['success', 'data', 'statusCode', 'timestamp'],
-  properties: {
-    success: { type: 'boolean', enum: [true] },
-    data: {},
-    statusCode: { type: 'integer', example: 200 },
-    timestamp: { type: 'string', format: 'date-time' },
-  },
-};
-
 const errorRef = { $ref: '#/components/schemas/ApiErrorResponseDto' };
 const HTTP_METHODS = ['get', 'post', 'patch', 'put', 'delete'] as const;
 
@@ -33,7 +22,7 @@ export function completeOpenApiContract(document: OpenAPIObject): OpenAPIObject 
   };
   document.components.schemas.PaginatedResponse = {
     allOf: [
-      successSchema,
+      successSchema(200),
       {
         type: 'object',
         properties: {
@@ -57,17 +46,16 @@ export function completeOpenApiContract(document: OpenAPIObject): OpenAPIObject 
       operation.tags ??= [tagFor(path)];
       operation.summary ??= summaryFor(method, path);
       operation.responses ??= {};
-      const successCode = method === 'post' ? '201' : '200';
-      operation.responses[successCode] ??= {
-        description: 'Successful response',
-      };
-      const successResponse = operation.responses[successCode];
-      if ('$ref' in successResponse === false && !successResponse.content) {
+
+      // Swagger has already read Nest's @HttpCode and @ApiResponse metadata.
+      // Enrich those declared success responses without guessing from the verb.
+      for (const [statusCode, successResponse] of successResponses(operation)) {
+        if (statusCode === '204' || '$ref' in successResponse || successResponse.content) continue;
         successResponse.content = {
           'application/json': {
             schema: isPaginated(operation)
               ? { $ref: '#/components/schemas/PaginatedResponse' }
-              : successSchema,
+              : successSchema(Number(statusCode)),
           },
         };
       }
@@ -106,6 +94,9 @@ export function validateOpenApiContract(document: OpenAPIObject): string[] {
       if (!Object.keys(operation.responses ?? {}).length) {
         errors.push(`${location} requires responses`);
       }
+      if (!successResponses(operation).length) {
+        errors.push(`${location} requires an explicit 2xx response`);
+      }
       visitRefs(operation, (ref) => {
         const name = ref.replace('#/components/schemas/', '');
         if (ref.startsWith('#/components/schemas/') && !schemas[name]) {
@@ -115,6 +106,25 @@ export function validateOpenApiContract(document: OpenAPIObject): string[] {
     }
   }
   return errors;
+}
+
+function successSchema(statusCode: number): SchemaObject {
+  return {
+    type: 'object',
+    required: ['success', 'data', 'statusCode', 'timestamp'],
+    properties: {
+      success: { type: 'boolean', enum: [true] },
+      data: {},
+      statusCode: { type: 'integer', example: statusCode },
+      timestamp: { type: 'string', format: 'date-time' },
+    },
+  };
+}
+
+function successResponses(
+  operation: OperationObject,
+): Array<[string, Exclude<OperationObject['responses'][string], undefined>]> {
+  return Object.entries(operation.responses ?? {}).filter(([statusCode]) => /^2\d\d$/.test(statusCode));
 }
 
 function errorResponse(description: string) {

@@ -52,6 +52,15 @@ describe('Application conventions (e2e)', () => {
     );
     expect(response.body.components.schemas.PaginatedResponse).toBeDefined();
 
+    expect(login.responses['200']).toBeDefined();
+    expect(login.responses['201']).toBeUndefined();
+    expect(login.responses['401']).toBeDefined();
+
+    const refresh = response.body.paths['/api/v1/auth/refresh'].post;
+    expect(refresh.responses['200']).toBeDefined();
+    expect(refresh.responses['201']).toBeUndefined();
+    expect(refresh.responses['401']).toBeDefined();
+
     const admin = response.body.paths['/api/v1/admin/settings'].get;
     expect(admin.security).toEqual([{ 'admin-jwt': [] }]);
     expect(admin.responses['401']).toBeDefined();
