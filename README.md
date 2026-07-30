@@ -581,9 +581,13 @@ administrative create, update, publish, and delete operations write the acting a
 audit record in the same PostgreSQL transaction as the content mutation.
 
 Migration `0007_add_demo_content_features.sql` adds blog posts, resources, and CMS SEO
-columns. Earlier migrations and snapshots remain unchanged. Search indexing, reminder
+columns. Earlier migrations and snapshots remain unchanged. External search services, reminder
 emails, session dashboards, recurring donations, MFA/OAuth, and paid monitoring remain
 explicitly deferred.
+
+Migration `0008_add_search_trigram_indexes.sql` enables PostgreSQL `pg_trgm` and adds GIN
+indexes for the CMS, event, and blog fields searched by `/api/v1/public/search`. Search remains
+fully local to PostgreSQL; no external indexing service or paid account is required.
 
 ## Production Deployment
 

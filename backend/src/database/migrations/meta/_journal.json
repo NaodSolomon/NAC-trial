@@ -57,6 +57,13 @@
       "when": 1785399817534,
       "tag": "0007_add_demo_content_features",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1785440668439,
+      "tag": "0008_add_search_trigram_indexes",
+      "breakpoints": true
     }
   ]
 }

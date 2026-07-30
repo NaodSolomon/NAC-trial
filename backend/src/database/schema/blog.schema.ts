@@ -23,6 +23,9 @@ export const blogPosts = pgTable(
   (table) => [
     uniqueIndex('blog_posts_slug_language_unique_idx').on(table.slug, table.languageCode),
     index('blog_posts_status_published_idx').on(table.status, table.publishedAt),
+    index('blog_posts_title_trgm_idx').using('gin', table.title.asc().op('gin_trgm_ops')),
+    index('blog_posts_excerpt_trgm_idx').using('gin', table.excerpt.asc().op('gin_trgm_ops')),
+    index('blog_posts_content_trgm_idx').using('gin', table.content.asc().op('gin_trgm_ops')),
   ],
 );
 
