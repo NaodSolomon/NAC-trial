@@ -80,6 +80,36 @@ describe('Application conventions (e2e)', () => {
     expect(trial.responses['409']).toBeDefined();
   });
 
+  it('compresses large API responses when the client accepts gzip', async () => {
+    const fastify = app.getHttpAdapter().getInstance();
+    const compressed = await fastify.inject({
+      method: 'GET',
+      url: '/api/v1/docs/openapi.json',
+      headers: { 'accept-encoding': 'gzip' },
+    });
+    const uncompressed = await fastify.inject({
+      method: 'GET',
+      url: '/api/v1/docs/openapi.json',
+      headers: { 'accept-encoding': 'identity' },
+    });
+
+    expect(compressed.statusCode).toBe(200);
+    expect(compressed.headers['content-encoding']).toBe('gzip');
+    expect(compressed.headers.vary).toContain('accept-encoding');
+    expect(compressed.rawPayload.byteLength).toBeLessThan(uncompressed.rawPayload.byteLength);
+  });
+
+  it('does not spend compression work on small API responses', async () => {
+    const response = await app.getHttpAdapter().getInstance().inject({
+      method: 'GET',
+      url: '/api/v1/system/version',
+      headers: { 'accept-encoding': 'gzip' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-encoding']).toBeUndefined();
+  });
+
   it('passes the unauthenticated API version smoke test', async () => {
     const response = await request(app.getHttpServer()).get('/api/v1/system/version').expect(200);
     expect(response.body.data).toMatchObject({
