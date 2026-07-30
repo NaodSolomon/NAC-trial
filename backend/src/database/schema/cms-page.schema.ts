@@ -58,6 +58,8 @@ export const cmsPages = pgTable(
     index('cms_pages_status_idx').on(table.status),
     index('cms_pages_scheduled_at_idx').on(table.scheduledAt),
     index('cms_pages_created_by_idx').on(table.createdBy),
+    index('cms_pages_title_trgm_idx').using('gin', table.title.asc().op('gin_trgm_ops')),
+    index('cms_pages_content_trgm_idx').using('gin', table.content.asc().op('gin_trgm_ops')),
   ],
 );
 

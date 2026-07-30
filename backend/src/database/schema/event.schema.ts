@@ -42,6 +42,11 @@ export const events = pgTable(
     ),
     index('events_status_language_start_idx').on(table.status, table.languageCode, table.startDate),
     index('events_created_by_idx').on(table.createdBy),
+    index('events_title_trgm_idx').using('gin', table.title.asc().op('gin_trgm_ops')),
+    index('events_description_trgm_idx').using(
+      'gin',
+      table.description.asc().op('gin_trgm_ops'),
+    ),
     check('events_end_after_start_check', sql`${table.endDate} > ${table.startDate}`),
   ],
 );

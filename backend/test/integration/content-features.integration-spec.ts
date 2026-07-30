@@ -4,6 +4,7 @@ import { auditLogs, blogPosts, cmsPages, events, resources } from '../../src/dat
 import { DrizzleBlogRepository } from '../../src/modules/blog/repositories/drizzle-blog.repository';
 import { DrizzleResourceRepository } from '../../src/modules/resources/repositories/drizzle-resource.repository';
 import { SearchService } from '../../src/modules/search/search.service';
+import { DrizzleSearchRepository } from '../../src/modules/search/repositories/drizzle-search.repository';
 import { cleanTestDatabase } from '../helpers/database-cleaner.helper';
 import {
   connectTestPostgres,
@@ -191,7 +192,10 @@ describeWithPostgres('Demonstration content features (PostgreSQL)', () => {
       languageCode: 'en',
       createdBy: ACTOR_ID,
     });
-    const result = await new SearchService(context.db).search({ q: 'support', languageCode: 'en' });
+    const result = await new SearchService(new DrizzleSearchRepository(context.db)).search({
+      q: 'support',
+      languageCode: 'en',
+    });
     expect(result.results.map((item) => item.type)).toEqual(
       expect.arrayContaining(['page', 'event']),
     );

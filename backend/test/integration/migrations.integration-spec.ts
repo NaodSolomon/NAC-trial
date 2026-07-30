@@ -26,6 +26,16 @@ const expectedTables = [
   'volunteer_applications',
 ];
 
+const searchIndexes = [
+  'blog_posts_content_trgm_idx',
+  'blog_posts_excerpt_trgm_idx',
+  'blog_posts_title_trgm_idx',
+  'cms_pages_content_trgm_idx',
+  'cms_pages_title_trgm_idx',
+  'events_description_trgm_idx',
+  'events_title_trgm_idx',
+];
+
 describe('Drizzle migration chain', () => {
   it('has one ordered SQL file for every journal entry', () => {
     const directory = resolve(__dirname, '../../src/database/migrations');
@@ -55,7 +65,24 @@ describe('Drizzle migration chain', () => {
       const migrations = await context.pool.query<{ count: string }>(
         'select count(*) from drizzle.__drizzle_migrations',
       );
-      expect(Number(migrations.rows[0].count)).toBe(8);
+      expect(Number(migrations.rows[0].count)).toBe(9);
+
+      const extension = await context.pool.query<{ exists: boolean }>(
+        `select exists(
+           select 1 from pg_extension where extname = 'pg_trgm'
+         )`,
+      );
+      expect(extension.rows[0].exists).toBe(true);
+
+      const indexes = await context.pool.query<{ indexname: string; indexdef: string }>(
+        `select indexname, indexdef
+         from pg_indexes
+         where schemaname = 'public' and indexname = any($1::text[])
+         order by indexname`,
+        [searchIndexes],
+      );
+      expect(indexes.rows.map((row) => row.indexname)).toEqual(searchIndexes);
+      expect(indexes.rows.every((row) => row.indexdef.includes('gin_trgm_ops'))).toBe(true);
     } finally {
       await context.pool.end();
     }
