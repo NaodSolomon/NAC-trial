@@ -3,9 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import {
   ApiErrorResponseDto,
-  ApiSuccessResponseDto,
-  PaginatedDataDto,
-  PaginationMetaDto,
 } from '../common/dto/api-response.dto';
 import { completeOpenApiContract } from './complete-contract';
 
@@ -19,16 +16,12 @@ export function setupOpenApi(app: INestApplication): void {
       .setTitle('Nehemiah Autism Center API')
       .setDescription('Versioned API for the Nehemiah Autism Center website and administration.')
       .setVersion('1.0')
+      .addServer('/', 'Current host')
       .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'admin-jwt')
       .addApiKey({ type: 'apiKey', in: 'header', name: 'X-Internal-API-Key' }, 'internal-api-key')
       .build(),
     {
-      extraModels: [
-        ApiErrorResponseDto,
-        ApiSuccessResponseDto,
-        PaginatedDataDto,
-        PaginationMetaDto,
-      ],
+      extraModels: [ApiErrorResponseDto],
     },
   );
   completeOpenApiContract(document);

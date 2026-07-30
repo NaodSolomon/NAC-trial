@@ -5,6 +5,7 @@ function documentWithResponses(responses: Record<string, { description: string }
   return {
     openapi: '3.0.0',
     info: { title: 'Test API', version: '1.0' },
+    servers: [{ url: '/' }],
     paths: {
       '/api/v1/auth/refresh': {
         post: {
@@ -30,6 +31,9 @@ describe('completeOpenApiContract', () => {
     expect(responses?.['200']).toBeDefined();
     expect(responses?.['201']).toBeUndefined();
     expect(responses?.['401']).toBeDefined();
+    expect(responses?.['400']).toBeUndefined();
+    expect(responses?.['404']).toBeUndefined();
+    expect(document.paths['/api/v1/auth/refresh']?.post?.security).toEqual([]);
   });
 
   it('reports an operation that has no explicit success response', () => {
