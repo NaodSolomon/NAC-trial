@@ -161,6 +161,7 @@ export class AuthService {
       tokenFamilyId,
       tokenHash: this.tokens.hashToken(tokenPair.refreshToken),
       expiresAt: tokenPair.refreshExpiresAt,
+      lastUsedAt: new Date(),
       ipHash: this.tokens.hashIpAddress(context.ipAddress),
       userAgent: context.userAgent?.slice(0, 512),
     };

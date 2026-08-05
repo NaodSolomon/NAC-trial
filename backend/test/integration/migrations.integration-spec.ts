@@ -65,7 +65,16 @@ describe('Drizzle migration chain', () => {
       const migrations = await context.pool.query<{ count: string }>(
         'select count(*) from drizzle.__drizzle_migrations',
       );
-      expect(Number(migrations.rows[0].count)).toBe(9);
+      expect(Number(migrations.rows[0].count)).toBe(10);
+
+      const sessionIndex = await context.pool.query<{ indexdef: string }>(
+        `select indexdef
+         from pg_indexes
+         where schemaname = 'public'
+           and indexname = 'auth_sessions_active_expires_created_idx'`,
+      );
+      expect(sessionIndex.rows).toHaveLength(1);
+      expect(sessionIndex.rows[0].indexdef).toContain('WHERE (revoked_at IS NULL)');
 
       const extension = await context.pool.query<{ exists: boolean }>(
         `select exists(

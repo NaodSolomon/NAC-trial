@@ -1,4 +1,5 @@
 import { index, pgTable, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { admins } from './admin.schema';
 
 export const authSessions = pgTable(
@@ -36,6 +37,9 @@ export const authSessions = pgTable(
     index('auth_sessions_admin_id_idx').on(table.adminId),
     index('auth_sessions_family_id_idx').on(table.tokenFamilyId),
     index('auth_sessions_expires_at_idx').on(table.expiresAt),
+    index('auth_sessions_active_expires_created_idx')
+      .on(table.expiresAt, table.createdAt)
+      .where(sql`${table.revokedAt} is null`),
   ],
 );
 
