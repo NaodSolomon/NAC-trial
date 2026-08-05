@@ -8,6 +8,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { admins } from './admin.schema';
 import { contentStatusEnum, languageCodeEnum } from './enums';
 
@@ -25,6 +26,10 @@ export const cmsPages = pgTable(
     seoTitle: varchar('seo_title', { length: 70 }),
     seoDescription: varchar('seo_description', { length: 160 }),
     seoImageUrl: varchar('seo_image_url', { length: 2048 }),
+    seoKeywords: text('seo_keywords')
+      .array()
+      .default(sql`'{}'::text[]`)
+      .notNull(),
     createdBy: uuid('created_by')
       .notNull()
       .references(() => admins.id, { onDelete: 'restrict' }),

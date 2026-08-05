@@ -78,6 +78,13 @@
       "when": 1785938687102,
       "tag": "0010_add_password_reset_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1785942272670,
+      "tag": "0011_add_cms_seo_keywords",
+      "breakpoints": true
     }
   ]
 }
