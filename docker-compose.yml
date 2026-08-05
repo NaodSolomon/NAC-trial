@@ -20,6 +20,8 @@ services:
       STORAGE_ENDPOINT: http://minio:9000
       STORAGE_PUBLIC_URL: http://localhost:9000/nehemiah-media
       MAIL_HOST: mailpit
+      PASSWORD_RESET_TTL_MINUTES: ${PASSWORD_RESET_TTL_MINUTES:-20}
+      PASSWORD_RESET_URL: ${PASSWORD_RESET_URL:-http://localhost:3000/admin/reset-password}
       REDIS_HOST: redis
     ports:
       - "8000:8000"

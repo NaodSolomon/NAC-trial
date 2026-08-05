@@ -19,6 +19,7 @@ const expectedTables = [
   'navigation_items',
   'newsletter_subscribers',
   'notification_outbox',
+  'password_reset_tokens',
   'payment_webhook_events',
   'resources',
   'site_settings',
@@ -65,7 +66,7 @@ describe('Drizzle migration chain', () => {
       const migrations = await context.pool.query<{ count: string }>(
         'select count(*) from drizzle.__drizzle_migrations',
       );
-      expect(Number(migrations.rows[0].count)).toBe(10);
+      expect(Number(migrations.rows[0].count)).toBe(11);
 
       const sessionIndex = await context.pool.query<{ indexdef: string }>(
         `select indexdef
@@ -75,6 +76,26 @@ describe('Drizzle migration chain', () => {
       );
       expect(sessionIndex.rows).toHaveLength(1);
       expect(sessionIndex.rows[0].indexdef).toContain('WHERE (revoked_at IS NULL)');
+
+      const resetIndexes = await context.pool.query<{ indexname: string }>(
+        `select indexname
+         from pg_indexes
+         where schemaname = 'public'
+           and indexname = any($1::text[])
+         order by indexname`,
+        [
+          [
+            'password_reset_tokens_admin_id_idx',
+            'password_reset_tokens_expires_at_idx',
+            'password_reset_tokens_token_hash_unique_idx',
+          ],
+        ],
+      );
+      expect(resetIndexes.rows.map((row) => row.indexname)).toEqual([
+        'password_reset_tokens_admin_id_idx',
+        'password_reset_tokens_expires_at_idx',
+        'password_reset_tokens_token_hash_unique_idx',
+      ]);
 
       const extension = await context.pool.query<{ exists: boolean }>(
         `select exists(

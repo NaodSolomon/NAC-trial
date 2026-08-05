@@ -47,6 +47,8 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   MAIL_HOST: string;
   MAIL_PORT: number;
   MAIL_FROM: string;
+  PASSWORD_RESET_TTL_MINUTES: number;
+  PASSWORD_RESET_URL: string;
   REDIS_HOST: string;
   REDIS_PORT: number;
   REDIS_CONNECT_TIMEOUT_MS: number;
@@ -200,7 +202,12 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
   );
   const paypalEnabled = parseBoolean(raw.PAYPAL_ENABLED);
   const paymentsEnabled = parseBoolean(raw.PAYMENTS_ENABLED);
-  const paymentDriver = parseChoice(raw.PAYMENT_DRIVER, 'PAYMENT_DRIVER', ['fake', 'paypal'], 'fake');
+  const paymentDriver = parseChoice(
+    raw.PAYMENT_DRIVER,
+    'PAYMENT_DRIVER',
+    ['fake', 'paypal'],
+    'fake',
+  );
   if (paymentDriver === 'paypal' && paymentsEnabled && !paypalEnabled) {
     throw new Error('PAYPAL_ENABLED must be true when real PayPal payments are enabled');
   }
@@ -321,6 +328,18 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     MAIL_HOST: String(raw.MAIL_HOST ?? 'mailpit'),
     MAIL_PORT: parsePort(raw.MAIL_PORT, 'MAIL_PORT', 1025),
     MAIL_FROM: String(raw.MAIL_FROM ?? 'noreply@nehemiah.local'),
+    PASSWORD_RESET_TTL_MINUTES: parseBoundedInteger(
+      raw.PASSWORD_RESET_TTL_MINUTES,
+      'PASSWORD_RESET_TTL_MINUTES',
+      20,
+      15,
+      30,
+    ),
+    PASSWORD_RESET_URL: validateUrl(
+      raw.PASSWORD_RESET_URL,
+      'PASSWORD_RESET_URL',
+      'http://localhost:3000/admin/reset-password',
+    ),
     REDIS_HOST: String(raw.REDIS_HOST ?? 'redis'),
     REDIS_PORT: parsePort(raw.REDIS_PORT, 'REDIS_PORT', 6379),
     REDIS_CONNECT_TIMEOUT_MS: parseBoundedInteger(
