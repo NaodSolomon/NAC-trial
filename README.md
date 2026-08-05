@@ -640,6 +640,20 @@ use HTTPS or the configured local MinIO location. The CMS update and its
 invalidate the CMS cache. Migration `0011_add_cms_seo_keywords.sql` adds the authoritative
 typed `seo_keywords` array without rewriting any previous migration or snapshot.
 
+### Step 26: PostgreSQL search-index rebuild
+
+`SUPER_ADMIN` can run `POST /api/v1/admin/system/search/reindex` to rebuild the seven trigram
+indexes used by public CMS, event, and blog search. The endpoint accepts no table, index, or
+SQL input; its allowlist is compiled into the maintenance repository. Each index is rebuilt
+with `REINDEX INDEX CONCURRENTLY`, allowing normal searches to continue during maintenance.
+
+One dedicated PostgreSQL pool client owns both a session advisory lock and the rebuild
+commands. A second request receives `409 Conflict` while that lock is held. After all seven
+indexes succeed, the service writes a `REINDEX / SEARCH` audit event containing the fixed
+index list, start/completion timestamps, and duration. Failed or conflicting rebuilds are not
+recorded as successful. No migration is added for this step because migration
+`0008_add_search_trigram_indexes.sql` already created the required indexes.
+
 ## Production Deployment
 
 ```bash
