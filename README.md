@@ -190,6 +190,8 @@ The platform has no public user registration. Administrator authentication uses:
 | POST   | `/api/v1/auth/refresh` | Rotate a valid refresh token    |
 | POST   | `/api/v1/auth/logout`  | Revoke the supplied session     |
 | GET    | `/api/v1/auth/me`      | Return the current administrator|
+| GET    | `/api/v1/admin/system/sessions` | List administrator sessions (`SUPER_ADMIN`) |
+| POST   | `/api/v1/admin/system/sessions/revoke` | Revoke one session or all sessions for an administrator (`SUPER_ADMIN`) |
 
 To create the first super administrator, set `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL`, and `SEED_ADMIN_PASSWORD`, then run `pnpm db:seed` from `backend/`. Seed credentials are never given default values, and an existing administrator is never overwritten.
 
@@ -584,12 +586,25 @@ audit record in the same PostgreSQL transaction as the content mutation.
 
 Migration `0007_add_demo_content_features.sql` adds blog posts, resources, and CMS SEO
 columns. Earlier migrations and snapshots remain unchanged. External search services, reminder
-emails, session dashboards, recurring donations, MFA/OAuth, and paid monitoring remain
+emails, recurring donations, MFA/OAuth, and paid monitoring remain
 explicitly deferred.
 
 Migration `0008_add_search_trigram_indexes.sql` enables PostgreSQL `pg_trgm` and adds GIN
 indexes for the CMS, event, and blog fields searched by `/api/v1/public/search`. Search remains
 fully local to PostgreSQL; no external indexing service or paid account is required.
+
+### Step 23: Administrator session dashboard
+
+Super administrators can inspect active, revoked, expired, or all administrator sessions with
+pagination and optional administrator filtering. Responses expose a short IP-hash fingerprint
+for device comparison, but never expose refresh-token hashes, raw tokens, raw IP addresses, or
+token-family identifiers.
+
+The revoke endpoint accepts exactly one `sessionId` or `adminId`. A session target terminates
+one device; an administrator target terminates every non-revoked session for that account.
+Successful changes and their `REVOKE` or `REVOKE_ALL` audit records are committed in one
+PostgreSQL transaction. Migration `0009_add_auth_session_active_index.sql` adds the partial
+index used by active-session dashboard queries.
 
 ## Production Deployment
 

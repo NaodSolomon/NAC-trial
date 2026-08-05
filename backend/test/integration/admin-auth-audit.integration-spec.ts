@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import { randomUUID } from 'node:crypto';
 import { admins, auditLogs, authSessions } from '../../src/database/schema';
 import { DrizzleAdminManagementRepository } from '../../src/modules/admins/repositories/drizzle-admin-management.repository';
 import { DrizzleAdminRepository } from '../../src/modules/admins/repositories/drizzle-admin.repository';
@@ -166,5 +167,144 @@ describeWithPostgres('Administrator, authentication, and audit repositories (Pos
       metadata: {},
     });
     expect(JSON.stringify(logout)).not.toContain(session.tokenHash);
+  });
+
+  it('lists safe session projections with pagination and status filters', async () => {
+    const active = await sessionsRepository.create(
+      authSessionFactory({
+        adminId: ACTOR_ID,
+        tokenHash: 'd'.repeat(64),
+        ipHash: '1234567890abcdef'.repeat(4),
+        expiresAt: new Date(Date.now() + 86_400_000),
+        createdAt: new Date(Date.now() - 1_000),
+      }),
+    );
+    await sessionsRepository.create(
+      authSessionFactory({
+        id: 'a6d92fb8-669c-41c0-93ac-d534dc0f1561',
+        adminId: ACTOR_ID,
+        tokenHash: 'e'.repeat(64),
+        expiresAt: new Date(Date.now() - 86_400_000),
+      }),
+    );
+
+    const listed = await sessionsRepository.list({
+      page: 1,
+      limit: 1,
+      offset: 0,
+      adminId: ACTOR_ID,
+      status: 'active',
+    });
+
+    expect(listed).toMatchObject({
+      data: [
+        {
+          id: active.id,
+          admin: { id: ACTOR_ID, email: 'admin@integration.test' },
+          ipFingerprint: '1234567890ab',
+          status: 'ACTIVE',
+        },
+      ],
+      meta: { total: 1, page: 1, limit: 1, totalPages: 1 },
+    });
+    expect(JSON.stringify(listed)).not.toContain(active.tokenHash);
+    expect(JSON.stringify(listed)).not.toContain(active.tokenFamilyId);
+    expect(JSON.stringify(listed)).not.toContain(active.ipHash!);
+
+    await expect(
+      sessionsRepository.list({ page: 1, limit: 20, offset: 0, status: 'expired' }),
+    ).resolves.toMatchObject({ meta: { total: 1 } });
+    await expect(
+      sessionsRepository.list({ page: 1, limit: 20, offset: 0, status: 'all' }),
+    ).resolves.toMatchObject({ meta: { total: 2 } });
+
+    await sessionsRepository.revokeSession(active.id, ACTOR_ID);
+    await expect(
+      sessionsRepository.list({ page: 1, limit: 20, offset: 0, status: 'revoked' }),
+    ).resolves.toMatchObject({
+      data: [expect.objectContaining({ id: active.id, status: 'REVOKED' })],
+      meta: { total: 1 },
+    });
+  });
+
+  it('revokes one session and inserts its audit record atomically', async () => {
+    const session = await sessionsRepository.create(
+      authSessionFactory({
+        adminId: ACTOR_ID,
+        tokenHash: 'f'.repeat(64),
+        expiresAt: new Date(Date.now() + 86_400_000),
+      }),
+    );
+
+    await expect(sessionsRepository.revokeSession(session.id, ACTOR_ID)).resolves.toBe('revoked');
+    await expect(sessionsRepository.revokeSession(session.id, ACTOR_ID)).resolves.toBe(
+      'already_revoked',
+    );
+    await expect(sessionsRepository.revokeSession(randomUUID(), ACTOR_ID)).resolves.toBe(
+      'not_found',
+    );
+
+    const [audit] = await context.db.select().from(auditLogs).where(eq(auditLogs.action, 'REVOKE'));
+    expect(audit).toMatchObject({
+      adminId: ACTOR_ID,
+      entityType: 'AUTH_SESSION',
+      entityId: session.id,
+    });
+  });
+
+  it('rolls back a session revocation when the audit insert fails', async () => {
+    const session = await sessionsRepository.create(
+      authSessionFactory({
+        adminId: ACTOR_ID,
+        tokenHash: '1'.repeat(64),
+        expiresAt: new Date(Date.now() + 86_400_000),
+      }),
+    );
+
+    await expectPostgresError(
+      sessionsRepository.revokeSession(session.id, '00000000-0000-4000-8000-000000000099'),
+      '23503',
+    );
+    await expect(sessionsRepository.findById(session.id)).resolves.toMatchObject({
+      revokedAt: null,
+    });
+    const audits = await context.db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.entityId, session.id));
+    expect(audits).toHaveLength(0);
+  });
+
+  it('revokes every non-revoked session for an administrator with one audit event', async () => {
+    await sessionsRepository.create(
+      authSessionFactory({
+        adminId: ACTOR_ID,
+        tokenHash: '2'.repeat(64),
+        expiresAt: new Date(Date.now() + 86_400_000),
+      }),
+    );
+    await sessionsRepository.create(
+      authSessionFactory({
+        id: '739d2297-1ea3-4a0d-9e56-54acddb3b490',
+        adminId: ACTOR_ID,
+        tokenHash: '3'.repeat(64),
+        expiresAt: new Date(Date.now() + 86_400_000),
+      }),
+    );
+
+    await expect(sessionsRepository.revokeAllForAdmin(ACTOR_ID, ACTOR_ID)).resolves.toBe(2);
+    await expect(sessionsRepository.revokeAllForAdmin(ACTOR_ID, ACTOR_ID)).resolves.toBe(0);
+
+    const sessions = await context.db
+      .select()
+      .from(authSessions)
+      .where(eq(authSessions.adminId, ACTOR_ID));
+    expect(sessions.every((session) => session.revokedAt instanceof Date)).toBe(true);
+    const audits = await context.db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.action, 'REVOKE_ALL'));
+    expect(audits).toHaveLength(1);
+    expect(audits[0]).toMatchObject({ entityType: 'AUTH_SESSION', entityId: ACTOR_ID });
   });
 });

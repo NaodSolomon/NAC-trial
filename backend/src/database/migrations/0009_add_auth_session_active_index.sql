@@ -1,0 +1,1 @@
+CREATE INDEX "auth_sessions_active_expires_created_idx" ON "auth_sessions" USING btree ("expires_at","created_at") WHERE "auth_sessions"."revoked_at" is null;

@@ -55,6 +55,9 @@ describe('AuthService', () => {
       rotate: jest.fn(),
       revokeByTokenHash: jest.fn(),
       revokeFamily: jest.fn(),
+      list: jest.fn(),
+      revokeSession: jest.fn(),
+      revokeAllForAdmin: jest.fn(),
     };
     tokens = {
       newIdentifier: jest
