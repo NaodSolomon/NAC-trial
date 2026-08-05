@@ -624,6 +624,22 @@ token-free `PASSWORD_RESET / ADMIN` audit event. If email delivery fails, the ex
 issued token is deleted. Migration `0010_add_password_reset_tokens.sql` creates the token table,
 foreign key, unique hash constraint, and administrator/expiration indexes.
 
+### Step 25: Dedicated SEO endpoints
+
+SEO remains part of each CMS page rather than becoming a second content store. Public clients
+can request `GET /api/v1/public/seo/:slug?languageCode=en`; the response contains only the
+slug, language, resolved SEO title, description, normalized keyword array, and image URL for a
+currently published page. Draft content and general CMS metadata are never returned. When no
+SEO title exists, the page title is used; missing keywords return an empty array.
+
+`SUPER_ADMIN` and `CONTENT_EDITOR` roles can update one language variant through
+`PATCH /api/v1/admin/seo/:slug`. Titles are limited to 70 characters, descriptions to 160,
+and keyword arrays to ten unique, lowercase entries of at most 40 characters. Image URLs must
+use HTTPS or the configured local MinIO location. The CMS update and its
+`UPDATE_SEO / CMS_PAGE` audit event share one PostgreSQL transaction, and successful changes
+invalidate the CMS cache. Migration `0011_add_cms_seo_keywords.sql` adds the authoritative
+typed `seo_keywords` array without rewriting any previous migration or snapshot.
+
 ## Production Deployment
 
 ```bash

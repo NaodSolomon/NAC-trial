@@ -32,6 +32,7 @@ import { CacheModule } from './modules/cache/cache.module';
 import { BlogModule } from './modules/blog/blog.module';
 import { SearchModule } from './modules/search/search.module';
 import { ResourcesModule } from './modules/resources/resources.module';
+import { SeoModule } from './modules/seo/seo.module';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { ResourcesModule } from './modules/resources/resources.module';
     BlogModule,
     SearchModule,
     ResourcesModule,
+    SeoModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

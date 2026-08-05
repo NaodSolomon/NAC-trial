@@ -66,7 +66,7 @@ describe('Drizzle migration chain', () => {
       const migrations = await context.pool.query<{ count: string }>(
         'select count(*) from drizzle.__drizzle_migrations',
       );
-      expect(Number(migrations.rows[0].count)).toBe(11);
+      expect(Number(migrations.rows[0].count)).toBe(12);
 
       const sessionIndex = await context.pool.query<{ indexdef: string }>(
         `select indexdef
@@ -96,6 +96,18 @@ describe('Drizzle migration chain', () => {
         'password_reset_tokens_expires_at_idx',
         'password_reset_tokens_token_hash_unique_idx',
       ]);
+
+      const seoKeywordsColumn = await context.pool.query<{
+        data_type: string;
+        udt_name: string;
+      }>(
+        `select data_type, udt_name
+         from information_schema.columns
+         where table_schema = 'public'
+           and table_name = 'cms_pages'
+           and column_name = 'seo_keywords'`,
+      );
+      expect(seoKeywordsColumn.rows).toEqual([{ data_type: 'ARRAY', udt_name: '_text' }]);
 
       const extension = await context.pool.query<{ exists: boolean }>(
         `select exists(

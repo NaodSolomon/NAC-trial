@@ -1,0 +1,1 @@
+ALTER TABLE "cms_pages" ADD COLUMN "seo_keywords" text[] DEFAULT '{}'::text[] NOT NULL;
