@@ -42,7 +42,7 @@ export function createDatabasePool(config: ConfigService): Pool {
       inject: [DATABASE_POOL],
     },
   ],
-  exports: [DRIZZLE],
+  exports: [DRIZZLE, DATABASE_POOL],
 })
 export class DrizzleModule implements OnApplicationShutdown {
   constructor(@Inject(DATABASE_POOL) private readonly pool: Pool) {}
