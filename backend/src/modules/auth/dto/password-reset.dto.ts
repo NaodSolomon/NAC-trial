@@ -28,3 +28,22 @@ export class PasswordResetConfirmDto {
   })
   newPassword!: string;
 }
+
+export class PasswordResetMessageDto {
+  @ApiProperty({ example: 'If the account exists, password reset instructions have been sent.' })
+  message!: string;
+}
+
+export class PasswordResetApiResponseDto {
+  @ApiProperty({ example: true })
+  success!: true;
+
+  @ApiProperty({ type: PasswordResetMessageDto })
+  data!: PasswordResetMessageDto;
+
+  @ApiProperty({ example: 200 })
+  statusCode!: number;
+
+  @ApiProperty({ format: 'date-time' })
+  timestamp!: string;
+}
