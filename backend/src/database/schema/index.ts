@@ -1,6 +1,7 @@
 export * from './enums';
 export * from './admin.schema';
 export * from './auth-session.schema';
+export * from './password-reset-token.schema';
 export * from './audit-log.schema';
 export * from './cms-page.schema';
 export * from './navigation.schema';

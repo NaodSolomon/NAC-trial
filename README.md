@@ -190,6 +190,8 @@ The platform has no public user registration. Administrator authentication uses:
 | POST   | `/api/v1/auth/refresh` | Rotate a valid refresh token    |
 | POST   | `/api/v1/auth/logout`  | Revoke the supplied session     |
 | GET    | `/api/v1/auth/me`      | Return the current administrator|
+| POST   | `/api/v1/auth/password-reset/request` | Request generic reset instructions |
+| POST   | `/api/v1/auth/password-reset/confirm` | Consume a single-use reset token |
 | GET    | `/api/v1/admin/system/sessions` | List administrator sessions (`SUPER_ADMIN`) |
 | POST   | `/api/v1/admin/system/sessions/revoke` | Revoke one session or all sessions for an administrator (`SUPER_ADMIN`) |
 
@@ -605,6 +607,22 @@ one device; an administrator target terminates every non-revoked session for tha
 Successful changes and their `REVOKE` or `REVOKE_ALL` audit records are committed in one
 PostgreSQL transaction. Migration `0009_add_auth_session_active_index.sql` adds the partial
 index used by active-session dashboard queries.
+
+### Step 24: Secure password reset
+
+Password recovery does not reveal whether an administrator email exists. Reset requests always
+return the same public message and are limited to three attempts per IP every 15 minutes. For
+an active account, the backend sends a Mailpit message containing a frontend reset URL whose
+token expires after 20 minutes.
+
+Only a SHA-256 token hash is stored in `password_reset_tokens`; the raw 256-bit token exists
+only in the email URL. Issuing a new token deletes earlier unused tokens. Confirmation claims
+the token with one conditional PostgreSQL update, so expired, reused, invalid, and concurrent
+losing requests receive the same generic error. The confirmation transaction changes the
+bcrypt password hash, clears login lockout state, revokes all existing sessions, and inserts a
+token-free `PASSWORD_RESET / ADMIN` audit event. If email delivery fails, the exact newly
+issued token is deleted. Migration `0010_add_password_reset_tokens.sql` creates the token table,
+foreign key, unique hash constraint, and administrator/expiration indexes.
 
 ## Production Deployment
 

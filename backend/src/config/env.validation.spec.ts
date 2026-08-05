@@ -17,6 +17,8 @@ describe('validateEnvironment', () => {
       TRIAL_MODE: true,
       RATE_LIMIT_TTL_MS: 60_000,
       RATE_LIMIT_REQUESTS: 100,
+      PASSWORD_RESET_TTL_MINUTES: 20,
+      PASSWORD_RESET_URL: 'http://localhost:3000/admin/reset-password',
     });
   });
 
@@ -124,6 +126,15 @@ describe('validateEnvironment', () => {
     );
     expect(() => validateEnvironment({ RATE_LIMIT_TTL_MS: 999 })).toThrow(
       'RATE_LIMIT_TTL_MS must be between 1000 and 3600000',
+    );
+  });
+
+  it('restricts password-reset expiration to the documented 15–30 minute range', () => {
+    expect(() => validateEnvironment({ PASSWORD_RESET_TTL_MINUTES: 14 })).toThrow(
+      'PASSWORD_RESET_TTL_MINUTES must be between 15 and 30',
+    );
+    expect(() => validateEnvironment({ PASSWORD_RESET_TTL_MINUTES: 31 })).toThrow(
+      'PASSWORD_RESET_TTL_MINUTES must be between 15 and 30',
     );
   });
 
