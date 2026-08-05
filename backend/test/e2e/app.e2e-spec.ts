@@ -79,11 +79,34 @@ describe('Application conventions (e2e)', () => {
     });
 
     const webhook = response.body.paths['/api/v1/webhooks/paypal'].post;
-    expect(webhook.parameters.filter((parameter: { in: string }) => parameter.in === 'header')).toHaveLength(5);
+    expect(
+      webhook.parameters.filter((parameter: { in: string }) => parameter.in === 'header'),
+    ).toHaveLength(5);
 
     const trial = response.body.paths['/api/v1/test/payments/{id}/confirm'].post;
     expect(trial.tags).toContain('Trial payment simulation (never production)');
     expect(trial.responses['409']).toBeDefined();
+
+    const resetRequest = response.body.paths['/api/v1/auth/password-reset/request'].post;
+    expect(resetRequest.security).toEqual([]);
+    expect(resetRequest.responses['200'].content['application/json'].schema).toEqual({
+      $ref: '#/components/schemas/PasswordResetApiResponseDto',
+    });
+    expect(resetRequest.responses['429']).toBeDefined();
+
+    const sessions = response.body.paths['/api/v1/admin/system/sessions'].get;
+    expect(sessions.security).toEqual([{ 'admin-jwt': [] }]);
+    expect(sessions.responses['401']).toBeDefined();
+    expect(sessions.responses['403']).toBeDefined();
+
+    const publicSeo = response.body.paths['/api/v1/public/seo/{slug}'].get;
+    const adminSeo = response.body.paths['/api/v1/admin/seo/{slug}'].patch;
+    expect(publicSeo.security).toEqual([]);
+    expect(adminSeo.security).toEqual([{ 'admin-jwt': [] }]);
+
+    const reindex = response.body.paths['/api/v1/admin/system/search/reindex'].post;
+    expect(reindex.security).toEqual([{ 'admin-jwt': [] }]);
+    expect(reindex.responses['409']).toBeDefined();
   });
 
   it('compresses large API responses when the client accepts gzip', async () => {
@@ -106,11 +129,14 @@ describe('Application conventions (e2e)', () => {
   });
 
   it('does not spend compression work on small API responses', async () => {
-    const response = await app.getHttpAdapter().getInstance().inject({
-      method: 'GET',
-      url: '/api/v1/system/version',
-      headers: { 'accept-encoding': 'gzip' },
-    });
+    const response = await app
+      .getHttpAdapter()
+      .getInstance()
+      .inject({
+        method: 'GET',
+        url: '/api/v1/system/version',
+        headers: { 'accept-encoding': 'gzip' },
+      });
 
     expect(response.statusCode).toBe(200);
     expect(response.headers['content-encoding']).toBeUndefined();

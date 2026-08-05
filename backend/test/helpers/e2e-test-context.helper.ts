@@ -2,7 +2,10 @@ import { INestApplication } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'node:crypto';
 import { admins, cmsPages, siteSettings } from '../../src/database/schema';
-import { ObjectStorage, OBJECT_STORAGE } from '../../src/modules/media/interfaces/object-storage.interface';
+import {
+  ObjectStorage,
+  OBJECT_STORAGE,
+} from '../../src/modules/media/interfaces/object-storage.interface';
 import {
   PaymentGateway,
   PAYMENT_GATEWAY,
@@ -22,12 +25,11 @@ export interface E2eActors {
   finance: { id: string; email: string };
 }
 
-export interface E2eTestContext extends PostgresTestContext {
+interface BaseE2eTestContext extends PostgresTestContext {
   app: INestApplication;
   actors: E2eActors;
   storage: jest.Mocked<ObjectStorage>;
   gateway: jest.Mocked<PaymentGateway>;
-  mailer: jest.Mocked<Mailer>;
   cache: {
     ping: jest.Mock;
     remember: jest.Mock;
@@ -36,7 +38,33 @@ export interface E2eTestContext extends PostgresTestContext {
   };
 }
 
+export interface E2eTestContext extends BaseE2eTestContext {
+  mailer: jest.Mocked<Mailer>;
+}
+
+export type MailpitE2eTestContext = BaseE2eTestContext;
+
 export async function createE2eTestContext(): Promise<E2eTestContext> {
+  const mailer: jest.Mocked<Mailer> = { send: jest.fn().mockResolvedValue(undefined) };
+  const context = await createBaseE2eTestContext(mailer);
+  return { ...context, mailer };
+}
+
+export async function createMailpitE2eTestContext(): Promise<MailpitE2eTestContext> {
+  const previousHost = process.env.MAIL_HOST;
+  const previousPort = process.env.MAIL_PORT;
+  process.env.MAIL_HOST = process.env.TEST_MAIL_HOST ?? '127.0.0.1';
+  process.env.MAIL_PORT = process.env.TEST_MAIL_PORT ?? '1026';
+
+  try {
+    return await createBaseE2eTestContext();
+  } finally {
+    restoreEnvironment('MAIL_HOST', previousHost);
+    restoreEnvironment('MAIL_PORT', previousPort);
+  }
+}
+
+async function createBaseE2eTestContext(mailer?: jest.Mocked<Mailer>): Promise<BaseE2eTestContext> {
   const databaseUrl = requireDedicatedTestDatabase();
   const postgres = await connectTestPostgres();
   await cleanTestDatabase(postgres);
@@ -124,7 +152,6 @@ export async function createE2eTestContext(): Promise<E2eTestContext> {
       status: 'CONFIRMED' as const,
     })),
   };
-  const mailer: jest.Mocked<Mailer> = { send: jest.fn().mockResolvedValue(undefined) };
   const cache = {
     ping: jest.fn().mockResolvedValue(true),
     remember: jest.fn(async (_namespace, _key, _ttl, loader) => loader()),
@@ -133,21 +160,27 @@ export async function createE2eTestContext(): Promise<E2eTestContext> {
   };
   const app = await createTestApp({
     databaseUrl,
-    configureModule: (builder) =>
-      builder
+    configureModule: (builder) => {
+      let configured = builder
         .overrideProvider(OBJECT_STORAGE)
         .useValue(storage)
         .overrideProvider(PAYMENT_GATEWAY)
         .useValue(gateway)
-        .overrideProvider(MAILER)
-        .useValue(mailer)
         .overrideProvider(CACHE)
-        .useValue(cache as unknown as ApplicationCache),
+        .useValue(cache as unknown as ApplicationCache);
+      if (mailer) configured = configured.overrideProvider(MAILER).useValue(mailer);
+      return configured;
+    },
   });
-  return { ...postgres, app, actors, storage, gateway, mailer, cache };
+  return { ...postgres, app, actors, storage, gateway, cache };
 }
 
-export async function closeE2eTestContext(context: E2eTestContext): Promise<void> {
+export async function closeE2eTestContext(context: BaseE2eTestContext): Promise<void> {
   await context.app.close();
   await context.pool.end();
+}
+
+function restoreEnvironment(name: string, value: string | undefined): void {
+  if (value === undefined) delete process.env[name];
+  else process.env[name] = value;
 }

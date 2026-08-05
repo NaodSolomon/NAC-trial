@@ -23,12 +23,20 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U nehemiah_test -d nehemiah_test"
           --health-interval 5s --health-timeout 5s --health-retries 10
+      mailpit:
+        image: axllent/mailpit:latest
+        ports:
+          - 1025:1025
+          - 8025:8025
     defaults:
       run:
         working-directory: backend
     env:
       NODE_ENV: test
       TEST_DATABASE_URL: postgresql://nehemiah_test:nehemiah_test@localhost:5432/nehemiah_test
+      TEST_MAIL_HOST: localhost
+      TEST_MAIL_PORT: 1025
+      TEST_MAILPIT_API_URL: http://localhost:8025
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

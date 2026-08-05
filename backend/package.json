@@ -11,6 +11,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:e2e": "jest --config test/e2e/jest-e2e.json",
+    "test:e2e:security": "jest --config test/e2e/jest-e2e.json --runInBand test/e2e/security-regression.e2e-spec.ts",
     "test:integration": "ts-node test/helpers/report-integration-environment.ts && jest --config test/integration/jest-integration.json --runInBand",
     "test:ci": "pnpm lint && pnpm test:coverage --runInBand && pnpm test:e2e --runInBand && pnpm test:integration && pnpm db:check && pnpm build",
     "db:generate": "drizzle-kit generate",
@@ -72,7 +73,9 @@
   },
   "pnpm": {
     "overrides": {
-      "fast-uri@<3.1.4": "3.1.4",
+      "fast-uri@<3.1.5": "3.1.5",
+      "fast-uri@>=4.0.0 <4.1.2": "4.1.2",
+      "brace-expansion@>=4.0.0 <5.0.9": "5.0.9",
       "find-my-way@<9.7.0": "9.7.0",
       "js-yaml@>=5.0.0 <5.2.2": "5.2.2"
     }

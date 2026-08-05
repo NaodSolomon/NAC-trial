@@ -35,7 +35,7 @@ import { AdminPrincipal } from '../interfaces/auth.types';
 import { AdminSessionsService } from '../services/admin-sessions.service';
 
 @ApiTags('Administrator sessions')
-@ApiBearerAuth()
+@ApiBearerAuth('admin-jwt')
 @Controller('admin/system/sessions')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('SUPER_ADMIN')

@@ -421,8 +421,9 @@ Step 14 formalizes the release pipeline:
 - `pnpm test:e2e` boots the real Fastify application against the dedicated PostgreSQL test
   database. It verifies successful JWT login, refresh rotation, logout and revocation,
   role boundaries, public-data privacy, every implemented vertical slice, CORS, rate limits,
-  request limits, security headers, OpenAPI, and smoke behavior. Object storage and PayPal
-  are deterministic in-process simulations; no paid or external service is contacted.
+  request limits, security headers, OpenAPI, and smoke behavior. Object storage and payments
+  are deterministic simulations; the combined security gate uses only the local Mailpit
+  container and never contacts a paid or hosted service.
 - `pnpm test:integration` applies every Drizzle migration to PostgreSQL and exercises real
   repository queries when `TEST_DATABASE_URL` is configured. The database-dependent suite
   prints an explicit warning and skips locally when that variable is absent; CI always
@@ -444,6 +445,8 @@ $env:TEST_DATABASE_URL="postgresql://nehemiah_test:nehemiah_test@localhost:5434/
 cd backend
 pnpm test:integration
 pnpm test:e2e
+# Run only the Step 27 cross-feature security journey when iterating on these four slices.
+pnpm test:e2e:security
 docker compose -f ../docker-compose.test.yml down
 ```
 
@@ -653,6 +656,28 @@ indexes succeed, the service writes a `REINDEX / SEARCH` audit event containing 
 index list, start/completion timestamps, and duration. Failed or conflicting rebuilds are not
 recorded as successful. No migration is added for this step because migration
 `0008_add_search_trigram_indexes.sql` already created the required indexes.
+
+### Step 27: Combined security and regression verification
+
+`pnpm test:e2e:security` runs one continuous controller-level journey across Steps 23–26. It
+logs a super administrator in from two simulated devices, lists and revokes one session,
+checks both access- and refresh-token rejection, retrieves a real password-reset message from
+the disposable Mailpit container, changes the password, and proves all remaining sessions are
+revoked. The recovered administrator then updates SEO on a draft page, verifies the draft is
+private, publishes it, rebuilds the seven PostgreSQL search indexes, confirms public search
+still finds the page, and inspects the associated audit records for secret leakage.
+
+The standard `docker-compose.test.yml` profile supplies only disposable PostgreSQL and Mailpit
+services. `TEST_MAIL_HOST`, `TEST_MAIL_PORT`, and `TEST_MAILPIT_API_URL` identify those
+host-side test endpoints; they are separate from the application container's normal
+`MAIL_HOST` setting. GitHub Actions provides the same two free services before running the
+canonical `pnpm test:ci` gate. OpenAPI assertions explicitly cover public password recovery,
+super-administrator session management, public/admin SEO, and protected search maintenance.
+
+This completes the JWT-based trial backend scope. Better Auth remains a future alternative
+authentication implementation, not a second active authentication stack. Real PayPal,
+Telebirr, and CBE collection also remains disabled; trial donations continue to use the fake
+gateway and never request or store card or bank credentials.
 
 ## Production Deployment
 
