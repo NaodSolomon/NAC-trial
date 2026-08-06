@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" fill="none">
+  <path d="M15 44 Q30 18 45 44" stroke="#6eb544" stroke-width="3" fill="none"/>
+  <path d="M25 44 Q35 28 45 44" stroke="#333" stroke-width="2" fill="none"/>
+  <line x1="30" y1="44" x2="30" y2="58" stroke="#6eb544" stroke-width="2.5"/>
+  <text x="56" y="36" font-family="Georgia, serif" font-size="16" font-weight="bold" fill="#333">Horizon</text>
+  <text x="56" y="54" font-family="Georgia, serif" font-size="13" fill="#777">Charity</text>
+</svg>

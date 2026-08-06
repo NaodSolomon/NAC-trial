@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" fill="none">
+  <polygon points="30,18 42,30 42,50 30,62 18,50 18,30" stroke="#6eb544" stroke-width="2.5" fill="none"/>
+  <circle cx="30" cy="40" r="6" fill="#6eb544"/>
+  <text x="52" y="36" font-family="Arial, sans-serif" font-size="17" font-weight="bold" fill="#333">Beacon</text>
+  <text x="52" y="54" font-family="Arial, sans-serif" font-size="12" fill="#888">IMPACT</text>
+</svg>
