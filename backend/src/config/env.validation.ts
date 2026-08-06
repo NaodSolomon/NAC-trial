@@ -47,6 +47,9 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   MAIL_HOST: string;
   MAIL_PORT: number;
   MAIL_FROM: string;
+  MAIL_CONNECTION_TIMEOUT_MS: number;
+  MAIL_GREETING_TIMEOUT_MS: number;
+  MAIL_SOCKET_TIMEOUT_MS: number;
   PASSWORD_RESET_TTL_MINUTES: number;
   PASSWORD_RESET_URL: string;
   REDIS_HOST: string;
@@ -352,6 +355,27 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     MAIL_HOST: String(raw.MAIL_HOST ?? 'mailpit'),
     MAIL_PORT: parsePort(raw.MAIL_PORT, 'MAIL_PORT', 1025),
     MAIL_FROM: String(raw.MAIL_FROM ?? 'noreply@nehemiah.local'),
+    MAIL_CONNECTION_TIMEOUT_MS: parseBoundedInteger(
+      raw.MAIL_CONNECTION_TIMEOUT_MS,
+      'MAIL_CONNECTION_TIMEOUT_MS',
+      3_000,
+      100,
+      60_000,
+    ),
+    MAIL_GREETING_TIMEOUT_MS: parseBoundedInteger(
+      raw.MAIL_GREETING_TIMEOUT_MS,
+      'MAIL_GREETING_TIMEOUT_MS',
+      3_000,
+      100,
+      60_000,
+    ),
+    MAIL_SOCKET_TIMEOUT_MS: parseBoundedInteger(
+      raw.MAIL_SOCKET_TIMEOUT_MS,
+      'MAIL_SOCKET_TIMEOUT_MS',
+      10_000,
+      100,
+      120_000,
+    ),
     PASSWORD_RESET_TTL_MINUTES: parseBoundedInteger(
       raw.PASSWORD_RESET_TTL_MINUTES,
       'PASSWORD_RESET_TTL_MINUTES',

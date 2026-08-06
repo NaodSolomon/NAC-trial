@@ -627,6 +627,13 @@ token-free `PASSWORD_RESET / ADMIN` audit event. If email delivery fails, the ex
 issued token is deleted. Migration `0010_add_password_reset_tokens.sql` creates the token table,
 foreign key, unique hash constraint, and administrator/expiration indexes.
 
+Local SMTP delivery uses Nodemailer rather than a hand-written socket parser, so fragmented and
+multiline SMTP responses are handled by a maintained protocol implementation. Connection,
+greeting, and idle-socket deadlines are configured independently with
+`MAIL_CONNECTION_TIMEOUT_MS`, `MAIL_GREETING_TIMEOUT_MS`, and `MAIL_SOCKET_TIMEOUT_MS`.
+File- and URL-based message attachments are disabled; current reset and simulated-receipt emails
+remain plain-text messages delivered only to the configured local Mailpit service.
+
 ### Step 25: Dedicated SEO endpoints
 
 SEO remains part of each CMS page rather than becoming a second content store. Public clients
