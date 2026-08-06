@@ -1,8 +1,8 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-sans: 'Open Sans', sans-serif;
-  --font-serif: 'Trirong', serif;
+  --font-sans: 'Open Sans', 'Noto Sans Ethiopic', 'Nyala', sans-serif;
+  --font-serif: 'Trirong', 'Noto Serif Ethiopic', 'Nyala', serif;
 
   --color-primary: hsl(var(--primary));
   --color-primary-hover: hsl(var(--primary-hover));
@@ -92,13 +92,36 @@
   border-color: hsl(var(--border));
 }
 
+html {
+  overflow-x: clip;
+  text-size-adjust: 100%;
+}
+
 body {
+  max-width: 100vw;
+  overflow-x: clip;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 28px;
   letter-spacing: 0.01em;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+}
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 3px solid hsl(var(--ring));
+  outline-offset: 3px;
+}
+
+::selection {
+  background: hsl(var(--primary-dark));
+  color: white;
 }
 
 h1,
@@ -110,4 +133,51 @@ h6 {
   font-family: var(--font-serif);
   font-weight: 500;
   color: hsl(var(--heading));
+}
+
+html[data-contrast='more'] {
+  --primary: 93 70% 28%;
+  --primary-hover: 93 75% 20%;
+  --primary-dark: 93 80% 14%;
+  --foreground: 0 0% 18%;
+  --heading: 0 0% 5%;
+  --text-medium: 0 0% 22%;
+  --border: 0 0% 25%;
+  --ring: 48 100% 45%;
+}
+
+html[data-contrast='more'] :where(a, button) {
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.18em;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --foreground: 0 0% 15%;
+    --heading: 0 0% 3%;
+    --border: 0 0% 30%;
+    --ring: 48 100% 42%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 22rem) {
+  body {
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  h1 {
+    overflow-wrap: anywhere;
+  }
 }

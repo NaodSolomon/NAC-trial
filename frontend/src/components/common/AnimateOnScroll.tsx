@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, useReducedMotion } from 'framer-motion';
 import { useRef } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -18,12 +18,12 @@ const variants = {
     animate: { opacity: 1, y: 0 },
   },
   fadeLeft: {
-    initial: { opacity: 0, x: -40 },
-    animate: { opacity: 1, x: 0 },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
   },
   fadeRight: {
-    initial: { opacity: 0, x: 40 },
-    animate: { opacity: 1, x: 0 },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
   },
   fadeIn: {
     initial: { opacity: 0 },
@@ -40,15 +40,16 @@ export default function AnimateOnScroll({
 }: AnimateOnScrollProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const prefersReducedMotion = useReducedMotion();
 
   const variant = variants[animation];
 
   return (
     <motion.div
       ref={ref}
-      initial={variant.initial}
-      animate={isInView ? variant.animate : variant.initial}
-      transition={{ duration, delay, ease: 'easeOut' }}
+      initial={prefersReducedMotion ? variant.animate : variant.initial}
+      animate={isInView || prefersReducedMotion ? variant.animate : variant.initial}
+      transition={prefersReducedMotion ? { duration: 0 } : { duration, delay, ease: 'easeOut' }}
       className={cn(className)}
     >
       {children}
