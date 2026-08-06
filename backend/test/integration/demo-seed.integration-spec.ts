@@ -1,9 +1,6 @@
 import { and, eq, inArray } from 'drizzle-orm';
 import { admins, cmsPages } from '../../src/database/schema';
-import {
-  DEMO_SEED_AUTHOR_ID,
-  seedDemoContent,
-} from '../../src/database/seeds/demo-content.seed';
+import { DEMO_SEED_AUTHOR_ID, seedDemoContent } from '../../src/database/seeds/demo-content.seed';
 import { cleanTestDatabase } from '../helpers/database-cleaner.helper';
 import { connectTestPostgres, PostgresTestContext } from '../helpers/postgres-test.helper';
 
@@ -28,23 +25,33 @@ describeWithPostgres('Trial demonstration seed (PostgreSQL)', () => {
     await seedDemoContent(context.db);
     await seedDemoContent(context.db);
 
-    const pages = await context.db
+    const englishPages = await context.db
       .select()
       .from(cmsPages)
-      .where(
-        and(eq(cmsPages.languageCode, 'en'), inArray(cmsPages.slug, ['home', 'faq'])),
-      );
+      .where(and(eq(cmsPages.languageCode, 'en'), inArray(cmsPages.slug, ['home', 'faq'])));
+    const [amharicHomepage] = await context.db
+      .select()
+      .from(cmsPages)
+      .where(and(eq(cmsPages.languageCode, 'am'), eq(cmsPages.slug, 'home')));
     const authors = await context.db
       .select()
       .from(admins)
       .where(eq(admins.id, DEMO_SEED_AUTHOR_ID));
 
-    expect(pages).toHaveLength(2);
-    expect(pages.every((page) => page.status === 'PUBLISHED' && page.publishedAt !== null)).toBe(
-      true,
+    expect(englishPages).toHaveLength(2);
+    expect(
+      englishPages.every((page) => page.status === 'PUBLISHED' && page.publishedAt !== null),
+    ).toBe(true);
+    expect(englishPages.find((page) => page.slug === 'home')?.metadata.sections).toBeInstanceOf(
+      Array,
     );
-    expect(pages.find((page) => page.slug === 'home')?.metadata.sections).toBeInstanceOf(Array);
-    expect(pages.find((page) => page.slug === 'faq')?.metadata.items).toHaveLength(4);
+    expect(englishPages.find((page) => page.slug === 'faq')?.metadata.items).toHaveLength(4);
+    expect(amharicHomepage).toMatchObject({
+      slug: 'home',
+      languageCode: 'am',
+      status: 'PUBLISHED',
+    });
+    expect(amharicHomepage?.metadata.sections).toBeInstanceOf(Array);
     expect(authors).toHaveLength(1);
     expect(authors[0]).toMatchObject({ isActive: false, role: 'CONTENT_EDITOR' });
   });
