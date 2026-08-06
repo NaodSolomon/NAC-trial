@@ -21,24 +21,29 @@ describeWithPostgres('Trial demonstration seed (PostgreSQL)', () => {
     await context?.pool.end();
   });
 
-  it('publishes homepage and FAQ data and remains idempotent', async () => {
+  it('publishes bilingual homepage, about, and FAQ data and remains idempotent', async () => {
     await seedDemoContent(context.db);
     await seedDemoContent(context.db);
 
     const englishPages = await context.db
       .select()
       .from(cmsPages)
-      .where(and(eq(cmsPages.languageCode, 'en'), inArray(cmsPages.slug, ['home', 'faq'])));
-    const [amharicHomepage] = await context.db
+      .where(
+        and(eq(cmsPages.languageCode, 'en'), inArray(cmsPages.slug, ['home', 'about', 'faq'])),
+      );
+    const amharicPages = await context.db
       .select()
       .from(cmsPages)
-      .where(and(eq(cmsPages.languageCode, 'am'), eq(cmsPages.slug, 'home')));
+      .where(
+        and(eq(cmsPages.languageCode, 'am'), inArray(cmsPages.slug, ['home', 'about', 'faq'])),
+      );
     const authors = await context.db
       .select()
       .from(admins)
       .where(eq(admins.id, DEMO_SEED_AUTHOR_ID));
 
-    expect(englishPages).toHaveLength(2);
+    expect(englishPages).toHaveLength(3);
+    expect(amharicPages).toHaveLength(3);
     expect(
       englishPages.every((page) => page.status === 'PUBLISHED' && page.publishedAt !== null),
     ).toBe(true);
@@ -46,12 +51,11 @@ describeWithPostgres('Trial demonstration seed (PostgreSQL)', () => {
       Array,
     );
     expect(englishPages.find((page) => page.slug === 'faq')?.metadata.items).toHaveLength(4);
-    expect(amharicHomepage).toMatchObject({
-      slug: 'home',
-      languageCode: 'am',
-      status: 'PUBLISHED',
-    });
-    expect(amharicHomepage?.metadata.sections).toBeInstanceOf(Array);
+    expect(amharicPages.every((page) => page.status === 'PUBLISHED')).toBe(true);
+    expect(amharicPages.find((page) => page.slug === 'home')?.metadata.sections).toBeInstanceOf(
+      Array,
+    );
+    expect(amharicPages.find((page) => page.slug === 'faq')?.metadata.items).toHaveLength(2);
     expect(authors).toHaveLength(1);
     expect(authors[0]).toMatchObject({ isActive: false, role: 'CONTENT_EDITOR' });
   });
