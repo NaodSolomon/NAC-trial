@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { DatabaseUnavailableError } from '../../../database/database-unavailable.error';
 import { EventsService } from './events.service';
 import { EventRepository } from '../interfaces/event-repository.interface';
 
@@ -90,5 +91,25 @@ describe('EventsService', () => {
     await expect(
       service.rsvp('event-id', { name: 'John Doe', email: 'JOHN@example.com', attendees: 2 }),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('maps event-list database saturation to a controlled 503', async () => {
+    repository.list.mockRejectedValue(
+      new DatabaseUnavailableError('events.list', new Error('pool acquisition timeout')),
+    );
+
+    await expect(
+      service.listPublic({
+        page: 1,
+        limit: 10,
+        offset: 0,
+        sortOrder: 'asc',
+        languageCode: 'en',
+        timeframe: 'upcoming',
+      }),
+    ).rejects.toMatchObject({
+      status: 503,
+      message: 'Events are temporarily unavailable',
+    });
   });
 });

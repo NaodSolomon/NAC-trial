@@ -1,0 +1,38 @@
+name: Backend performance gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Concurrency profile to execute
+        required: true
+        default: both
+        type: choice
+        options:
+          - both
+          - "500"
+          - "1000"
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start isolated benchmark services
+        run: docker compose -f docker-compose.benchmark.yml up -d --build --wait backend
+      - name: Run 500-user profile
+        if: inputs.target == 'both' || inputs.target == '500'
+        run: docker compose -f docker-compose.benchmark.yml --profile benchmark run --rm -e TARGET_VUS=500 k6
+      - name: Run 1,000-user profile
+        if: inputs.target == 'both' || inputs.target == '1000'
+        run: docker compose -f docker-compose.benchmark.yml --profile benchmark run --rm -e TARGET_VUS=1000 k6
+      - name: Show service logs after a failure
+        if: failure()
+        run: docker compose -f docker-compose.benchmark.yml logs --no-color --tail 500 backend postgres redis
+      - name: Remove isolated benchmark services
+        if: always()
+        run: docker compose -f docker-compose.benchmark.yml --profile benchmark down --volumes

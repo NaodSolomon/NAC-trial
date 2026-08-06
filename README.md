@@ -766,6 +766,23 @@ PostgreSQL-backed public reads. It ramps to the requested virtual-user count, ho
 concurrency, and then ramps down. Each virtual user pauses for one second between requests to
 represent an active visitor rather than an unlimited request flood.
 
+Identical cache misses are coalesced in-process, so one public cache key can run at most one
+PostgreSQL loader at a time per API instance. Joined callers receive the same result, and a
+rejected loader is removed immediately so a later request can retry. Event-list queries record
+pool acquisition time, query duration, queue depth, and pool utilization when pressure is high;
+database acquisition/query failures are returned as a controlled `503 Service Unavailable`.
+Production and benchmark modes sample successful access logs and aggregate slow-request counts
+and maximum latency into one bounded warning per time window, preventing container-log volume
+from becoming the measured bottleneck while preserving pressure telemetry.
+
+The API supports bounded Node cluster concurrency through `WEB_CONCURRENCY` (1–16, default 1).
+The isolated benchmark uses two workers so a multi-core container does not force all 1,000
+connections through one JavaScript event loop. The primary process replaces an unexpectedly
+exited worker and forwards shutdown signals for graceful Nest shutdown. Size deployments from
+measured CPU capacity; remember that the 20-connection PostgreSQL pool is per worker, so two
+workers can open at most 40 database connections. In-process cache single-flight is also scoped
+per worker, while Redis remains the shared cache and PostgreSQL remains authoritative.
+
 Start the isolated benchmark stack and run the default 500-user profile:
 
 ```bash
@@ -779,6 +796,11 @@ Run the upper 1,000-user profile:
 docker compose -f docker-compose.benchmark.yml --profile benchmark run --rm \
   -e TARGET_VUS=1000 k6
 ```
+
+GitHub Actions also provides the manually dispatched **Backend performance gate** workflow.
+Choose `both` before a release to execute the complete 500- and 1,000-user profiles. It is kept
+separate from the normal push/PR gate because shared runners are noisy and the full check takes
+about seven minutes; retain results from hardware representative of the intended deployment.
 
 For a quick script and environment smoke test, shorten the stages without treating the result as
 capacity evidence:

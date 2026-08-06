@@ -1,4 +1,9 @@
 import * as request from 'supertest';
+import { DatabaseUnavailableError } from '../../src/database/database-unavailable.error';
+import {
+  EVENT_REPOSITORY,
+  EventRepository,
+} from '../../src/modules/events/interfaces/event-repository.interface';
 import { authenticatedSession, TestSession } from '../helpers/auth-test.helper';
 import {
   closeE2eTestContext,
@@ -78,5 +83,29 @@ describe('Events and RSVP (e2e)', () => {
       .delete(`/api/v1/admin/events/${id}`)
       .set('Authorization', superAdmin.authorization)
       .expect(200);
+  });
+
+  it('returns a controlled 503 when the event-list database query is unavailable', async () => {
+    const repository = context.app.get<EventRepository>(EVENT_REPOSITORY);
+    const list = jest
+      .spyOn(repository, 'list')
+      .mockRejectedValueOnce(
+        new DatabaseUnavailableError('events.list', new Error('pool acquisition timeout')),
+      );
+
+    try {
+      await request(context.app.getHttpServer())
+        .get('/api/v1/public/events?languageCode=en&page=1&limit=10')
+        .expect(503)
+        .expect(({ body }) =>
+          expect(body).toMatchObject({
+            success: false,
+            statusCode: 503,
+            message: 'Events are temporarily unavailable',
+          }),
+        );
+    } finally {
+      list.mockRestore();
+    }
   });
 });

@@ -7,10 +7,16 @@ import {
 } from './cache.interface';
 import { REDIS_CLIENT, RedisClient } from './redis-client.provider';
 
+interface InFlightLoad {
+  promise: Promise<unknown>;
+  joinedRequests: number;
+}
+
 @Injectable()
 export class RedisCacheService implements ApplicationCache, OnApplicationShutdown {
   private readonly logger = new Logger(RedisCacheService.name);
   private readonly dirtyNamespaces = new Set<PublicCacheNamespace>();
+  private readonly inFlightLoads = new Map<string, InFlightLoad>();
   private readonly commandTimeoutMs: number;
   private readonly circuitCooldownMs: number;
   private connectPromise: Promise<void> | null = null;
@@ -51,18 +57,26 @@ export class RedisCacheService implements ApplicationCache, OnApplicationShutdow
       cacheKey = `nac:${namespace}:v${version}:${key}`;
       const cached = await this.execute(() => this.client.get(cacheKey));
       if (cached !== null) return JSON.parse(String(cached)) as T;
-    } catch {
+    } catch (error) {
       this.dirtyNamespaces.add(namespace);
-      this.logOutage(`Redis unavailable for ${namespace}; using PostgreSQL`);
-    }
-
-    const value = await loader();
-    if (cacheKey) {
-      await this.execute(() => this.client.setEx(cacheKey, ttlSeconds, JSON.stringify(value))).catch(
-        () => this.logOutage(`Redis write unavailable for ${namespace}`),
+      this.logOutage(
+        `Redis cache fallback namespace=${namespace} reason=${this.errorReason(error)} cooldownMs=${this.circuitCooldownMs}`,
       );
     }
-    return value;
+
+    return this.singleFlight(namespace, key, async () => {
+      const value = await loader();
+      if (cacheKey) {
+        await this.execute(() =>
+          this.client.setEx(cacheKey, ttlSeconds, JSON.stringify(value)),
+        ).catch((error: unknown) =>
+          this.logOutage(
+            `Redis cache write failed namespace=${namespace} reason=${this.errorReason(error)}`,
+          ),
+        );
+      }
+      return value;
+    });
   }
 
   async invalidate(namespace: PublicCacheNamespace): Promise<void> {
@@ -146,6 +160,39 @@ export class RedisCacheService implements ApplicationCache, OnApplicationShutdow
     if (this.outageWarningLogged) return;
     this.outageWarningLogged = true;
     this.logger.warn(message);
+  }
+
+  private singleFlight<T>(
+    namespace: PublicCacheNamespace,
+    key: string,
+    loader: () => Promise<T>,
+  ): Promise<T> {
+    const flightKey = `${namespace}:${key}`;
+    const existing = this.inFlightLoads.get(flightKey);
+    if (existing) {
+      existing.joinedRequests += 1;
+      return existing.promise as Promise<T>;
+    }
+
+    const flight: InFlightLoad = {
+      promise: Promise.resolve(undefined),
+      joinedRequests: 0,
+    };
+    flight.promise = loader().finally(() => {
+      if (this.inFlightLoads.get(flightKey) === flight) this.inFlightLoads.delete(flightKey);
+      if (flight.joinedRequests > 0) {
+        this.logger.log(
+          `Cache single-flight namespace=${namespace} coalescedRequests=${flight.joinedRequests}`,
+        );
+      }
+    });
+    this.inFlightLoads.set(flightKey, flight);
+    return flight.promise as Promise<T>;
+  }
+
+  private errorReason(error: unknown): string {
+    if (!(error instanceof Error)) return 'unknown';
+    return error.message.replaceAll(/[\r\n]/g, ' ').slice(0, 160);
   }
 
   private versionKey(namespace: PublicCacheNamespace): string {
