@@ -1,30 +1,22 @@
+'use client';
+
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import type { AdminPrincipal } from '@/lib/auth/constants';
 
-type AdminRole = 'SUPER_ADMIN' | 'CONTENT_EDITOR' | 'FINANCE_VIEWER';
-
-interface AdminUser {
-  id: string;
-  email: string;
-  name: string;
-  role: AdminRole;
-}
+export type AuthenticationStatus = 'BOOTSTRAPPING' | 'AUTHENTICATED' | 'ANONYMOUS';
 
 interface AuthStore {
-  user: AdminUser | null;
-  token: string | null;
-  setUser: (user: AdminUser, token: string) => void;
-  logout: () => void;
+  user: AdminPrincipal | null;
+  status: AuthenticationStatus;
+  setAuthenticated: (user: AdminPrincipal) => void;
+  setAnonymous: () => void;
+  beginBootstrap: () => void;
 }
 
-export const useAuthStore = create<AuthStore>()(
-  persist(
-    (set) => ({
-      user: null,
-      token: null,
-      setUser: (user, token) => set({ user, token }),
-      logout: () => set({ user: null, token: null }),
-    }),
-    { name: 'auth-storage' },
-  ),
-);
+export const useAuthStore = create<AuthStore>()((set) => ({
+  user: null,
+  status: 'BOOTSTRAPPING',
+  setAuthenticated: (user) => set({ user, status: 'AUTHENTICATED' }),
+  setAnonymous: () => set({ user: null, status: 'ANONYMOUS' }),
+  beginBootstrap: () => set({ user: null, status: 'BOOTSTRAPPING' }),
+}));

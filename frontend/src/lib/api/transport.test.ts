@@ -61,6 +61,56 @@ describe('API transport', () => {
     expect(fetchImplementation).toHaveBeenCalledTimes(1);
   });
 
+  it('refreshes once and replays one rejected authenticated request', async () => {
+    let accessToken = 'expired-access';
+    const fetchImplementation = vi
+      .fn()
+      .mockResolvedValueOnce(errorResponse(401))
+      .mockResolvedValueOnce(
+        jsonResponse(200, {
+          success: true,
+          data: { id: 'admin-1' },
+          statusCode: 200,
+          timestamp: '2026-08-06T00:00:00.000Z',
+        }),
+      );
+    const refreshAccessToken = vi.fn(async () => {
+      accessToken = 'rotated-access';
+      return accessToken;
+    });
+    const client = createApiClient({
+      baseUrl: 'http://localhost:8000/api/v1',
+      fetchImplementation: fetchImplementation as typeof fetch,
+      getAccessToken: () => accessToken,
+      refreshAccessToken,
+      maxGetRetries: 0,
+    });
+
+    await expect(client.get('/auth/me')).resolves.toEqual({ id: 'admin-1' });
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(fetchImplementation).toHaveBeenCalledTimes(2);
+    expect(new Headers(fetchImplementation.mock.calls[1][1]?.headers).get('authorization')).toBe(
+      'Bearer rotated-access',
+    );
+  });
+
+  it('does not enter a refresh loop when the replay is also unauthorized', async () => {
+    const fetchImplementation = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(errorResponse(401)));
+    const refreshAccessToken = vi.fn().mockResolvedValue('replacement');
+    const client = createApiClient({
+      baseUrl: 'http://localhost:8000/api/v1',
+      fetchImplementation: fetchImplementation as typeof fetch,
+      refreshAccessToken,
+      maxGetRetries: 0,
+    });
+
+    await expect(client.get('/auth/me')).rejects.toMatchObject({ status: 401 });
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(fetchImplementation).toHaveBeenCalledTimes(2);
+  });
+
   it('honors caller cancellation', async () => {
     const fetchImplementation = vi.fn(
       (_input: RequestInfo | URL, init?: RequestInit) =>
