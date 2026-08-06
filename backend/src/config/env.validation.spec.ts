@@ -22,6 +22,9 @@ describe('validateEnvironment', () => {
       WEB_CONCURRENCY: 1,
       PASSWORD_RESET_TTL_MINUTES: 20,
       PASSWORD_RESET_URL: 'http://localhost:3000/admin/reset-password',
+      MAIL_CONNECTION_TIMEOUT_MS: 3_000,
+      MAIL_GREETING_TIMEOUT_MS: 3_000,
+      MAIL_SOCKET_TIMEOUT_MS: 10_000,
     });
   });
 
@@ -156,6 +159,18 @@ describe('validateEnvironment', () => {
     );
     expect(() => validateEnvironment({ PASSWORD_RESET_TTL_MINUTES: 31 })).toThrow(
       'PASSWORD_RESET_TTL_MINUTES must be between 15 and 30',
+    );
+  });
+
+  it('validates SMTP connection and protocol timeouts', () => {
+    expect(() => validateEnvironment({ MAIL_CONNECTION_TIMEOUT_MS: 99 })).toThrow(
+      'MAIL_CONNECTION_TIMEOUT_MS must be between 100 and 60000',
+    );
+    expect(() => validateEnvironment({ MAIL_GREETING_TIMEOUT_MS: 60_001 })).toThrow(
+      'MAIL_GREETING_TIMEOUT_MS must be between 100 and 60000',
+    );
+    expect(() => validateEnvironment({ MAIL_SOCKET_TIMEOUT_MS: 120_001 })).toThrow(
+      'MAIL_SOCKET_TIMEOUT_MS must be between 100 and 120000',
     );
   });
 
