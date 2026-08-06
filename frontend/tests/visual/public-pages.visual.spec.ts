@@ -9,6 +9,7 @@ const publicScreens = [
   { name: 'event-detail', path: '/events/bring-orphans-happiness' },
   { name: 'blog', path: '/blog' },
   { name: 'blog-detail', path: '/blog/how-your-donations-change-lives' },
+  { name: 'search', path: '/search?q=support' },
   { name: 'gallery', path: '/gallery' },
   { name: 'gallery-masonry', path: '/gallery/masonry' },
   { name: 'faq', path: '/faq' },

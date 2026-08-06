@@ -1,5 +1,5 @@
 import { and, eq, inArray } from 'drizzle-orm';
-import { admins, cmsPages } from '../../src/database/schema';
+import { admins, blogPosts, cmsPages } from '../../src/database/schema';
 import { DEMO_SEED_AUTHOR_ID, seedDemoContent } from '../../src/database/seeds/demo-content.seed';
 import { cleanTestDatabase } from '../helpers/database-cleaner.helper';
 import { connectTestPostgres, PostgresTestContext } from '../helpers/postgres-test.helper';
@@ -41,6 +41,7 @@ describeWithPostgres('Trial demonstration seed (PostgreSQL)', () => {
       .select()
       .from(admins)
       .where(eq(admins.id, DEMO_SEED_AUTHOR_ID));
+    const seededBlogs = await context.db.select().from(blogPosts);
 
     expect(englishPages).toHaveLength(3);
     expect(amharicPages).toHaveLength(3);
@@ -58,6 +59,10 @@ describeWithPostgres('Trial demonstration seed (PostgreSQL)', () => {
     expect(amharicPages.find((page) => page.slug === 'faq')?.metadata.items).toHaveLength(2);
     expect(authors).toHaveLength(1);
     expect(authors[0]).toMatchObject({ isActive: false, role: 'CONTENT_EDITOR' });
+    expect(seededBlogs).toHaveLength(4);
+    expect(seededBlogs.every((post) => post.status === 'PUBLISHED' && post.publishedAt)).toBe(true);
+    expect(seededBlogs.filter((post) => post.languageCode === 'en')).toHaveLength(3);
+    expect(seededBlogs.filter((post) => post.languageCode === 'am')).toHaveLength(1);
   });
 
   it('does not overwrite an existing CMS page', async () => {
@@ -74,5 +79,25 @@ describeWithPostgres('Trial demonstration seed (PostgreSQL)', () => {
       .from(cmsPages)
       .where(and(eq(cmsPages.slug, 'home'), eq(cmsPages.languageCode, 'en')));
     expect(homepage.title).toBe('Edited by an administrator');
+  });
+
+  it('does not overwrite an existing blog post', async () => {
+    await seedDemoContent(context.db);
+    await context.db
+      .update(blogPosts)
+      .set({ title: 'Edited article title' })
+      .where(
+        and(eq(blogPosts.slug, 'understanding-autism-together'), eq(blogPosts.languageCode, 'en')),
+      );
+
+    await seedDemoContent(context.db);
+
+    const [post] = await context.db
+      .select()
+      .from(blogPosts)
+      .where(
+        and(eq(blogPosts.slug, 'understanding-autism-together'), eq(blogPosts.languageCode, 'en')),
+      );
+    expect(post.title).toBe('Edited article title');
   });
 });

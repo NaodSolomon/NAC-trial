@@ -1,6 +1,6 @@
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../schema';
-import { admins, cmsPages } from '../schema';
+import { admins, blogPosts, cmsPages } from '../schema';
 
 export const DEMO_SEED_AUTHOR_ID = '00000000-0000-4000-8000-000000000004';
 
@@ -171,6 +171,50 @@ const demoPages = [
   },
 ] as const;
 
+const demoBlogPosts = [
+  {
+    slug: 'understanding-autism-together',
+    languageCode: 'en' as const,
+    title: 'Understanding autism together',
+    excerpt: 'Practical ways families and communities can build understanding and inclusion.',
+    content:
+      'Understanding begins by listening to autistic people and their families.\n\nSmall, consistent acts of acceptance can make schools, homes, and communities more welcoming.',
+    seoTitle: 'Understanding Autism Together | Nehemiah Autism Center',
+    seoDescription:
+      'Practical guidance for building autism understanding and inclusion in families and communities.',
+  },
+  {
+    slug: 'family-centered-support',
+    languageCode: 'en' as const,
+    title: 'What family-centered support means',
+    excerpt: 'Why listening to each family is central to respectful and practical support.',
+    content:
+      'Every family has different strengths, questions, and priorities.\n\nFamily-centered support starts with listening and builds a practical plan around the child and caregivers.',
+    seoTitle: 'Family-Centered Autism Support | Nehemiah Autism Center',
+    seoDescription: 'Learn how family-centered autism support respects each child and caregiver.',
+  },
+  {
+    slug: 'inclusive-community-activities',
+    languageCode: 'en' as const,
+    title: 'Creating inclusive community activities',
+    excerpt: 'Simple considerations that help more children and families take part comfortably.',
+    content:
+      'Inclusive activities offer clear information, flexible ways to participate, and quiet spaces when possible.\n\nPlanning with families helps organizers remove barriers before an event begins.',
+    seoTitle: 'Inclusive Community Activities | Nehemiah Autism Center',
+    seoDescription: 'Ideas for making community activities more welcoming for autistic children.',
+  },
+  {
+    slug: 'understanding-autism-together',
+    languageCode: 'am' as const,
+    title: 'ኦቲዝምን በጋራ መረዳት',
+    excerpt: 'ቤተሰቦችና ማህበረሰቦች ግንዛቤንና አካታችነትን የሚያዳብሩባቸው ተግባራዊ መንገዶች።',
+    content:
+      'መረዳት የሚጀምረው ኦቲዝም ያለባቸውን ሰዎችና ቤተሰቦቻቸውን በማዳመጥ ነው።\n\nተከታታይ የተቀባይነት ተግባራት ትምህርት ቤቶችንና ማህበረሰቦችን የበለጠ አካታች ያደርጋሉ።',
+    seoTitle: 'ኦቲዝምን በጋራ መረዳት | ነህምያ ኦቲዝም ማዕከል',
+    seoDescription: 'በቤተሰብና በማህበረሰብ ውስጥ የኦቲዝም ግንዛቤን ለማዳበር ተግባራዊ መረጃ።',
+  },
+] as const;
+
 export async function seedDemoContent(database: NodePgDatabase<typeof schema>): Promise<void> {
   await database.transaction(async (transaction) => {
     await transaction
@@ -200,5 +244,17 @@ export async function seedDemoContent(database: NodePgDatabase<typeof schema>): 
       .onConflictDoNothing({
         target: [cmsPages.slug, cmsPages.languageCode],
       });
+
+    await transaction
+      .insert(blogPosts)
+      .values(
+        demoBlogPosts.map((post) => ({
+          ...post,
+          status: 'PUBLISHED' as const,
+          publishedAt,
+          createdBy: DEMO_SEED_AUTHOR_ID,
+        })),
+      )
+      .onConflictDoNothing({ target: [blogPosts.slug, blogPosts.languageCode] });
   });
 }

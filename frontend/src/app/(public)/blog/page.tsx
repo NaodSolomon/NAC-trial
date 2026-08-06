@@ -1,35 +1,37 @@
 import type { Metadata } from 'next';
 import PageBanner from '@/components/common/PageBanner';
-import BlogList from '@/features/blog/components/BlogList';
-import BlogSidebar from '@/features/blog/components/BlogSidebar';
+import { BlogList, loadPublishedBlogs, parseBlogPage } from '@/features/blog';
+import { localizedHref } from '@/lib/i18n';
+import { resolveRequestLanguage } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
-  title: 'Blog - Nehemiah',
+  title: 'Blog | Nehemiah Autism Center',
   description:
-    'Stay up to date with the latest stories, updates, and insights from our organization.',
+    'Published news, family guidance, and community stories from Nehemiah Autism Center.',
 };
 
-export default function BlogPage() {
+interface BlogRouteProps {
+  searchParams: Promise<{ lang?: string; page?: string }>;
+}
+
+export default async function BlogPage({ searchParams }: BlogRouteProps) {
+  const query = await searchParams;
+  const language = await resolveRequestLanguage(query.lang);
+  const page = await loadPublishedBlogs(language, parseBlogPage(query.page));
+  const title = language === 'am' ? 'ጽሑፎችና ዜና' : 'News and stories';
   return (
     <>
       <PageBanner
-        title="Our Blog"
+        title={title}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Blog' },
+          { label: language === 'am' ? 'መነሻ' : 'Home', href: localizedHref('/', language) },
+          { label: language === 'am' ? 'ብሎግ' : 'Blog' },
         ]}
         backgroundImage="/images/blog_1.jpg"
       />
-      <section className="bg-secondary-bg py-20">
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-            <div className="lg:col-span-8">
-              <BlogList />
-            </div>
-            <div className="lg:col-span-4">
-              <BlogSidebar />
-            </div>
-          </div>
+      <section className="bg-secondary-bg py-16 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4">
+          <BlogList page={page} language={language} />
         </div>
       </section>
     </>
