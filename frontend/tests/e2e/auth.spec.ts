@@ -7,5 +7,6 @@ test('homepage has correct title', async ({ page }) => {
 
 test('login page loads', async ({ page }) => {
   await page.goto('/login');
-  await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/login$/);
+  await expect(page.getByRole('heading', { name: 'Administrator sign in' })).toBeVisible();
 });

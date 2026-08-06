@@ -21,6 +21,7 @@ interface ApiClientConfiguration {
   credentials?: RequestCredentials;
   defaultHeaders?: HeadersInit | (() => HeadersInit | Promise<HeadersInit>);
   getAccessToken?: () => string | null | Promise<string | null>;
+  refreshAccessToken?: () => Promise<string | null>;
   fetchImplementation?: typeof fetch;
   maxGetRetries?: number;
   retryDelayMs?: number;
@@ -56,6 +57,7 @@ async function executeRequest<T>(
   method: HttpMethod,
   path: string,
   options: ApiRequestOptions,
+  accessReplayAttempted = false,
 ): Promise<T> {
   const fetchImplementation = configuration.fetchImplementation ?? fetch;
   const maxRetries = method === 'GET' ? Math.max(0, configuration.maxGetRetries ?? 2) : 0;
@@ -78,6 +80,12 @@ async function executeRequest<T>(
       const payload = await parseResponse(response);
 
       if (!response.ok) {
+        if (response.status === 401 && !accessReplayAttempted && configuration.refreshAccessToken) {
+          const replacement = await configuration.refreshAccessToken();
+          if (replacement) {
+            return executeRequest<T>(configuration, method, path, options, true);
+          }
+        }
         if (attempt < maxRetries && retryableStatuses.has(response.status)) {
           await retryDelay(response, attempt, configuration.retryDelayMs ?? 200, options.signal);
           continue;
