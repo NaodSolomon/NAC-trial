@@ -2,19 +2,24 @@
 
 Full-stack monorepo — Next.js frontend + NestJS backend with PostgreSQL, Redis, MinIO, and Mailpit.
 
+## License
+
+This repository is proprietary. All rights are reserved by the project owner unless a separate
+written license is provided.
+
 ## Tech Stack
 
-| Layer      | Tech                                                        |
-|------------|-------------------------------------------------------------|
-| Frontend   | Next.js 15, React 19, TypeScript, Tailwind CSS v4, shadcn/ui |
-| Backend    | NestJS, Fastify, Drizzle ORM, Repository Pattern            |
-| Database   | PostgreSQL 16                                               |
-| Cache      | Redis 7                                                     |
-| Storage    | MinIO (dev) / Cloudflare R2 (prod)                          |
-| Mail       | Mailpit (dev)                                               |
-| Testing    | Vitest + Playwright (frontend) / Jest + Supertest (backend) |
-| CI/CD      | GitHub Actions → GHCR → VPS deploy                         |
-| Infra      | Docker Compose (dev + prod), Traefik (prod SSL)             |
+| Layer    | Tech                                                         |
+| -------- | ------------------------------------------------------------ |
+| Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS v4, shadcn/ui |
+| Backend  | NestJS, Fastify, Drizzle ORM, Repository Pattern             |
+| Database | PostgreSQL 16                                                |
+| Cache    | Redis 7                                                      |
+| Storage  | MinIO (dev) / Cloudflare R2 (prod)                           |
+| Mail     | Mailpit (dev)                                                |
+| Testing  | Vitest + Playwright (frontend) / Jest + Supertest (backend)  |
+| CI/CD    | GitHub Actions → GHCR → VPS deploy                           |
+| Infra    | Docker Compose (dev + prod), Traefik (prod SSL)              |
 
 ## Quick Start
 
@@ -51,14 +56,14 @@ cd backend && pnpm install && pnpm dev
 
 ## Service URLs (Development)
 
-| Service   | URL                          | Purpose            |
-|-----------|------------------------------|---------------------|
-| Frontend  | http://localhost:3000         | Next.js app         |
-| Backend   | http://localhost:8000/api/v1  | NestJS API          |
-| pgAdmin   | http://localhost:5050         | Postgres GUI        |
-| MinIO UI  | http://localhost:9001         | Object storage GUI  |
-| Mailpit   | http://localhost:8025         | Email catcher UI    |
-| Redis     | localhost:6379                | Cache               |
+| Service  | URL                          | Purpose            |
+| -------- | ---------------------------- | ------------------ |
+| Frontend | http://localhost:3000        | Next.js app        |
+| Backend  | http://localhost:8000/api/v1 | NestJS API         |
+| pgAdmin  | http://localhost:5050        | Postgres GUI       |
+| MinIO UI | http://localhost:9001        | Object storage GUI |
+| Mailpit  | http://localhost:8025        | Email catcher UI   |
+| Redis    | localhost:6379               | Cache              |
 
 **pgAdmin login:** `admin@admin.com` / `admin`
 **MinIO login:** `minioadmin` / `minioadmin`
@@ -98,49 +103,50 @@ nehemiah/
 
 ### Root
 
-| Command              | Description                        |
-|----------------------|------------------------------------|
-| `pnpm dev`           | Start all services via Docker      |
-| `pnpm dev:frontend`  | Run frontend only                  |
-| `pnpm dev:backend`   | Run backend only                   |
-| `pnpm build`         | Build all Docker images            |
-| `pnpm test`          | Run all tests                      |
-| `pnpm lint`          | Lint both apps                     |
+| Command             | Description                   |
+| ------------------- | ----------------------------- |
+| `pnpm dev`          | Start all services via Docker |
+| `pnpm dev:frontend` | Run frontend only             |
+| `pnpm dev:backend`  | Run backend only              |
+| `pnpm build`        | Build all Docker images       |
+| `pnpm test`         | Run all tests                 |
+| `pnpm lint`         | Lint both apps                |
 
 ### Frontend (`cd frontend`)
 
-| Command              | Description                        |
-|----------------------|------------------------------------|
-| `pnpm dev`           | Start dev server                   |
-| `pnpm build`         | Production build                   |
-| `pnpm test`          | Run unit tests (Vitest)            |
-| `pnpm test:e2e`      | Run E2E tests (Playwright)         |
-| `pnpm lint`          | Lint with ESLint                   |
-| `pnpm format`        | Format with Prettier               |
+| Command         | Description                |
+| --------------- | -------------------------- |
+| `pnpm dev`      | Start dev server           |
+| `pnpm build`    | Production build           |
+| `pnpm test`     | Run unit tests (Vitest)    |
+| `pnpm test:e2e` | Run E2E tests (Playwright) |
+| `pnpm lint`     | Lint with ESLint           |
+| `pnpm format`   | Format with Prettier       |
 
 ### Backend (`cd backend`)
 
-| Command              | Description                        |
-|----------------------|------------------------------------|
-| `pnpm dev`           | Start with watch mode              |
-| `pnpm build`         | Build for production               |
-| `pnpm test`          | Run unit tests (Jest)              |
-| `pnpm test:e2e`      | Run E2E tests                      |
-| `pnpm db:generate`   | Generate migration from schema diff|
-| `pnpm db:migrate`    | Apply pending migrations           |
-| `pnpm db:check`      | Check migration history consistency |
-| `pnpm db:studio`     | Open Drizzle Studio (visual DB)    |
-| `pnpm db:seed`       | Seed the database                  |
-| `pnpm db:seed:demo`  | Seed local trial homepage and FAQ  |
-| `pnpm lint`          | Lint with ESLint                   |
-| `pnpm format`        | Format with Prettier               |
+| Command             | Description                         |
+| ------------------- | ----------------------------------- |
+| `pnpm dev`          | Start with watch mode               |
+| `pnpm build`        | Build for production                |
+| `pnpm test`         | Run unit tests (Jest)               |
+| `pnpm test:e2e`     | Run E2E tests                       |
+| `pnpm openapi:lint` | Generate and validate OpenAPI       |
+| `pnpm db:generate`  | Generate migration from schema diff |
+| `pnpm db:migrate`   | Apply pending migrations            |
+| `pnpm db:check`     | Check migration history consistency |
+| `pnpm db:studio`    | Open Drizzle Studio (visual DB)     |
+| `pnpm db:seed`      | Seed the database                   |
+| `pnpm db:seed:demo` | Seed local trial homepage and FAQ   |
+| `pnpm lint`         | Lint with ESLint                    |
+| `pnpm format`       | Format with Prettier                |
 
 ## Shared Types
 
 Both apps use `@shared/*` path alias to import from `shared/types/`:
 
 ```typescript
-import type { AdminUser, ApiResponse, PaginatedResponse } from '@shared/types';
+import type { AdminUser, ApiResponse, PaginatedResponse } from "@shared/types";
 ```
 
 ## Backend Architecture
@@ -184,15 +190,15 @@ The platform has no public user registration. Administrator authentication uses:
 - database-backed account activation and temporary login lockout;
 - separate production secrets for access tokens, refresh tokens, and IP hashing.
 
-| Method | Endpoint               | Purpose                         |
-|--------|------------------------|---------------------------------|
-| POST   | `/api/v1/auth/login`   | Authenticate an administrator   |
-| POST   | `/api/v1/auth/refresh` | Rotate a valid refresh token    |
-| POST   | `/api/v1/auth/logout`  | Revoke the supplied session     |
-| GET    | `/api/v1/auth/me`      | Return the current administrator|
-| POST   | `/api/v1/auth/password-reset/request` | Request generic reset instructions |
-| POST   | `/api/v1/auth/password-reset/confirm` | Consume a single-use reset token |
-| GET    | `/api/v1/admin/system/sessions` | List administrator sessions (`SUPER_ADMIN`) |
+| Method | Endpoint                               | Purpose                                                                 |
+| ------ | -------------------------------------- | ----------------------------------------------------------------------- |
+| POST   | `/api/v1/auth/login`                   | Authenticate an administrator                                           |
+| POST   | `/api/v1/auth/refresh`                 | Rotate a valid refresh token                                            |
+| POST   | `/api/v1/auth/logout`                  | Revoke the supplied session                                             |
+| GET    | `/api/v1/auth/me`                      | Return the current administrator                                        |
+| POST   | `/api/v1/auth/password-reset/request`  | Request generic reset instructions                                      |
+| POST   | `/api/v1/auth/password-reset/confirm`  | Consume a single-use reset token                                        |
+| GET    | `/api/v1/admin/system/sessions`        | List administrator sessions (`SUPER_ADMIN`)                             |
 | POST   | `/api/v1/admin/system/sessions/revoke` | Revoke one session or all sessions for an administrator (`SUPER_ADMIN`) |
 
 To create the first super administrator, set `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL`, and `SEED_ADMIN_PASSWORD`, then run `pnpm db:seed` from `backend/`. Seed credentials are never given default values, and an existing administrator is never overwritten.
@@ -208,14 +214,14 @@ bootstrap seed.
 
 Private administration endpoints require both a valid access JWT and an explicitly allowed database-backed role. Administrator account management and audit-log access are restricted to `SUPER_ADMIN`.
 
-| Method | Endpoint                    | Required role | Purpose                    |
-|--------|-----------------------------|---------------|----------------------------|
-| GET    | `/api/v1/admin/users`       | `SUPER_ADMIN` | List administrator accounts|
-| POST   | `/api/v1/admin/users`       | `SUPER_ADMIN` | Create an administrator    |
-| GET    | `/api/v1/admin/users/:id`   | `SUPER_ADMIN` | Read an administrator      |
-| PATCH  | `/api/v1/admin/users/:id`   | `SUPER_ADMIN` | Update an administrator    |
-| DELETE | `/api/v1/admin/users/:id`   | `SUPER_ADMIN` | Delete an administrator    |
-| GET    | `/api/v1/admin/audit-logs`  | `SUPER_ADMIN` | Search immutable audit logs|
+| Method | Endpoint                   | Required role | Purpose                     |
+| ------ | -------------------------- | ------------- | --------------------------- |
+| GET    | `/api/v1/admin/users`      | `SUPER_ADMIN` | List administrator accounts |
+| POST   | `/api/v1/admin/users`      | `SUPER_ADMIN` | Create an administrator     |
+| GET    | `/api/v1/admin/users/:id`  | `SUPER_ADMIN` | Read an administrator       |
+| PATCH  | `/api/v1/admin/users/:id`  | `SUPER_ADMIN` | Update an administrator     |
+| DELETE | `/api/v1/admin/users/:id`  | `SUPER_ADMIN` | Delete an administrator     |
+| GET    | `/api/v1/admin/audit-logs` | `SUPER_ADMIN` | Search immutable audit logs |
 
 Administrator create, update, and delete operations write their audit records in the same database transaction. Login and logout events are also recorded. Password hashes, raw tokens, and raw IP addresses are never included in audit metadata.
 
@@ -228,16 +234,16 @@ Step 5 adds the first complete content-management slice. English and Amharic pag
 drafts, can publish immediately, or schedule future publication. Editing published content
 returns it to draft so unreviewed changes never become public automatically.
 
-| Method | Endpoint                                      | Access                         | Purpose                         |
-|--------|-----------------------------------------------|--------------------------------|---------------------------------|
-| GET    | `/api/v1/public/pages/:slug?languageCode=en` | Public                         | Read a published page           |
-| GET    | `/api/v1/admin/slugs/check`                  | Editor or super administrator  | Check localized slug availability |
-| GET    | `/api/v1/admin/cms/pages`                    | Editor or super administrator  | List and filter pages           |
-| POST   | `/api/v1/admin/cms/pages`                    | Editor or super administrator  | Create a draft                  |
-| PATCH  | `/api/v1/admin/cms/pages/:id`                | Editor or super administrator  | Edit a page                     |
-| POST   | `/api/v1/admin/cms/pages/:id/publish`        | Editor or super administrator  | Publish immediately             |
-| POST   | `/api/v1/admin/cms/pages/:id/schedule`       | Editor or super administrator  | Schedule publication            |
-| DELETE | `/api/v1/admin/cms/pages/:id`                | Editor or super administrator  | Delete a page                   |
+| Method | Endpoint                                     | Access                        | Purpose                           |
+| ------ | -------------------------------------------- | ----------------------------- | --------------------------------- |
+| GET    | `/api/v1/public/pages/:slug?languageCode=en` | Public                        | Read a published page             |
+| GET    | `/api/v1/admin/slugs/check`                  | Editor or super administrator | Check localized slug availability |
+| GET    | `/api/v1/admin/cms/pages`                    | Editor or super administrator | List and filter pages             |
+| POST   | `/api/v1/admin/cms/pages`                    | Editor or super administrator | Create a draft                    |
+| PATCH  | `/api/v1/admin/cms/pages/:id`                | Editor or super administrator | Edit a page                       |
+| POST   | `/api/v1/admin/cms/pages/:id/publish`        | Editor or super administrator | Publish immediately               |
+| POST   | `/api/v1/admin/cms/pages/:id/schedule`       | Editor or super administrator | Schedule publication              |
+| DELETE | `/api/v1/admin/cms/pages/:id`                | Editor or super administrator | Delete a page                     |
 
 Navigation has public localized reads and protected management endpoints under
 `/api/v1/admin/navigation`. Public site settings are available at `/api/v1/settings`; only a
@@ -255,11 +261,11 @@ local MinIO. The API accepts JPEG, PNG, GIF, WebP, MP4, WebM, and PDF files. It 
 the declared MIME type and the file signature, generates the object key server-side, limits
 each request to one bounded file, and requires accessibility alt text for images.
 
-| Method | Endpoint                     | Required role                    | Purpose                    |
-|--------|------------------------------|----------------------------------|----------------------------|
-| GET    | `/api/v1/admin/media`        | Editor or super administrator    | Search and filter assets   |
-| POST   | `/api/v1/admin/media/upload` | Editor or super administrator    | Upload an asset            |
-| DELETE | `/api/v1/admin/media/:id`    | `SUPER_ADMIN`                    | Delete an asset            |
+| Method | Endpoint                     | Required role                 | Purpose                  |
+| ------ | ---------------------------- | ----------------------------- | ------------------------ |
+| GET    | `/api/v1/admin/media`        | Editor or super administrator | Search and filter assets |
+| POST   | `/api/v1/admin/media/upload` | Editor or super administrator | Upload an asset          |
+| DELETE | `/api/v1/admin/media/:id`    | `SUPER_ADMIN`                 | Delete an asset          |
 
 Uploads use `multipart/form-data` with a required `file` and optional `languageCode`,
 `altText`, `caption`, and `folder` fields. `altText` is mandatory for images. Configure the
@@ -273,12 +279,12 @@ settings, so editors do not maintain the same address and phone number in multip
 Public submissions are validated, normalized, rate-limited to five requests per minute per
 client, and stored without IP addresses or user-agent fingerprints.
 
-| Method | Endpoint                    | Access                      | Purpose                         |
-|--------|-----------------------------|-----------------------------|---------------------------------|
-| GET    | `/api/v1/public/contact`    | Public                      | Read localized contact content  |
-| POST   | `/api/v1/public/contact`    | Public, rate-limited        | Submit a contact message        |
-| GET    | `/api/v1/admin/contact`     | Editor or super administrator | Search and list submissions   |
-| DELETE | `/api/v1/admin/contact/:id` | `SUPER_ADMIN`               | Permanently delete a submission |
+| Method | Endpoint                    | Access                        | Purpose                         |
+| ------ | --------------------------- | ----------------------------- | ------------------------------- |
+| GET    | `/api/v1/public/contact`    | Public                        | Read localized contact content  |
+| POST   | `/api/v1/public/contact`    | Public, rate-limited          | Submit a contact message        |
+| GET    | `/api/v1/admin/contact`     | Editor or super administrator | Search and list submissions     |
+| DELETE | `/api/v1/admin/contact/:id` | `SUPER_ADMIN`                 | Permanently delete a submission |
 
 The public request accepts `name`, `email`, `message`, optional `subject`, and optional
 `languageCode` (`en` or `am`). Deletion is audited without copying the sender's personal data
@@ -292,20 +298,20 @@ the published `volunteer` CMS page. Applications and newsletter subscriptions ar
 normalized, rate-limited, and stored without network identifiers. Duplicate newsletter
 signup returns the same success response, preventing account enumeration.
 
-| Method | Endpoint                              | Access                         | Purpose                        |
-|--------|---------------------------------------|--------------------------------|--------------------------------|
-| GET    | `/api/v1/public/volunteer`            | Public                         | Read volunteer-page content    |
-| POST   | `/api/v1/public/volunteer/apply`      | Public, rate-limited           | Submit a volunteer application |
-| GET    | `/api/v1/admin/volunteers`            | Editor or super administrator  | Review applications            |
-| DELETE | `/api/v1/admin/volunteers/:id`        | `SUPER_ADMIN`                  | Delete an application          |
-| GET    | `/api/v1/public/testimonials`         | Public                         | Read published testimonials    |
-| GET    | `/api/v1/admin/testimonials`          | Editor or super administrator  | Review all testimonials        |
-| POST   | `/api/v1/admin/testimonials`          | Editor or super administrator  | Create a testimonial           |
-| PATCH  | `/api/v1/admin/testimonials/:id`      | Editor or super administrator  | Edit or publish a testimonial  |
-| DELETE | `/api/v1/admin/testimonials/:id`      | Editor or super administrator  | Delete a testimonial           |
-| POST   | `/api/v1/public/newsletter`           | Public, rate-limited           | Subscribe an email address     |
-| GET    | `/api/v1/admin/newsletter`            | `SUPER_ADMIN`                  | List subscribers               |
-| DELETE | `/api/v1/admin/newsletter/:email`     | `SUPER_ADMIN`                  | Remove a subscriber            |
+| Method | Endpoint                          | Access                        | Purpose                        |
+| ------ | --------------------------------- | ----------------------------- | ------------------------------ |
+| GET    | `/api/v1/public/volunteer`        | Public                        | Read volunteer-page content    |
+| POST   | `/api/v1/public/volunteer/apply`  | Public, rate-limited          | Submit a volunteer application |
+| GET    | `/api/v1/admin/volunteers`        | Editor or super administrator | Review applications            |
+| DELETE | `/api/v1/admin/volunteers/:id`    | `SUPER_ADMIN`                 | Delete an application          |
+| GET    | `/api/v1/public/testimonials`     | Public                        | Read published testimonials    |
+| GET    | `/api/v1/admin/testimonials`      | Editor or super administrator | Review all testimonials        |
+| POST   | `/api/v1/admin/testimonials`      | Editor or super administrator | Create a testimonial           |
+| PATCH  | `/api/v1/admin/testimonials/:id`  | Editor or super administrator | Edit or publish a testimonial  |
+| DELETE | `/api/v1/admin/testimonials/:id`  | Editor or super administrator | Delete a testimonial           |
+| POST   | `/api/v1/public/newsletter`       | Public, rate-limited          | Subscribe an email address     |
+| GET    | `/api/v1/admin/newsletter`        | `SUPER_ADMIN`                 | List subscribers               |
+| DELETE | `/api/v1/admin/newsletter/:email` | `SUPER_ADMIN`                 | Remove a subscriber            |
 
 Testimonials start as drafts unless explicitly published. Public queries cannot request draft
 status, and repository filtering independently enforces `PUBLISHED`. Audit metadata for
@@ -336,18 +342,18 @@ Step 10 adds localized event publishing and RSVP management. Public queries expo
 published events, while editors can manage drafts and translations. Event slugs are unique per
 language, end times must follow start times, and each email can RSVP only once per event.
 
-| Method | Endpoint                                | Access                        | Purpose |
-|--------|-----------------------------------------|-------------------------------|---------|
-| GET    | `/api/v1/public/events`                 | Public                        | List published events |
-| GET    | `/api/v1/public/events/:slug`           | Public                        | Read a localized event |
-| GET    | `/api/v1/public/events/:slug/calendar.ics` | Public                     | Download an iCalendar event |
-| POST   | `/api/v1/public/events/:id/rsvp`        | Public, rate-limited          | Submit an RSVP |
-| GET    | `/api/v1/admin/events`                  | Editor or super administrator | Manage event inventory |
-| POST   | `/api/v1/admin/events`                  | Editor or super administrator | Create an event |
-| PATCH  | `/api/v1/admin/events/:id`              | Editor or super administrator | Update an event |
-| DELETE | `/api/v1/admin/events/:id`              | `SUPER_ADMIN`                 | Delete an event and its RSVPs |
-| GET    | `/api/v1/admin/events/:id/rsvps`        | Editor or super administrator | Review RSVPs |
-| GET    | `/api/v1/admin/events/:id/rsvps/export` | Editor or super administrator | Export RSVP CSV |
+| Method | Endpoint                                   | Access                        | Purpose                       |
+| ------ | ------------------------------------------ | ----------------------------- | ----------------------------- |
+| GET    | `/api/v1/public/events`                    | Public                        | List published events         |
+| GET    | `/api/v1/public/events/:slug`              | Public                        | Read a localized event        |
+| GET    | `/api/v1/public/events/:slug/calendar.ics` | Public                        | Download an iCalendar event   |
+| POST   | `/api/v1/public/events/:id/rsvp`           | Public, rate-limited          | Submit an RSVP                |
+| GET    | `/api/v1/admin/events`                     | Editor or super administrator | Manage event inventory        |
+| POST   | `/api/v1/admin/events`                     | Editor or super administrator | Create an event               |
+| PATCH  | `/api/v1/admin/events/:id`                 | Editor or super administrator | Update an event               |
+| DELETE | `/api/v1/admin/events/:id`                 | `SUPER_ADMIN`                 | Delete an event and its RSVPs |
+| GET    | `/api/v1/admin/events/:id/rsvps`           | Editor or super administrator | Review RSVPs                  |
+| GET    | `/api/v1/admin/events/:id/rsvps/export`    | Editor or super administrator | Export RSVP CSV               |
 
 Use `languageCode=en|am` for localized reads and `timeframe=upcoming|past|all` for event lists.
 RSVP closes when an event ends and personal RSVP data is never returned by public routes.
@@ -361,10 +367,10 @@ uploads accept validated images and videos only; file signatures must match decl
 types, image alternative text is mandatory, and objects are stored under the `gallery`
 namespace in the configured R2 or MinIO bucket.
 
-| Method | Endpoint                    | Access                        | Purpose |
-|--------|-----------------------------|-------------------------------|---------|
+| Method | Endpoint                    | Access                        | Purpose                          |
+| ------ | --------------------------- | ----------------------------- | -------------------------------- |
 | GET    | `/api/v1/public/gallery`    | Public                        | List localized images and videos |
-| POST   | `/api/v1/admin/gallery`     | Editor or super administrator | Upload a gallery item |
+| POST   | `/api/v1/admin/gallery`     | Editor or super administrator | Upload a gallery item            |
 | PATCH  | `/api/v1/admin/gallery/:id` | Editor or super administrator | Update title or alternative text |
 | DELETE | `/api/v1/admin/gallery/:id` | `SUPER_ADMIN`                 | Delete the item and stored media |
 
@@ -380,11 +386,11 @@ device categories, and sanitized referrers. Query strings are removed before sto
 they can contain tokens or personal information. IP addresses, cookies, user agents, and
 visitor fingerprints are not stored.
 
-| Method | Endpoint                            | Access                  | Purpose |
-|--------|-------------------------------------|-------------------------|---------|
-| POST   | `/api/v1/public/analytics/events`   | Public, rate-limited    | Record an anonymous event |
-| GET    | `/api/v1/admin/analytics/summary`   | `SUPER_ADMIN`           | Read total page views and top dimensions |
-| GET    | `/api/v1/admin/analytics/timeline`  | `SUPER_ADMIN`           | Read a 1-, 7-, or 30-day visitor timeline |
+| Method | Endpoint                           | Access               | Purpose                                   |
+| ------ | ---------------------------------- | -------------------- | ----------------------------------------- |
+| POST   | `/api/v1/public/analytics/events`  | Public, rate-limited | Record an anonymous event                 |
+| GET    | `/api/v1/admin/analytics/summary`  | `SUPER_ADMIN`        | Read total page views and top dimensions  |
+| GET    | `/api/v1/admin/analytics/timeline` | `SUPER_ADMIN`        | Read a 1-, 7-, or 30-day visitor timeline |
 
 The ingestion body accepts `eventType` (`page_view`, `click`, or `submit`), a local `pageUrl`,
 `deviceType`, and optional `referrer`. Country is accepted only from Cloudflare's
@@ -480,10 +486,12 @@ the Compose rollout.
 ## CI/CD
 
 ### PR Flow
+
 1. Push feature branch → open PR targeting `main`
 2. CI runs lint + tests + build for both apps (checks only, no deploy)
 
 ### Prod Flow
+
 1. Merge the reviewed PR into `main`
 2. Manually start the production workflow after CI succeeds
 3. SHA-tagged images are pushed to GHCR
@@ -491,12 +499,12 @@ the Compose rollout.
 
 ### Required GitHub Secrets
 
-| Secret            | Description                              |
-|-------------------|------------------------------------------|
-| `PROD_HOST`       | Production VPS IP                        |
-| `PROD_USER`       | SSH user for production                  |
-| `PROD_SSH_KEY`    | SSH private key for production           |
-| `GHCR_TOKEN`      | GitHub PAT with `write:packages` scope   |
+| Secret         | Description                            |
+| -------------- | -------------------------------------- |
+| `PROD_HOST`    | Production VPS IP                      |
+| `PROD_USER`    | SSH user for production                |
+| `PROD_SSH_KEY` | SSH private key for production         |
+| `GHCR_TOKEN`   | GitHub PAT with `write:packages` scope |
 
 ## Free Local Trial Runtime
 
@@ -566,6 +574,11 @@ headers. Trial confirmation and failure operations are identified as local-only 
 routes and document their idempotency and terminal-state responses. The E2E suite validates
 the generated document, resolves component references, and asserts these representative
 security, request, upload, webhook, pagination, and response schemas.
+
+`pnpm openapi:lint` generates the runtime document into the ignored `backend/dist` directory
+and validates it independently with Redocly's recommended rules. CI runs this external gate
+after the internal test suite; missing path-parameter declarations and strict license metadata
+therefore fail validation outside the project-owned validator as well.
 
 ### Step 22: Demonstration content features
 

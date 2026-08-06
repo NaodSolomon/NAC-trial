@@ -38,7 +38,14 @@ describe('Application conventions (e2e)', () => {
       .expect(200);
     expect(response.body).toMatchObject({
       openapi: expect.stringMatching(/^3\./),
-      info: { title: 'Nehemiah Autism Center API', version: '1.0' },
+      info: {
+        title: 'Nehemiah Autism Center API',
+        version: '1.0',
+        license: {
+          name: 'Proprietary — all rights reserved',
+          url: 'https://github.com/NaodSolomon/NAC-trial#license',
+        },
+      },
     });
     expect(response.body.paths['/api/v1/auth/login']).toBeDefined();
     expect(validateOpenApiContract(response.body)).toEqual([]);

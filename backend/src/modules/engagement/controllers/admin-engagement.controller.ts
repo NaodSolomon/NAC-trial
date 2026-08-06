@@ -11,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CurrentAdmin } from '../../../common/decorators/current-admin.decorator';
+import { ApiParam } from '@nestjs/swagger';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
@@ -77,6 +78,11 @@ export class AdminEngagementController {
 
   @Delete('newsletter/:email')
   @Roles('SUPER_ADMIN')
+  @ApiParam({
+    name: 'email',
+    description: 'Email address of the newsletter subscriber to remove',
+    example: 'subscriber@example.org',
+  })
   deleteSubscriber(
     @Param() params: NewsletterEmailParamDto,
     @CurrentAdmin() actor: AdminPrincipal,

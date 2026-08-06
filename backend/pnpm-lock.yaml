@@ -100,6 +100,9 @@ importers:
       '@nestjs/testing':
         specifier: latest
         version: 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))
+      '@redocly/cli':
+        specifier: 2.45.0
+        version: 2.45.0
       '@types/bcrypt':
         specifier: latest
         version: 6.0.0
@@ -1465,6 +1468,11 @@ packages:
     engines: {node: '>= 18'}
     peerDependencies:
       '@redis/client': ^5.8.2
+
+  '@redocly/cli@2.45.0':
+    resolution: {integrity: sha512-Z9VtjYEYdUBUvB/rggUJv5WPVMMEA3YM9NprEHD5aGrPeUl8aHIv14wByvL+dhxNkUbZW80AMNOuSXwduDeIsQ==}
+    engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
+    hasBin: true
 
   '@scarf/scarf@1.4.0':
     resolution: {integrity: sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==}
@@ -5449,6 +5457,8 @@ snapshots:
   '@redis/time-series@5.8.2(@redis/client@5.8.2)':
     dependencies:
       '@redis/client': 5.8.2
+
+  '@redocly/cli@2.45.0': {}
 
   '@scarf/scarf@1.4.0': {}
 
