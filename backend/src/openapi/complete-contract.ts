@@ -84,6 +84,9 @@ export function validateOpenApiContract(document: OpenAPIObject): string[] {
   const errors: string[] = [];
   if (!/^3\./.test(document.openapi)) errors.push('openapi must declare version 3.x');
   if (!document.info?.title || !document.info?.version) errors.push('info title/version required');
+  if (!document.info?.license?.name || !document.info.license.url) {
+    errors.push('info license name/url required');
+  }
   if (!document.servers?.length) errors.push('at least one server is required');
   const schemas = document.components?.schemas ?? {};
 
@@ -102,6 +105,19 @@ export function validateOpenApiContract(document: OpenAPIObject): string[] {
       if (!successResponses(operation).length) {
         errors.push(`${location} requires an explicit 2xx response`);
       }
+      const declaredPathParameters = new Set(
+        [...(pathItem?.parameters ?? []), ...(operation.parameters ?? [])]
+          .filter(
+            (parameter): parameter is Exclude<typeof parameter, { $ref: string }> =>
+              !('$ref' in parameter) && parameter.in === 'path',
+          )
+          .map((parameter) => parameter.name),
+      );
+      for (const parameterName of pathParameterNames(path)) {
+        if (!declaredPathParameters.has(parameterName)) {
+          errors.push(`${location} must declare path parameter ${parameterName}`);
+        }
+      }
       visitRefs(operation, (ref) => {
         const name = ref.replace('#/components/schemas/', '');
         if (ref.startsWith('#/components/schemas/') && !schemas[name]) {
@@ -111,6 +127,10 @@ export function validateOpenApiContract(document: OpenAPIObject): string[] {
     }
   }
   return errors;
+}
+
+function pathParameterNames(path: string): string[] {
+  return [...path.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]);
 }
 
 function successSchema(statusCode: number): SchemaObject {
@@ -129,7 +149,9 @@ function successSchema(statusCode: number): SchemaObject {
 function successResponses(
   operation: OperationObject,
 ): Array<[string, Exclude<OperationObject['responses'][string], undefined>]> {
-  return Object.entries(operation.responses ?? {}).filter(([statusCode]) => /^2\d\d$/.test(statusCode));
+  return Object.entries(operation.responses ?? {}).filter(([statusCode]) =>
+    /^2\d\d$/.test(statusCode),
+  );
 }
 
 function errorResponse(description: string) {
@@ -147,9 +169,13 @@ function tagFor(path: string): string {
 }
 
 function summaryFor(method: string, path: string): string {
-  const action = { get: 'Get', post: 'Create or execute', patch: 'Update', put: 'Replace', delete: 'Delete' }[
-    method
-  ];
+  const action = {
+    get: 'Get',
+    post: 'Create or execute',
+    patch: 'Update',
+    put: 'Replace',
+    delete: 'Delete',
+  }[method];
   return `${action} ${path.replace('/api/v1/', '').replaceAll(/[{}]/g, '')}`;
 }
 
