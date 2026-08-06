@@ -17,6 +17,9 @@ describe('validateEnvironment', () => {
       TRIAL_MODE: true,
       RATE_LIMIT_TTL_MS: 60_000,
       RATE_LIMIT_REQUESTS: 100,
+      HTTP_LOG_SUCCESS_SAMPLE_RATE: 1,
+      HTTP_SLOW_REQUEST_MS: 750,
+      WEB_CONCURRENCY: 1,
       PASSWORD_RESET_TTL_MINUTES: 20,
       PASSWORD_RESET_URL: 'http://localhost:3000/admin/reset-password',
     });
@@ -126,6 +129,24 @@ describe('validateEnvironment', () => {
     );
     expect(() => validateEnvironment({ RATE_LIMIT_TTL_MS: 999 })).toThrow(
       'RATE_LIMIT_TTL_MS must be between 1000 and 3600000',
+    );
+  });
+
+  it('validates HTTP log sampling and slow-request thresholds', () => {
+    expect(() => validateEnvironment({ HTTP_LOG_SUCCESS_SAMPLE_RATE: 1.1 })).toThrow(
+      'HTTP_LOG_SUCCESS_SAMPLE_RATE must be between 0 and 1',
+    );
+    expect(() => validateEnvironment({ HTTP_SLOW_REQUEST_MS: 0 })).toThrow(
+      'HTTP_SLOW_REQUEST_MS must be between 1 and 60000',
+    );
+  });
+
+  it('restricts API worker concurrency to a safe range', () => {
+    expect(() => validateEnvironment({ WEB_CONCURRENCY: 0 })).toThrow(
+      'WEB_CONCURRENCY must be between 1 and 16',
+    );
+    expect(() => validateEnvironment({ WEB_CONCURRENCY: 17 })).toThrow(
+      'WEB_CONCURRENCY must be between 1 and 16',
     );
   });
 

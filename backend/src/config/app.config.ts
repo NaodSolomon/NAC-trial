@@ -16,4 +16,9 @@ export default registerAs('app', () => ({
       : process.env.NODE_ENV !== 'production',
   rateLimitTtlMs: Number(process.env.RATE_LIMIT_TTL_MS ?? 60_000),
   rateLimitRequests: Number(process.env.RATE_LIMIT_REQUESTS ?? 100),
+  httpSuccessLogSampleRate: Number(
+    process.env.HTTP_LOG_SUCCESS_SAMPLE_RATE ??
+      (process.env.NODE_ENV === 'production' ? 0.01 : 1),
+  ),
+  httpSlowRequestMs: Number(process.env.HTTP_SLOW_REQUEST_MS ?? 750),
 }));

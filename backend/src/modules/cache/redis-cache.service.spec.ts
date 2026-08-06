@@ -99,4 +99,86 @@ describe('RedisCacheService', () => {
     expect(client.connect).toHaveBeenCalledTimes(2);
     expect(client.setEx).toHaveBeenCalled();
   });
+
+  it('coalesces concurrent cache misses into one database loader', async () => {
+    const client = {
+      isReady: true,
+      isOpen: true,
+      get: jest.fn(async () => null),
+      setEx: jest.fn(async () => 'OK'),
+      incr: jest.fn(async () => 1),
+      destroy: jest.fn(),
+    } as unknown as RedisClient;
+    const service = new RedisCacheService(config(), client);
+    let release!: (value: { data: string[] }) => void;
+    const loader = jest.fn(
+      () =>
+        new Promise<{ data: string[] }>((resolve) => {
+          release = resolve;
+        }),
+    );
+
+    const requests = Array.from({ length: 100 }, () =>
+      service.remember('events', 'list:en', 60, loader),
+    );
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(loader).toHaveBeenCalledTimes(1);
+    release({ data: ['event'] });
+    await expect(Promise.all(requests)).resolves.toEqual(
+      Array.from({ length: 100 }, () => ({ data: ['event'] })),
+    );
+    expect(client.setEx).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears a rejected flight so the next request can retry', async () => {
+    const client = {
+      isReady: true,
+      isOpen: true,
+      get: jest.fn(async () => null),
+      setEx: jest.fn(async () => 'OK'),
+      incr: jest.fn(async () => 1),
+      destroy: jest.fn(),
+    } as unknown as RedisClient;
+    const service = new RedisCacheService(config(), client);
+    const loader = jest
+      .fn<Promise<string>, []>()
+      .mockRejectedValueOnce(new Error('database unavailable'))
+      .mockResolvedValueOnce('recovered');
+
+    await expect(service.remember('events', 'list:en', 60, loader)).rejects.toThrow(
+      'database unavailable',
+    );
+    await expect(service.remember('events', 'list:en', 60, loader)).resolves.toBe('recovered');
+    expect(loader).toHaveBeenCalledTimes(2);
+  });
+
+  it('coalesces PostgreSQL fallback when Redis is unavailable', async () => {
+    const client = {
+      isReady: false,
+      isOpen: false,
+      connect: jest.fn(() => new Promise<never>(() => undefined)),
+      destroy: jest.fn(),
+    } as unknown as RedisClient;
+    const service = new RedisCacheService(config(20, 1_000), client);
+    let release!: (value: string) => void;
+    const loader = jest.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          release = resolve;
+        }),
+    );
+
+    const requests = Array.from({ length: 100 }, () =>
+      service.remember('events', 'list:en', 60, loader),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    expect(client.connect).toHaveBeenCalledTimes(1);
+    expect(loader).toHaveBeenCalledTimes(1);
+    release('database result');
+    await expect(Promise.all(requests)).resolves.toEqual(
+      Array.from({ length: 100 }, () => 'database result'),
+    );
+  });
 });

@@ -3,8 +3,11 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
+import { DatabaseUnavailableError } from '../../../database/database-unavailable.error';
 import { AdminPrincipal } from '../../auth/interfaces/auth.types';
 import { ApplicationCache, CACHE, NOOP_CACHE } from '../../cache/cache.interface';
 import {
@@ -18,19 +21,32 @@ import { EVENT_REPOSITORY, EventRepository } from '../interfaces/event-repositor
 
 @Injectable()
 export class EventsService {
+  private readonly logger = new Logger(EventsService.name);
+
   constructor(
     @Inject(EVENT_REPOSITORY) private readonly events: EventRepository,
     @Inject(CACHE) private readonly cache: ApplicationCache = NOOP_CACHE,
   ) {}
 
-  listPublic(query: EventQueryDto) {
-    return this.cache.remember('events', `list:${JSON.stringify(this.criteria(query))}`, 120, () =>
-      this.events.list(this.criteria(query), true),
-    );
+  async listPublic(query: EventQueryDto) {
+    try {
+      return await this.cache.remember(
+        'events',
+        `list:${JSON.stringify(this.criteria(query))}`,
+        120,
+        () => this.events.list(this.criteria(query), true),
+      );
+    } catch (error) {
+      this.rethrowListFailure(error);
+    }
   }
 
-  listAdmin(query: EventQueryDto) {
-    return this.events.list(this.criteria(query), false);
+  async listAdmin(query: EventQueryDto) {
+    try {
+      return await this.events.list(this.criteria(query), false);
+    } catch (error) {
+      this.rethrowListFailure(error);
+    }
   }
 
   async findPublic(slug: string, languageCode: 'en' | 'am') {
@@ -39,6 +55,16 @@ export class EventsService {
     );
     if (!event) throw new NotFoundException(`Published event ${slug} was not found`);
     return event;
+  }
+
+  private rethrowListFailure(error: unknown): never {
+    if (error instanceof DatabaseUnavailableError) {
+      this.logger.warn(`Event listing unavailable operation=${error.operation}`);
+      throw new ServiceUnavailableException('Events are temporarily unavailable', {
+        cause: error,
+      });
+    }
+    throw error;
   }
 
   async calendar(slug: string, languageCode: 'en' | 'am') {

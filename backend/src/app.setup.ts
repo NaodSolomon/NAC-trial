@@ -10,7 +10,13 @@ export function configureApp(app: INestApplication): void {
 
   app.setGlobalPrefix('api/v1');
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalInterceptors(new SecureLoggingInterceptor(), new TransformInterceptor());
+  app.useGlobalInterceptors(
+    new SecureLoggingInterceptor(
+      config.getOrThrow<number>('app.httpSuccessLogSampleRate'),
+      config.getOrThrow<number>('app.httpSlowRequestMs'),
+    ),
+    new TransformInterceptor(),
+  );
   app.useGlobalPipes(
     new RequestSanitizationPipe(),
     new ValidationPipe({

@@ -54,6 +54,9 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   REDIS_CONNECT_TIMEOUT_MS: number;
   REDIS_COMMAND_TIMEOUT_MS: number;
   REDIS_CIRCUIT_COOLDOWN_MS: number;
+  HTTP_LOG_SUCCESS_SAMPLE_RATE: number;
+  HTTP_SLOW_REQUEST_MS: number;
+  WEB_CONCURRENCY: number;
 }
 
 function parseChoice<T extends string>(
@@ -97,6 +100,14 @@ function parseBoundedInteger(
   const parsed = Number(value ?? fallback);
   if (!Number.isSafeInteger(parsed) || parsed < minimum || parsed > maximum) {
     throw new Error(`${name} must be between ${minimum} and ${maximum}`);
+  }
+  return parsed;
+}
+
+function parseRate(value: unknown, name: string, fallback: number): number {
+  const parsed = Number(value ?? fallback);
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > 1) {
+    throw new Error(`${name} must be between 0 and 1`);
   }
   return parsed;
 }
@@ -318,6 +329,19 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
       1,
       2_000_000,
     ),
+    HTTP_LOG_SUCCESS_SAMPLE_RATE: parseRate(
+      raw.HTTP_LOG_SUCCESS_SAMPLE_RATE,
+      'HTTP_LOG_SUCCESS_SAMPLE_RATE',
+      environment === 'production' ? 0.01 : 1,
+    ),
+    HTTP_SLOW_REQUEST_MS: parseBoundedInteger(
+      raw.HTTP_SLOW_REQUEST_MS,
+      'HTTP_SLOW_REQUEST_MS',
+      750,
+      1,
+      60_000,
+    ),
+    WEB_CONCURRENCY: parseBoundedInteger(raw.WEB_CONCURRENCY, 'WEB_CONCURRENCY', 1, 1, 16),
     PAYPAL_ENABLED: paypalEnabled,
     PAYMENTS_ENABLED: paymentsEnabled,
     TRIAL_MODE: trialMode,

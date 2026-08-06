@@ -1,14 +1,21 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { and, asc, count, desc, eq, gt, lt, SQL } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { DRIZZLE } from '../../../database/drizzle.module';
+import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { Pool, PoolClient } from 'pg';
+import { DatabaseUnavailableError } from '../../../database/database-unavailable.error';
+import { DATABASE_POOL, DRIZZLE } from '../../../database/drizzle.module';
 import * as schema from '../../../database/schema';
 import { auditLogs, eventRsvps, events } from '../../../database/schema';
 import { EventCriteria, EventRepository } from '../interfaces/event-repository.interface';
 
 @Injectable()
 export class DrizzleEventRepository implements EventRepository {
-  constructor(@Inject(DRIZZLE) private readonly db: NodePgDatabase<typeof schema>) {}
+  private readonly logger = new Logger(DrizzleEventRepository.name);
+
+  constructor(
+    @Inject(DRIZZLE) private readonly db: NodePgDatabase<typeof schema>,
+    @Optional() @Inject(DATABASE_POOL) private readonly pool?: Pool,
+  ) {}
 
   async list(criteria: EventCriteria, publicOnly: boolean) {
     const filters: SQL[] = [];
@@ -20,17 +27,19 @@ export class DrizzleEventRepository implements EventRepository {
     if (criteria.timeframe === 'past') filters.push(lt(events.endDate, now));
     const where = filters.length ? and(...filters) : undefined;
     const order = criteria.sortOrder === 'asc' ? asc(events.startDate) : desc(events.startDate);
-    const [data, [{ total }]] = await Promise.all([
-      this.db
-        .select()
-        .from(events)
-        .where(where)
-        .orderBy(order)
-        .limit(criteria.limit)
-        .offset(criteria.offset),
-      this.db.select({ total: count() }).from(events).where(where),
-    ]);
-    return this.result(data, total, criteria);
+    return this.measuredListQuery(async (database) => {
+      const [data, [{ total }]] = await Promise.all([
+        database
+          .select()
+          .from(events)
+          .where(where)
+          .orderBy(order)
+          .limit(criteria.limit)
+          .offset(criteria.offset),
+        database.select({ total: count() }).from(events).where(where),
+      ]);
+      return this.result(data, total, criteria);
+    });
   }
 
   async findPublicBySlug(slug: string, languageCode: 'en' | 'am') {
@@ -46,6 +55,42 @@ export class DrizzleEventRepository implements EventRepository {
       )
       .limit(1);
     return event ?? null;
+  }
+
+  private async measuredListQuery<T>(
+    query: (database: NodePgDatabase<typeof schema>) => Promise<T>,
+  ): Promise<T> {
+    const startedAt = Date.now();
+    const waitingBefore = this.pool?.waitingCount ?? 0;
+    let poolWaitMs = 0;
+    let client: PoolClient | undefined;
+
+    try {
+      let database = this.db;
+      if (this.pool) {
+        const waitStartedAt = Date.now();
+        client = await this.pool.connect();
+        poolWaitMs = Date.now() - waitStartedAt;
+        database = drizzle(client, { schema });
+      }
+      const result = await query(database);
+      const durationMs = Date.now() - startedAt;
+      if (poolWaitMs >= 100 || durationMs >= 250 || waitingBefore > 0) {
+        this.logger.warn(
+          `PostgreSQL event-list pressure poolWaitMs=${poolWaitMs} durationMs=${durationMs} waitingBefore=${waitingBefore} waitingAfter=${this.pool?.waitingCount ?? 0} total=${this.pool?.totalCount ?? 0} idle=${this.pool?.idleCount ?? 0}`,
+        );
+      }
+      return result;
+    } catch (error) {
+      const durationMs = Date.now() - startedAt;
+      this.logger.error(
+        `PostgreSQL event-list failed poolWaitMs=${poolWaitMs} durationMs=${durationMs} waitingBefore=${waitingBefore} waitingAfter=${this.pool?.waitingCount ?? 0} total=${this.pool?.totalCount ?? 0} idle=${this.pool?.idleCount ?? 0}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw new DatabaseUnavailableError('events.list', error);
+    } finally {
+      client?.release();
+    }
   }
 
   async findById(id: string) {

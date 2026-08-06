@@ -14,6 +14,9 @@ services:
       NODE_ENV: test
       API_HOST: 0.0.0.0
       API_PORT: 8000
+      # Two Node workers use the container's available CPU while k6 holds 1,000
+      # concurrent connections. Each worker retains its own bounded DB pool.
+      WEB_CONCURRENCY: 2
       DATABASE_URL: postgresql://benchmark:benchmark@postgres:5432/nehemiah_benchmark
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -23,6 +26,10 @@ services:
       # The benchmark has one source IP inside Compose. This high test-only ceiling
       # keeps the production throttling code active without measuring HTTP 429s.
       RATE_LIMIT_REQUESTS: 2000000
+      # Production samples successful access logs. Keeping that behavior here avoids
+      # turning stdout throughput into the benchmark's limiting resource.
+      HTTP_LOG_SUCCESS_SAMPLE_RATE: 0.01
+      HTTP_SLOW_REQUEST_MS: 750
       SWAGGER_ENABLED: "false"
       TRIAL_MODE: "true"
       PAYMENTS_ENABLED: "false"
@@ -34,7 +41,13 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/api/v1/system/health/ready"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "-qO-",
+          "http://127.0.0.1:8000/api/v1/system/health/ready",
+        ]
       interval: 5s
       timeout: 3s
       retries: 30
