@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { FastifyReply, FastifyRequest } from 'fastify';
+import { safeRequestPath } from '../logging/safe-request-path';
 
 interface ValidationErrorResponse {
   message?: string | string[];
@@ -36,7 +37,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
       const stack = exception instanceof Error ? exception.stack : String(exception);
       this.logger.error(
-        `${request.method} ${request.url.split('?')[0]} failed with ${statusCode}`,
+        `${request.method} ${safeRequestPath(request)} failed with ${statusCode}`,
         stack,
       );
     }
