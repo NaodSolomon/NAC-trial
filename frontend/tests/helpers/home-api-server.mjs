@@ -4,9 +4,19 @@ import { resolve } from 'node:path';
 
 const port = 4010;
 const downloadCounts = new Map();
+const eventRsvpEmails = new Set();
 
 createServer(async (request, response) => {
   const url = new URL(request.url ?? '/', `http://127.0.0.1:${port}`);
+  if (request.method === 'OPTIONS') {
+    response.writeHead(204, {
+      'access-control-allow-origin': 'http://localhost:3000',
+      'access-control-allow-credentials': 'true',
+      'access-control-allow-methods': 'GET,POST,OPTIONS',
+      'access-control-allow-headers': 'content-type,authorization',
+    });
+    return response.end();
+  }
   if (url.pathname === '/health') return json(response, { ok: true });
   if (url.pathname.startsWith('/assets/')) return asset(response, url.pathname);
   if (url.pathname.startsWith('/downloads/')) return downloadAsset(response);
@@ -29,7 +39,59 @@ createServer(async (request, response) => {
     return envelope(response, searchResults(url.searchParams.get('q') ?? '', language));
   }
   if (url.pathname === '/api/v1/public/events') {
-    return envelope(response, paginated(events(language)));
+    const timeframe = url.searchParams.get('timeframe') ?? 'upcoming';
+    const now = Date.parse('2026-08-06T12:00:00.000Z');
+    const filtered = events(language)
+      .filter((event) =>
+        timeframe === 'past'
+          ? Date.parse(event.endDate) < now
+          : timeframe === 'all' || Date.parse(event.endDate) > now,
+      )
+      .sort((left, right) =>
+        (url.searchParams.get('sortOrder') ?? 'desc') === 'asc'
+          ? Date.parse(left.startDate) - Date.parse(right.startDate)
+          : Date.parse(right.startDate) - Date.parse(left.startDate),
+      );
+    return envelope(response, paginated(filtered, url));
+  }
+  const eventCalendar = url.pathname.match(/^\/api\/v1\/public\/events\/([^/]+)\/calendar\.ics$/);
+  if (eventCalendar) {
+    const event = events(language).find(
+      (item) => item.slug === decodeURIComponent(eventCalendar[1]),
+    );
+    if (!event) return json(response, { message: 'Not found' }, 404);
+    response.writeHead(200, {
+      'content-type': 'text/calendar; charset=utf-8',
+      'content-disposition': `attachment; filename="${event.slug}.ics"`,
+      'access-control-allow-origin': 'http://localhost:3000',
+    });
+    return response.end(
+      `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:${event.id}@nehemiah.local\r\nDTSTART:20270114T223000Z\r\nSUMMARY:${event.title}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`,
+    );
+  }
+  const eventRsvp = url.pathname.match(/^\/api\/v1\/public\/events\/([0-9a-f-]+)\/rsvp$/);
+  if (eventRsvp && request.method === 'POST') {
+    const event = events(language).find((item) => item.id === eventRsvp[1]);
+    if (!event)
+      return json(response, { success: false, statusCode: 404, message: 'Not found' }, 404);
+    const body = await readJson(request);
+    const key = `${event.id}:${String(body.email ?? '').toLowerCase()}`;
+    if (eventRsvpEmails.has(key)) {
+      return json(
+        response,
+        { success: false, statusCode: 409, message: 'Already registered' },
+        409,
+      );
+    }
+    eventRsvpEmails.add(key);
+    return envelope(response, { status: 'confirmed' }, 201);
+  }
+  const eventDetail = url.pathname.match(/^\/api\/v1\/public\/events\/([^/]+)$/);
+  if (eventDetail) {
+    const event = events(language).find((item) => item.slug === decodeURIComponent(eventDetail[1]));
+    return event
+      ? envelope(response, event)
+      : json(response, { success: false, statusCode: 404, message: 'Not found' }, 404);
   }
   if (url.pathname === '/api/v1/public/gallery') {
     return envelope(response, paginated(gallery(language)));
@@ -205,16 +267,49 @@ function searchResults(query, language) {
 }
 
 function events(language) {
-  return [1, 2, 3].map((number) => ({
-    id: `event-${number}`,
-    slug: `event-${number}`,
-    title: language === 'am' ? `የማህበረሰብ ዝግጅት ${number}` : `Community event ${number}`,
+  const definitions = [
+    {
+      slug: 'family-support-day',
+      start: '2027-01-14T22:30:00.000Z',
+      end: '2027-01-15T02:30:00.000Z',
+    },
+    {
+      slug: 'community-awareness-workshop',
+      start: '2027-02-20T06:00:00.000Z',
+      end: '2027-02-20T09:00:00.000Z',
+    },
+    {
+      slug: 'inclusive-learning-forum',
+      start: '2027-03-12T08:00:00.000Z',
+      end: '2027-03-12T11:00:00.000Z',
+    },
+    {
+      slug: 'past-family-gathering',
+      start: '2025-05-10T06:00:00.000Z',
+      end: '2025-05-10T10:00:00.000Z',
+    },
+  ];
+  return definitions.map((definition, index) => ({
+    id: `00000000-0000-4000-8000-00000000040${index + 1}`,
+    slug: definition.slug,
+    languageCode: language,
+    title:
+      language === 'am'
+        ? `የማህበረሰብ ዝግጅት ${index + 1}`
+        : index === 0
+          ? 'Family support day'
+          : index === 3
+            ? 'Past family gathering'
+            : `Community event ${index + 1}`,
     description:
       language === 'am'
         ? 'ቤተሰቦችን የሚያገናኝ ዝግጅት።'
-        : 'An inclusive activity for families and supporters.',
-    startDate: `2027-0${number}-15T09:00:00.000Z`,
-    location: language === 'am' ? 'አዲስ አበባ' : 'Addis Ababa',
+        : 'An inclusive activity for families and supporters. <script>private-rsvp@example.org</script>',
+    startDate: definition.start,
+    endDate: definition.end,
+    location: language === 'am' ? 'አዲስ አበባ' : 'Nehemiah Autism Center, Addis Ababa',
+    rsvpEnabled: index === 0,
+    status: 'PUBLISHED',
   }));
 }
 
@@ -347,13 +442,27 @@ function paginated(data, url) {
   };
 }
 
-function envelope(response, data) {
-  return json(response, {
-    success: true,
-    data,
-    statusCode: 200,
-    timestamp: new Date(0).toISOString(),
-  });
+function envelope(response, data, status = 200) {
+  return json(
+    response,
+    {
+      success: true,
+      data,
+      statusCode: status,
+      timestamp: new Date(0).toISOString(),
+    },
+    status,
+  );
+}
+
+async function readJson(request) {
+  const chunks = [];
+  for await (const chunk of request) chunks.push(chunk);
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  } catch {
+    return {};
+  }
 }
 
 function json(response, body, status = 200) {
