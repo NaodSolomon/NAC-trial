@@ -94,6 +94,27 @@ const demoPages = [
     seoDescription: 'ከነሕምያ ኦቲዝም ማዕከል ቤተሰብን ማዕከል ያደረገ የኦቲዝም ድጋፍ፣ ትምህርትና የማህበረሰብ አገልግሎቶች።',
   },
   {
+    slug: 'about',
+    languageCode: 'en' as const,
+    title: 'About Nehemiah Autism Center',
+    content:
+      'Nehemiah Autism Center supports autistic children and their families through practical guidance, learning support, advocacy, and inclusive community activities.\n\nOur work is family-centered. We listen to each family, respect every child’s strengths, and help communities build greater understanding and acceptance.',
+    metadata: {},
+    seoTitle: 'About Nehemiah Autism Center',
+    seoDescription:
+      'Learn about Nehemiah Autism Center and its family-centered autism support in Ethiopia.',
+  },
+  {
+    slug: 'about',
+    languageCode: 'am' as const,
+    title: 'ስለ ነህምያ ኦቲዝም ማዕከል',
+    content:
+      'ነህምያ ኦቲዝም ማዕከል ኦቲዝም ያለባቸውን ህጻናትና ቤተሰቦቻቸውን በተግባራዊ ምክር፣ በትምህርት ድጋፍ፣ በጥብቅና እና በአካታች የማህበረሰብ እንቅስቃሴዎች ይደግፋል።\n\nሥራችን ቤተሰብን ማዕከል ያደረገ ነው። እያንዳንዱን ቤተሰብ እናዳምጣለን፣ የእያንዳንዱን ህጻን ጥንካሬ እናከብራለን።',
+    metadata: {},
+    seoTitle: 'ስለ ነህምያ ኦቲዝም ማዕከል',
+    seoDescription: 'በኢትዮጵያ ስላለው የነህምያ ኦቲዝም ማዕከል የቤተሰብ ድጋፍ ይወቁ።',
+  },
+  {
     slug: 'faq',
     languageCode: 'en' as const,
     title: 'Frequently Asked Questions',
@@ -126,6 +147,27 @@ const demoPages = [
     seoTitle: 'Frequently Asked Questions | Nehemiah Autism Center',
     seoDescription:
       'Answers to common questions about Nehemiah Autism Center, family support, website access, and volunteering.',
+  },
+  {
+    slug: 'faq',
+    languageCode: 'am' as const,
+    title: 'ተደጋጋሚ ጥያቄዎች',
+    content: 'ስለ ነህምያ ኦቲዝም ማዕከልና ቤተሰቦች ከእኛ ጋር እንዴት መገናኘት እንደሚችሉ መልሶችን ያግኙ።',
+    metadata: {
+      items: [
+        {
+          question: 'ነህምያ ኦቲዝም ማዕከል ምን ያደርጋል?',
+          answer:
+            'ቤተሰብን ማዕከል ያደረገ የኦቲዝም ድጋፍ፣ ተግባራዊ ምክር፣ የትምህርት ዕድሎችና የማህበረሰብ ግንዛቤ እንቅስቃሴዎችን እናቀርባለን።',
+        },
+        {
+          question: 'ድጋፍ እንዴት መጠየቅ እችላለሁ?',
+          answer: 'ለቡድናችን መልእክት ለመላክ የመገናኛ ገጹን ይጠቀሙ። የቡድን አባል ባቀረቡት መረጃ ያነጋግርዎታል።',
+        },
+      ],
+    },
+    seoTitle: 'ተደጋጋሚ ጥያቄዎች | ነህምያ ኦቲዝም ማዕከል',
+    seoDescription: 'ስለ ነህምያ ኦቲዝም ማዕከልና የቤተሰብ ድጋፍ የተለመዱ ጥያቄዎች መልሶች።',
   },
 ] as const;
 

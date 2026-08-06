@@ -3,11 +3,13 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const port = 4010;
+const downloadCounts = new Map();
 
 createServer(async (request, response) => {
   const url = new URL(request.url ?? '/', `http://127.0.0.1:${port}`);
   if (url.pathname === '/health') return json(response, { ok: true });
   if (url.pathname.startsWith('/assets/')) return asset(response, url.pathname);
+  if (url.pathname.startsWith('/downloads/')) return downloadAsset(response);
 
   const language = url.searchParams.get('languageCode') === 'am' ? 'am' : 'en';
   if (url.pathname === '/api/v1/public/content/homepage') {
@@ -19,6 +21,31 @@ createServer(async (request, response) => {
   }
   if (url.pathname === '/api/v1/public/gallery') {
     return envelope(response, paginated(gallery(language)));
+  }
+  if (url.pathname === '/api/v1/public/pages/about') {
+    return envelope(response, about(language));
+  }
+  if (url.pathname === '/api/v1/public/content/faqs') {
+    return envelope(response, faqs(language));
+  }
+  if (url.pathname === '/api/v1/public/resources') {
+    return envelope(response, paginated(resources(language)));
+  }
+  const resourceDownload = url.pathname.match(
+    /^\/api\/v1\/public\/resources\/([0-9a-f-]+)\/download$/,
+  );
+  if (resourceDownload) {
+    const resource = resources(language).find((item) => item.id === resourceDownload[1]);
+    if (!resource) return json(response, { message: 'Not found' }, 404);
+    const downloadCount = (downloadCounts.get(resource.id) ?? resource.downloadCount) + 1;
+    downloadCounts.set(resource.id, downloadCount);
+    return envelope(response, {
+      id: resource.id,
+      fileUrl: resource.fileUrl,
+      fileName: resource.fileName,
+      mimeType: resource.mimeType,
+      downloadCount,
+    });
   }
   if (url.pathname === '/api/v1/settings') return envelope(response, settings);
   if (url.pathname === '/api/v1/navigation') {
@@ -133,6 +160,71 @@ function gallery(language) {
   }));
 }
 
+function about(language) {
+  const amharic = language === 'am';
+  return {
+    id: amharic ? '00000000-0000-4000-8000-000000000102' : '00000000-0000-4000-8000-000000000101',
+    slug: 'about',
+    languageCode: language,
+    title: amharic ? 'ስለ ነህምያ ኦቲዝም ማዕከል' : 'About Nehemiah Autism Center',
+    content: amharic
+      ? 'ማዕከላችን ኦቲዝም ያለባቸውን ህጻናትና ቤተሰቦቻቸውን ይደግፋል።'
+      : '<p>Nehemiah Autism Center provides family-centered autism support in Ethiopia.</p><script>draft-secret</script>',
+    status: 'PUBLISHED',
+    seoTitle: amharic ? 'ስለ ነህምያ ኦቲዝም ማዕከል' : 'About Nehemiah Autism Center',
+    seoDescription: amharic ? 'ስለ ማዕከላችን ይወቁ።' : 'Learn about our family-centered work.',
+    seoImageUrl: null,
+  };
+}
+
+function faqs(language) {
+  const amharic = language === 'am';
+  return {
+    title: amharic ? 'ተደጋጋሚ ጥያቄዎች' : 'Frequently Asked Questions',
+    body: amharic ? 'ስለ ማዕከላችን መልሶችን ያግኙ።' : 'Answers about the center and its services.',
+    items: [
+      {
+        question: amharic ? 'ማዕከሉ ምን ያደርጋል?' : 'What does the center do?',
+        answer: amharic
+          ? 'ለህጻናትና ለቤተሰቦች ድጋፍ ይሰጣል።'
+          : 'We provide practical, family-centered autism support.',
+      },
+      {
+        question: amharic ? 'እንዴት ልገናኝ?' : 'How can I contact the team?',
+        answer: amharic ? 'የመገናኛ ገጹን ይጠቀሙ።' : 'Use the contact page to send us a message.',
+      },
+    ],
+  };
+}
+
+function resources(language) {
+  if (language === 'am') return [];
+  return [
+    {
+      id: '00000000-0000-4000-8000-000000000201',
+      title: 'Family autism guide',
+      description: 'Practical introductory information for parents and caregivers.',
+      fileName: 'family-autism-guide.pdf',
+      fileUrl: 'http://127.0.0.1:' + port + '/downloads/family-autism-guide.pdf',
+      mimeType: 'application/pdf',
+      languageCode: 'en',
+      status: 'PUBLISHED',
+      downloadCount: 2,
+    },
+    {
+      id: '00000000-0000-4000-8000-000000000202',
+      title: 'Activity planner',
+      description: 'A simple text planner for family activities.',
+      fileName: 'activity-planner.txt',
+      fileUrl: 'http://127.0.0.1:' + port + '/downloads/activity-planner.txt',
+      mimeType: 'text/plain',
+      languageCode: 'en',
+      status: 'PUBLISHED',
+      downloadCount: 0,
+    },
+  ];
+}
+
 function navigation(language) {
   const labels =
     language === 'am'
@@ -161,6 +253,14 @@ async function asset(response, pathname) {
   } catch {
     return json(response, { message: 'Not found' }, 404);
   }
+}
+
+function downloadAsset(response) {
+  response.writeHead(200, {
+    'content-type': 'application/octet-stream',
+    'content-disposition': 'attachment',
+  });
+  response.end('Trial resource file');
 }
 
 function paginated(data) {

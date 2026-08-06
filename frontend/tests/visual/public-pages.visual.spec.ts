@@ -12,6 +12,7 @@ const publicScreens = [
   { name: 'gallery', path: '/gallery' },
   { name: 'gallery-masonry', path: '/gallery/masonry' },
   { name: 'faq', path: '/faq' },
+  { name: 'resources', path: '/resources' },
   { name: 'contact', path: '/contact' },
   { name: 'donate', path: '/donate' },
   { name: 'coming-soon', path: '/coming-soon' },

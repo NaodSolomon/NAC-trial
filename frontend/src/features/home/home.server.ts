@@ -1,8 +1,8 @@
 import 'server-only';
 
-import { cookies } from 'next/headers';
 import { createServerApiClient } from '@/lib/api/server-client';
-import { languageCookieName, normalizeLanguage, type Language } from '@/lib/i18n';
+import type { Language } from '@/lib/i18n';
+import { resolveRequestLanguage } from '@/lib/i18n/server';
 import {
   blogListSchema,
   eventListSchema,
@@ -13,12 +13,7 @@ import type { HomePageData } from './home.types';
 
 const client = createServerApiClient();
 
-export async function resolveHomeLanguage(queryLanguage?: string): Promise<Language> {
-  const fromQuery = normalizeLanguage(queryLanguage);
-  if (fromQuery) return fromQuery;
-  const cookieStore = await cookies();
-  return normalizeLanguage(cookieStore.get(languageCookieName)?.value) ?? 'en';
-}
+export const resolveHomeLanguage = resolveRequestLanguage;
 
 export async function loadHomePageData(language: Language): Promise<HomePageData> {
   const compositionRequest = loadComposition(language);

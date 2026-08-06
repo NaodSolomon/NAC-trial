@@ -13,19 +13,15 @@ export default function PageBanner({ title, breadcrumbs, backgroundImage }: Page
     <section className="relative flex min-h-[300px] items-center justify-center py-24">
       {backgroundImage && (
         <div className="absolute inset-0">
-          <Image
-            src={backgroundImage}
-            alt={title}
-            fill
-            className="object-cover"
-            priority
-          />
+          <Image src={backgroundImage} alt={title} fill className="object-cover" priority />
         </div>
       )}
       <div className="absolute inset-0 bg-black/60" />
 
       <div className="relative z-10 text-center">
-        <h1 className="font-serif text-4xl font-medium text-white md:text-5xl">{title}</h1>
+        <h1 className="font-serif text-4xl font-medium md:text-5xl" style={{ color: 'white' }}>
+          {title}
+        </h1>
 
         <nav className="mt-4 flex items-center justify-center gap-1">
           {breadcrumbs.map((crumb, index) => (

@@ -58,7 +58,7 @@ export const SITE_CONFIG = {
       { label: 'Volunteer', href: '/contact' },
       { label: 'Frequently Asked Questions', href: '/faq' },
       { label: 'Events', href: '/events' },
-      { label: 'Resources', href: '/blog' },
+      { label: 'Resources', href: '/resources' },
     ],
     discover: [
       { label: 'Our Team', href: '/team' },
