@@ -29,9 +29,21 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: [
+    {
+      command: 'node tests/helpers/home-api-server.mjs',
+      url: 'http://127.0.0.1:4010/health',
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: 'pnpm dev',
+      url: 'http://localhost:3000',
+      reuseExistingServer: !process.env.CI,
+      env: {
+        API_URL: 'http://127.0.0.1:4010/api/v1',
+        NEXT_PUBLIC_API_URL: 'http://127.0.0.1:4010/api/v1',
+        NEXT_PUBLIC_STORAGE_ORIGIN: 'http://127.0.0.1:4010',
+      },
+    },
+  ],
 });

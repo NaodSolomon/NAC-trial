@@ -17,7 +17,7 @@ const demoPages = [
           type: 'hero',
           heading: 'Every child deserves understanding, support, and opportunity',
           body: 'Discover family-centered autism services and a welcoming community in Ethiopia.',
-          primaryAction: { label: 'Explore our services', href: '/services' },
+          primaryAction: { label: 'Explore our services', href: '/about' },
           secondaryAction: { label: 'Contact us', href: '/contact' },
         },
         {
@@ -49,6 +49,49 @@ const demoPages = [
     seoTitle: 'Nehemiah Autism Center | Autism Support in Ethiopia',
     seoDescription:
       'Family-centered autism support, education, and community services from Nehemiah Autism Center.',
+  },
+  {
+    slug: 'home',
+    languageCode: 'am' as const,
+    title: 'ነሕምያ ኦቲዝም ማዕከል',
+    content: 'ነሕምያ ኦቲዝም ማዕከል ኦቲዝም ያለባቸውን ህጻናትና ቤተሰቦቻቸውን በእንክብካቤ፣ በትምህርትና በማህበረሰብ ይደግፋል።',
+    metadata: {
+      sections: [
+        {
+          type: 'hero',
+          heading: 'እያንዳንዱ ህጻን መረዳት፣ ድጋፍና እድል ይገባዋል',
+          body: 'በኢትዮጵያ ቤተሰብን ማዕከል ያደረጉ የኦቲዝም አገልግሎቶችንና ተቀባይ ማህበረሰብን ይወቁ።',
+          primaryAction: { label: 'አገልግሎቶቻችንን ይወቁ', href: '/about' },
+          secondaryAction: { label: 'ያግኙን', href: '/contact' },
+        },
+        {
+          type: 'services',
+          heading: 'ቤተሰቦችን የምንደግፍባቸው መንገዶች',
+          items: [
+            {
+              title: 'የቤተሰብ ምክር',
+              body: 'ለወላጆችና ለተንከባካቢዎች ተግባራዊ መረጃና ድጋፍ።',
+            },
+            {
+              title: 'የትምህርት ድጋፍ',
+              body: 'የእያንዳንዱን ህጻን ጥንካሬና ፍላጎት የሚያከብሩ የግል እንቅስቃሴዎች።',
+            },
+            {
+              title: 'የማህበረሰብ ግንዛቤ',
+              body: 'አካታችነትን፣ ተቀባይነትንና መረዳትን የሚያዳብር ትምህርት።',
+            },
+          ],
+        },
+        {
+          type: 'callToAction',
+          heading: 'ከቡድናችን ጋር ውይይት ይጀምሩ',
+          body: 'ልንሰማዎትና ትክክለኛውን ቀጣይ እርምጃ እንዲያገኙ ለመርዳት ዝግጁ ነን።',
+          action: { label: 'ያግኙን', href: '/contact' },
+        },
+      ],
+    },
+    seoTitle: 'ነሕምያ ኦቲዝም ማዕከል | በኢትዮጵያ የኦቲዝም ድጋፍ',
+    seoDescription: 'ከነሕምያ ኦቲዝም ማዕከል ቤተሰብን ማዕከል ያደረገ የኦቲዝም ድጋፍ፣ ትምህርትና የማህበረሰብ አገልግሎቶች።',
   },
   {
     slug: 'faq',
