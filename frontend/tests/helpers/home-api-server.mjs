@@ -15,7 +15,19 @@ createServer(async (request, response) => {
   if (url.pathname === '/api/v1/public/content/homepage') {
     return envelope(response, homepage(language));
   }
-  if (url.pathname === '/api/v1/public/blog') return envelope(response, paginated(blogs(language)));
+  if (url.pathname === '/api/v1/public/blog') {
+    return envelope(response, paginated(blogs(language), url));
+  }
+  const blogDetail = url.pathname.match(/^\/api\/v1\/public\/blog\/([^/]+)$/);
+  if (blogDetail) {
+    const post = blogs(language).find((item) => item.slug === decodeURIComponent(blogDetail[1]));
+    return post
+      ? envelope(response, post)
+      : json(response, { success: false, statusCode: 404, message: 'Not found' }, 404);
+  }
+  if (url.pathname === '/api/v1/public/search') {
+    return envelope(response, searchResults(url.searchParams.get('q') ?? '', language));
+  }
   if (url.pathname === '/api/v1/public/events') {
     return envelope(response, paginated(events(language)));
   }
@@ -125,15 +137,71 @@ function homepage(language) {
 }
 
 function blogs(language) {
-  return [1, 2, 3].map((number) => ({
-    id: `blog-${number}`,
-    slug: `story-${number}`,
-    title: language === 'am' ? `የማህበረሰብ ታሪክ ${number}` : `Community story ${number}`,
-    excerpt:
-      language === 'am' ? 'የማዕከሉ የቅርብ ጊዜ ዜና።' : 'Recent news from the center and its community.',
+  const slugs = [
+    'how-your-donations-change-lives',
+    'family-support-at-home',
+    'inclusive-learning-practices',
+    'community-awareness-day',
+    'caregiver-conversation',
+    'celebrating-every-strength',
+    'a-welcoming-community',
+    'practical-family-guidance',
+  ];
+  return slugs.map((slug, index) => ({
+    id: `00000000-0000-4000-8000-00000000030${index + 1}`,
+    slug,
+    languageCode: language,
+    title:
+      language === 'am'
+        ? `Community story ${index + 1}`
+        : index === 0
+          ? 'How your support changes lives'
+          : `Community story ${index + 1}`,
+    excerpt: 'Practical guidance and recent news from the center and its community.',
+    content:
+      'Families are at the center of our work.\n\nThis published story shares practical guidance and the impact of an inclusive community.',
+    status: 'PUBLISHED',
+    seoTitle: index === 0 ? 'How support changes lives | Nehemiah Autism Center' : null,
+    seoDescription: index === 0 ? 'See how community support helps families thrive.' : null,
     seoImageUrl: null,
-    publishedAt: '2026-08-01T09:00:00.000Z',
+    publishedAt: `2026-08-${String(index + 1).padStart(2, '0')}T09:00:00.000Z`,
+    updatedAt: `2026-08-${String(index + 1).padStart(2, '0')}T09:00:00.000Z`,
   }));
+}
+
+function searchResults(query, language) {
+  return {
+    query,
+    results: [
+      {
+        type: 'page',
+        slug: 'about',
+        title: 'About our family support',
+        summary: '<p>Learn about our work.</p><script>draft-secret</script>',
+        languageCode: language,
+        date: null,
+        url: '/pages/about',
+      },
+      {
+        type: 'event',
+        slug: 'event-1',
+        title: 'Family support event',
+        summary: 'An inclusive activity for families and supporters.',
+        languageCode: language,
+        date: '2027-01-15T09:00:00.000Z',
+        url: '/events/event-1',
+      },
+      {
+        type: 'blog',
+        slug: 'how-your-donations-change-lives',
+        title: 'How your support changes lives',
+        summary: 'A published community story.',
+        languageCode: language,
+        date: '2026-08-01T09:00:00.000Z',
+        url: '/blog/how-your-donations-change-lives',
+      },
+    ],
+  };
 }
 
 function events(language) {
@@ -263,10 +331,19 @@ function downloadAsset(response) {
   response.end('Trial resource file');
 }
 
-function paginated(data) {
+function paginated(data, url) {
+  const page = Math.max(Number(url?.searchParams.get('page') ?? 1), 1);
+  const requestedLimit = Number(url?.searchParams.get('limit') ?? (data.length || 1));
+  const limit = Math.max(requestedLimit, 1);
+  const offset = (page - 1) * limit;
   return {
-    data,
-    meta: { total: data.length, page: 1, limit: data.length || 1, totalPages: data.length ? 1 : 0 },
+    data: url ? data.slice(offset, offset + limit) : data,
+    meta: {
+      total: data.length,
+      page,
+      limit,
+      totalPages: data.length ? Math.ceil(data.length / limit) : 0,
+    },
   };
 }
 
