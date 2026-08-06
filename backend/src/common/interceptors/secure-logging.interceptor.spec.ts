@@ -2,10 +2,13 @@ import { CallHandler, ExecutionContext, Logger } from '@nestjs/common';
 import { lastValueFrom, of } from 'rxjs';
 import { SecureLoggingInterceptor } from './secure-logging.interceptor';
 
-function context(): ExecutionContext {
+function context(
+  url = '/api/v1/public/events?languageCode=en',
+  routeUrl = '/api/v1/public/events',
+): ExecutionContext {
   return {
     switchToHttp: () => ({
-      getRequest: () => ({ method: 'GET', url: '/api/v1/public/events?languageCode=en' }),
+      getRequest: () => ({ method: 'GET', url, routeOptions: { url: routeUrl } }),
     }),
   } as unknown as ExecutionContext;
 }
@@ -45,5 +48,25 @@ describe('SecureLoggingInterceptor', () => {
     expect(warn).toHaveBeenCalledWith(
       'Slow HTTP requests windowMs=1900 count=2 maxDurationMs=800 latest=GET /api/v1/public/events',
     );
+  });
+
+  it('logs the route template without a newsletter email parameter', async () => {
+    const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    jest.spyOn(Math, 'random').mockReturnValue(0);
+    jest.spyOn(Date, 'now').mockReturnValueOnce(100).mockReturnValueOnce(110);
+    const interceptor = new SecureLoggingInterceptor(1, 750);
+
+    await lastValueFrom(
+      interceptor.intercept(
+        context(
+          '/api/v1/admin/newsletter/subscriber%40example.org',
+          '/api/v1/admin/newsletter/:email',
+        ),
+        handler,
+      ),
+    );
+
+    expect(log).toHaveBeenCalledWith('GET /api/v1/admin/newsletter/:email completed in 10ms');
+    expect(JSON.stringify(log.mock.calls)).not.toContain('subscriber');
   });
 });

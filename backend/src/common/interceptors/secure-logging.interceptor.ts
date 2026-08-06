@@ -1,6 +1,7 @@
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
 import { FastifyRequest } from 'fastify';
 import { Observable, finalize } from 'rxjs';
+import { safeRequestPath } from '../logging/safe-request-path';
 
 @Injectable()
 export class SecureLoggingInterceptor implements NestInterceptor {
@@ -17,20 +18,18 @@ export class SecureLoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<FastifyRequest>();
     const startedAt = Date.now();
-    const path = request.url.split('?')[0];
+    const path = safeRequestPath(request);
     const sampled = Math.random() < this.successSampleRate;
-    return next
-      .handle()
-      .pipe(
-        finalize(() => {
-          const durationMs = Date.now() - startedAt;
-          if (durationMs >= this.slowRequestMs) {
-            this.recordSlowRequest(request.method, path, durationMs);
-          } else if (sampled) {
-            this.logger.log(`${request.method} ${path} completed in ${durationMs}ms`);
-          }
-        }),
-      );
+    return next.handle().pipe(
+      finalize(() => {
+        const durationMs = Date.now() - startedAt;
+        if (durationMs >= this.slowRequestMs) {
+          this.recordSlowRequest(request.method, path, durationMs);
+        } else if (sampled) {
+          this.logger.log(`${request.method} ${path} completed in ${durationMs}ms`);
+        }
+      }),
+    );
   }
 
   private recordSlowRequest(method: string, path: string, durationMs: number): void {

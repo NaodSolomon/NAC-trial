@@ -410,8 +410,9 @@ Authentication keeps five-attempt/15-minute account lockout and rotating refresh
 families. Reuse of a revoked refresh token revokes the entire family. PayPal webhooks are
 accepted only after PayPal signature verification. Production startup rejects short,
 placeholder, whitespace-containing, or reused security secrets. HTTP logs contain method,
-query-free path, status context, duration, and request correlation only—never bodies, tokens,
-credentials, or query strings.
+registered route template, status context, duration, and request correlation only—never bodies,
+tokens, credentials, query strings, or concrete route-parameter values. Unmatched routes receive
+defensive email and newsletter-identifier redaction before logging.
 
 ## Testing, API Documentation, and Deployment
 

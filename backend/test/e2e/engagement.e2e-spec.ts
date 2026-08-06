@@ -1,4 +1,5 @@
 import * as request from 'supertest';
+import { Logger } from '@nestjs/common';
 import { authenticatedSession, TestSession } from '../helpers/auth-test.helper';
 import {
   closeE2eTestContext,
@@ -15,7 +16,11 @@ describe('Volunteers, testimonials, and newsletter (e2e)', () => {
 
   beforeAll(async () => {
     context = await createE2eTestContext();
-    superAdmin = await authenticatedSession(context.app, context.actors.superAdmin.email, E2E_PASSWORD);
+    superAdmin = await authenticatedSession(
+      context.app,
+      context.actors.superAdmin.email,
+      E2E_PASSWORD,
+    );
     editor = await authenticatedSession(context.app, context.actors.editor.email, E2E_PASSWORD);
     finance = await authenticatedSession(context.app, context.actors.finance.email, E2E_PASSWORD);
   });
@@ -103,9 +108,18 @@ describe('Volunteers, testimonials, and newsletter (e2e)', () => {
       .get('/api/v1/admin/newsletter')
       .set('Authorization', superAdmin.authorization)
       .expect(200);
-    await request(context.app.getHttpServer())
-      .delete('/api/v1/admin/newsletter/subscriber%40e2e.test')
-      .set('Authorization', superAdmin.authorization)
-      .expect(200);
+    const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    try {
+      await request(context.app.getHttpServer())
+        .delete('/api/v1/admin/newsletter/subscriber%40e2e.test')
+        .set('Authorization', superAdmin.authorization)
+        .expect(200);
+      const messages = JSON.stringify(log.mock.calls);
+      expect(messages).toContain('DELETE /api/v1/admin/newsletter/:email completed');
+      expect(messages).not.toContain('subscriber');
+      expect(messages).not.toContain('e2e.test');
+    } finally {
+      log.mockRestore();
+    }
   });
 });
