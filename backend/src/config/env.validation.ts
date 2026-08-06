@@ -20,6 +20,8 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   JWT_AUDIENCE: string;
   IP_HASH_SECRET: string;
   INTERNAL_API_KEY: string;
+  SCHEDULED_PUBLISHING_ENABLED: boolean;
+  SCHEDULED_PUBLISHING_INTERVAL_MS: number;
   STORAGE_ENDPOINT: string;
   STORAGE_REGION: string;
   STORAGE_BUCKET: string;
@@ -267,6 +269,17 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     JWT_AUDIENCE: String(raw.JWT_AUDIENCE ?? 'nehemiah-admin'),
     IP_HASH_SECRET: ipHashSecret,
     INTERNAL_API_KEY: internalApiKey,
+    SCHEDULED_PUBLISHING_ENABLED: parseBoolean(
+      raw.SCHEDULED_PUBLISHING_ENABLED,
+      environment !== 'test',
+    ),
+    SCHEDULED_PUBLISHING_INTERVAL_MS: parseBoundedInteger(
+      raw.SCHEDULED_PUBLISHING_INTERVAL_MS,
+      'SCHEDULED_PUBLISHING_INTERVAL_MS',
+      60_000,
+      1_000,
+      3_600_000,
+    ),
     STORAGE_ENDPOINT: validateUrl(
       requiredInProduction(
         raw.STORAGE_ENDPOINT,

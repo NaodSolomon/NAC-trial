@@ -250,9 +250,18 @@ Navigation has public localized reads and protected management endpoints under
 super administrator can update them at `/api/v1/admin/settings`. All content, navigation, and
 settings mutations write an audit record in the same database transaction.
 
-A trusted scheduler should call `POST /api/v1/internal/jobs/publish-scheduled` with the
-`x-internal-api-key` header. Set a separate, randomly generated `INTERNAL_API_KEY` of at least
-32 characters in production. This endpoint is intended for a cron service, not browsers.
+Scheduled CMS publishing runs automatically inside every API process at startup and then every
+`SCHEDULED_PUBLISHING_INTERVAL_MS` milliseconds (60 seconds by default). A PostgreSQL advisory
+lock ensures that only one process publishes a batch when Node clustering or multiple API
+replicas are active. The publication changes and `AUTO_PUBLISH` audit records remain in one
+database transaction, and CMS cache invalidation follows successful batches.
+
+Set `SCHEDULED_PUBLISHING_ENABLED=false` only when an external scheduler deliberately owns this
+job. The protected `POST /api/v1/internal/jobs/publish-scheduled` endpoint remains available for
+manual recovery or external orchestration and uses the same advisory lock. It requires the
+`x-internal-api-key` header; configure a separate, randomly generated `INTERNAL_API_KEY` of at
+least 32 characters in production. Scheduler database failures are logged and retried at the
+next interval without stopping the API.
 
 ## Media Library
 
