@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" fill="none">
+  <rect x="12" y="22" width="14" height="36" rx="2" fill="#6eb544"/>
+  <rect x="30" y="30" width="14" height="28" rx="2" fill="#4a9e35"/>
+  <rect x="48" y="26" width="14" height="32" rx="2" fill="#333"/>
+  <text x="72" y="36" font-family="Arial, sans-serif" font-size="17" font-weight="bold" fill="#333">Uplift</text>
+  <text x="72" y="54" font-family="Arial, sans-serif" font-size="12" fill="#888">VENTURES</text>
+</svg>
