@@ -1,6 +1,6 @@
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../schema';
-import { admins, blogPosts, cmsPages } from '../schema';
+import { admins, blogPosts, cmsPages, events } from '../schema';
 
 export const DEMO_SEED_AUTHOR_ID = '00000000-0000-4000-8000-000000000004';
 
@@ -215,6 +215,76 @@ const demoBlogPosts = [
   },
 ] as const;
 
+const demoEvents = [
+  {
+    translationKey: '00000000-0000-4000-8000-000000000501',
+    slug: 'family-support-day',
+    languageCode: 'en' as const,
+    title: 'Family support day',
+    description:
+      'A welcoming day for families to connect, share practical ideas, and learn about the center.',
+    startDate: new Date('2030-01-15T06:00:00.000Z'),
+    endDate: new Date('2030-01-15T10:00:00.000Z'),
+    location: 'Nehemiah Autism Center, Addis Ababa',
+    rsvpEnabled: true,
+  },
+  {
+    translationKey: '00000000-0000-4000-8000-000000000501',
+    slug: 'family-support-day',
+    languageCode: 'am' as const,
+    title: 'የቤተሰብ ድጋፍ ቀን',
+    description: 'ቤተሰቦች የሚገናኙበት፣ ተግባራዊ ሐሳቦችን የሚጋሩበትና ስለ ማዕከሉ የሚማሩበት አካታች ቀን።',
+    startDate: new Date('2030-01-15T06:00:00.000Z'),
+    endDate: new Date('2030-01-15T10:00:00.000Z'),
+    location: 'ነህምያ ኦቲዝም ማዕከል፣ አዲስ አበባ',
+    rsvpEnabled: true,
+  },
+  {
+    translationKey: '00000000-0000-4000-8000-000000000502',
+    slug: 'community-awareness-workshop',
+    languageCode: 'en' as const,
+    title: 'Community awareness workshop',
+    description: 'A practical workshop about autism understanding, acceptance, and inclusion.',
+    startDate: new Date('2030-02-20T06:00:00.000Z'),
+    endDate: new Date('2030-02-20T09:00:00.000Z'),
+    location: 'Nehemiah Autism Center, Addis Ababa',
+    rsvpEnabled: false,
+  },
+  {
+    translationKey: '00000000-0000-4000-8000-000000000502',
+    slug: 'community-awareness-workshop',
+    languageCode: 'am' as const,
+    title: 'የማህበረሰብ ግንዛቤ ወርክሾፕ',
+    description: 'ስለ ኦቲዝም ግንዛቤ፣ ተቀባይነትና አካታችነት ተግባራዊ ወርክሾፕ።',
+    startDate: new Date('2030-02-20T06:00:00.000Z'),
+    endDate: new Date('2030-02-20T09:00:00.000Z'),
+    location: 'ነህምያ ኦቲዝም ማዕከል፣ አዲስ አበባ',
+    rsvpEnabled: false,
+  },
+  {
+    translationKey: '00000000-0000-4000-8000-000000000503',
+    slug: 'past-family-gathering',
+    languageCode: 'en' as const,
+    title: 'Past family gathering',
+    description: 'A completed gathering kept public as part of the center event archive.',
+    startDate: new Date('2025-05-10T06:00:00.000Z'),
+    endDate: new Date('2025-05-10T10:00:00.000Z'),
+    location: 'Nehemiah Autism Center, Addis Ababa',
+    rsvpEnabled: false,
+  },
+  {
+    translationKey: '00000000-0000-4000-8000-000000000503',
+    slug: 'past-family-gathering',
+    languageCode: 'am' as const,
+    title: 'ያለፈ የቤተሰብ ስብሰባ',
+    description: 'የማዕከሉ የዝግጅት ማህደር አካል ሆኖ የቀረ የተጠናቀቀ የቤተሰብ ስብሰባ።',
+    startDate: new Date('2025-05-10T06:00:00.000Z'),
+    endDate: new Date('2025-05-10T10:00:00.000Z'),
+    location: 'ነህምያ ኦቲዝም ማዕከል፣ አዲስ አበባ',
+    rsvpEnabled: false,
+  },
+] as const;
+
 export async function seedDemoContent(database: NodePgDatabase<typeof schema>): Promise<void> {
   await database.transaction(async (transaction) => {
     await transaction
@@ -256,5 +326,16 @@ export async function seedDemoContent(database: NodePgDatabase<typeof schema>): 
         })),
       )
       .onConflictDoNothing({ target: [blogPosts.slug, blogPosts.languageCode] });
+
+    await transaction
+      .insert(events)
+      .values(
+        demoEvents.map((event) => ({
+          ...event,
+          status: 'PUBLISHED' as const,
+          createdBy: DEMO_SEED_AUTHOR_ID,
+        })),
+      )
+      .onConflictDoNothing({ target: [events.slug, events.languageCode] });
   });
 }

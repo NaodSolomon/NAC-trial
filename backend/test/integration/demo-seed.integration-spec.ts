@@ -1,5 +1,5 @@
 import { and, eq, inArray } from 'drizzle-orm';
-import { admins, blogPosts, cmsPages } from '../../src/database/schema';
+import { admins, blogPosts, cmsPages, events } from '../../src/database/schema';
 import { DEMO_SEED_AUTHOR_ID, seedDemoContent } from '../../src/database/seeds/demo-content.seed';
 import { cleanTestDatabase } from '../helpers/database-cleaner.helper';
 import { connectTestPostgres, PostgresTestContext } from '../helpers/postgres-test.helper';
@@ -42,6 +42,7 @@ describeWithPostgres('Trial demonstration seed (PostgreSQL)', () => {
       .from(admins)
       .where(eq(admins.id, DEMO_SEED_AUTHOR_ID));
     const seededBlogs = await context.db.select().from(blogPosts);
+    const seededEvents = await context.db.select().from(events);
 
     expect(englishPages).toHaveLength(3);
     expect(amharicPages).toHaveLength(3);
@@ -63,6 +64,15 @@ describeWithPostgres('Trial demonstration seed (PostgreSQL)', () => {
     expect(seededBlogs.every((post) => post.status === 'PUBLISHED' && post.publishedAt)).toBe(true);
     expect(seededBlogs.filter((post) => post.languageCode === 'en')).toHaveLength(3);
     expect(seededBlogs.filter((post) => post.languageCode === 'am')).toHaveLength(1);
+    expect(seededEvents).toHaveLength(6);
+    expect(seededEvents.every((event) => event.status === 'PUBLISHED')).toBe(true);
+    expect(seededEvents.filter((event) => event.languageCode === 'en')).toHaveLength(3);
+    expect(seededEvents.filter((event) => event.languageCode === 'am')).toHaveLength(3);
+    expect(
+      seededEvents.find(
+        (event) => event.slug === 'family-support-day' && event.languageCode === 'en',
+      )?.rsvpEnabled,
+    ).toBe(true);
   });
 
   it('does not overwrite an existing CMS page', async () => {

@@ -1,58 +1,85 @@
 import Image from 'next/image';
-import { Calendar, Clock, MapPin, User } from 'lucide-react';
-import type { Event } from '@/features/events/types';
+import { Calendar, CalendarPlus, Clock, MapPin } from 'lucide-react';
+import { CmsArticle } from '@/features/cms/components/CmsArticle';
+import type { Language } from '@/lib/i18n';
+import type { PublicEvent } from '../event.types';
+import {
+  calendarDownloadHref,
+  eventImage,
+  eventStatus,
+  formatEventDate,
+  formatEventTimeRange,
+} from '../event.utils';
+import { RsvpForm } from './RsvpForm';
 
-interface EventSingleProps {
-  event: Event;
-}
-
-export default function EventSingle({ event }: EventSingleProps) {
+export function EventSingle({ event, language }: { event: PublicEvent; language: Language }) {
+  const isPast = eventStatus(event) === 'past';
   return (
-    <article className="space-y-8">
-      {/* Featured Image */}
-      <div className="relative aspect-video overflow-hidden rounded-lg">
-        <Image src={event.image} alt={event.title} fill className="object-cover" />
+    <article>
+      <div className="relative aspect-video overflow-hidden rounded-xl">
+        <Image
+          src={eventImage(event.slug)}
+          alt=""
+          fill
+          priority
+          sizes="(max-width: 1024px) 100vw, 70vw"
+          className="object-cover"
+        />
       </div>
-
-      {/* Event Details */}
-      <div className="grid grid-cols-2 gap-4 rounded-lg bg-white p-6 shadow-sm md:grid-cols-4">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-primary" />
+      <div className="bg-card mt-7 grid gap-5 rounded-xl border p-6 shadow-sm md:grid-cols-3">
+        <div className="flex items-start gap-3">
+          <Calendar aria-hidden="true" className="text-primary mt-1 size-5 shrink-0" />
           <div>
-            <p className="text-xs text-foreground">Date</p>
-            <p className="text-sm font-semibold text-heading">{event.date}</p>
+            <p className="text-foreground text-xs">{language === 'am' ? 'ቀን' : 'Date'}</p>
+            <p className="text-heading font-semibold">
+              {formatEventDate(event.startDate, language)}
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Clock className="h-5 w-5 text-primary" />
+        <div className="flex items-start gap-3">
+          <Clock aria-hidden="true" className="text-primary mt-1 size-5 shrink-0" />
           <div>
-            <p className="text-xs text-foreground">Time</p>
-            <p className="text-sm font-semibold text-heading">{event.time}</p>
+            <p className="text-foreground text-xs">{language === 'am' ? 'ሰዓት' : 'Time'}</p>
+            <p className="text-heading font-semibold">
+              {formatEventTimeRange(event.startDate, event.endDate, language)}
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-primary" />
+        <div className="flex items-start gap-3">
+          <MapPin aria-hidden="true" className="text-primary mt-1 size-5 shrink-0" />
           <div>
-            <p className="text-xs text-foreground">Location</p>
-            <p className="text-sm font-semibold text-heading">{event.location}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <User className="h-5 w-5 text-primary" />
-          <div>
-            <p className="text-xs text-foreground">Organizer</p>
-            <p className="text-sm font-semibold text-heading">{event.organizer}</p>
+            <p className="text-foreground text-xs">{language === 'am' ? 'ቦታ' : 'Location'}</p>
+            <p className="text-heading font-semibold">{event.location}</p>
           </div>
         </div>
       </div>
-
-      {/* Content */}
-      <div className="space-y-4">
-        {event.content.split('\n\n').map((paragraph, index) => (
-          <p key={index} className="text-foreground leading-relaxed">
-            {paragraph}
-          </p>
-        ))}
+      <div className="mt-8">
+        <CmsArticle content={event.description} />
+      </div>
+      <a
+        href={calendarDownloadHref(event.slug, language)}
+        download={event.slug + '.ics'}
+        className="text-primary mt-8 inline-flex min-h-12 items-center gap-2 rounded-lg border px-5 font-semibold hover:underline"
+      >
+        <CalendarPlus aria-hidden="true" className="size-5" />
+        {language === 'am' ? 'ወደ ቀን መቁጠሪያ ያክሉ' : 'Add to calendar (.ics)'}
+      </a>
+      <div className="mt-10 border-t pt-10">
+        {event.rsvpEnabled && !isPast ? (
+          <RsvpForm eventId={event.id} language={language} />
+        ) : (
+          <div role="status" className="bg-secondary-bg rounded-xl border p-6">
+            <h2 className="text-heading text-xl font-semibold">
+              {isPast
+                ? language === 'am'
+                  ? 'ይህ ዝግጅት አልፏል'
+                  : 'This event has ended'
+                : language === 'am'
+                  ? 'ምዝገባ አልተከፈተም'
+                  : 'RSVP is not available'}
+            </h2>
+          </div>
+        )}
       </div>
     </article>
   );
