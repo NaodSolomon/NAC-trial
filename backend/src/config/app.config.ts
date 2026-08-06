@@ -10,6 +10,11 @@ export default registerAs('app', () => ({
     .map((origin) => origin.trim().replace(/\/+$/, ''))
     .filter(Boolean),
   internalApiKey: process.env.INTERNAL_API_KEY ?? 'development-internal-api-key-change-me',
+  scheduledPublishingEnabled:
+    process.env.SCHEDULED_PUBLISHING_ENABLED !== undefined
+      ? process.env.SCHEDULED_PUBLISHING_ENABLED === 'true'
+      : process.env.NODE_ENV !== 'test',
+  scheduledPublishingIntervalMs: Number(process.env.SCHEDULED_PUBLISHING_INTERVAL_MS ?? 60_000),
   swaggerEnabled:
     process.env.SWAGGER_ENABLED !== undefined
       ? process.env.SWAGGER_ENABLED === 'true'
@@ -17,8 +22,7 @@ export default registerAs('app', () => ({
   rateLimitTtlMs: Number(process.env.RATE_LIMIT_TTL_MS ?? 60_000),
   rateLimitRequests: Number(process.env.RATE_LIMIT_REQUESTS ?? 100),
   httpSuccessLogSampleRate: Number(
-    process.env.HTTP_LOG_SUCCESS_SAMPLE_RATE ??
-      (process.env.NODE_ENV === 'production' ? 0.01 : 1),
+    process.env.HTTP_LOG_SUCCESS_SAMPLE_RATE ?? (process.env.NODE_ENV === 'production' ? 0.01 : 1),
   ),
   httpSlowRequestMs: Number(process.env.HTTP_SLOW_REQUEST_MS ?? 750),
 }));

@@ -20,6 +20,8 @@ describe('validateEnvironment', () => {
       HTTP_LOG_SUCCESS_SAMPLE_RATE: 1,
       HTTP_SLOW_REQUEST_MS: 750,
       WEB_CONCURRENCY: 1,
+      SCHEDULED_PUBLISHING_ENABLED: true,
+      SCHEDULED_PUBLISHING_INTERVAL_MS: 60_000,
       PASSWORD_RESET_TTL_MINUTES: 20,
       PASSWORD_RESET_URL: 'http://localhost:3000/admin/reset-password',
       MAIL_CONNECTION_TIMEOUT_MS: 3_000,
@@ -150,6 +152,15 @@ describe('validateEnvironment', () => {
     );
     expect(() => validateEnvironment({ WEB_CONCURRENCY: 17 })).toThrow(
       'WEB_CONCURRENCY must be between 1 and 16',
+    );
+  });
+
+  it('disables scheduled publishing by default in tests and validates its interval', () => {
+    expect(validateEnvironment({ NODE_ENV: 'test' })).toMatchObject({
+      SCHEDULED_PUBLISHING_ENABLED: false,
+    });
+    expect(() => validateEnvironment({ SCHEDULED_PUBLISHING_INTERVAL_MS: 999 })).toThrow(
+      'SCHEDULED_PUBLISHING_INTERVAL_MS must be between 1000 and 3600000',
     );
   });
 

@@ -9,8 +9,11 @@ import { PublicCmsPagesController } from './controllers/public-cms-pages.control
 import { PublicCompositionController } from './controllers/public-composition.controller';
 import { SlugCheckController } from './controllers/slug-check.controller';
 import { CMS_PAGE_REPOSITORY } from './interfaces/cms-page-repository.interface';
+import { SCHEDULED_PUBLISHING_LOCK } from './interfaces/scheduled-publishing-lock.interface';
 import { DrizzleCmsPageRepository } from './repositories/drizzle-cms-page.repository';
+import { PostgresScheduledPublishingLock } from './repositories/postgres-scheduled-publishing-lock.repository';
 import { CmsPagesService } from './services/cms-pages.service';
+import { ScheduledPublishingService } from './services/scheduled-publishing.service';
 
 @Module({
   imports: [AuthModule, CacheModule],
@@ -23,11 +26,16 @@ import { CmsPagesService } from './services/cms-pages.service';
   ],
   providers: [
     CmsPagesService,
+    ScheduledPublishingService,
     RolesGuard,
     InternalApiKeyGuard,
     {
       provide: CMS_PAGE_REPOSITORY,
       useClass: DrizzleCmsPageRepository,
+    },
+    {
+      provide: SCHEDULED_PUBLISHING_LOCK,
+      useClass: PostgresScheduledPublishingLock,
     },
   ],
   exports: [CmsPagesService],
