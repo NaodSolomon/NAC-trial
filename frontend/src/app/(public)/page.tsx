@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { HomePage, loadComposition, loadHomePageData, resolveHomeLanguage } from '@/features/home';
+import { loadPublicSeo } from '@/features/seo';
+import { buildLocalizedMetadata } from '@/lib/seo/site';
 
 interface HomeRouteProps {
   searchParams: Promise<{ lang?: string }>;
@@ -7,38 +9,18 @@ interface HomeRouteProps {
 
 export async function generateMetadata({ searchParams }: HomeRouteProps): Promise<Metadata> {
   const language = await resolveHomeLanguage((await searchParams).lang);
-  const composition = await loadComposition(language);
-  const description = composition.seo.description || composition.body.slice(0, 160);
-  const siteUrl = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000');
-  const canonical = new URL(`/?lang=${language}`, siteUrl);
-  const image = new URL(composition.seo.imageUrl ?? '/images/home_1_slider_1.jpg', siteUrl);
-
-  return {
-    title: composition.seo.title,
-    description,
-    alternates: {
-      canonical: canonical.toString(),
-      languages: {
-        en: new URL('/?lang=en', siteUrl).toString(),
-        am: new URL('/?lang=am', siteUrl).toString(),
-      },
-    },
-    openGraph: {
-      type: 'website',
-      locale: language === 'am' ? 'am_ET' : 'en_US',
-      url: canonical.toString(),
-      siteName: 'Nehemiah Autism Center',
-      title: composition.seo.title,
-      description,
-      images: [{ url: image, alt: composition.title }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: composition.seo.title,
-      description,
-      images: [image],
-    },
-  };
+  const [composition, seo] = await Promise.all([
+    loadComposition(language),
+    loadPublicSeo('homepage', language).catch(() => null),
+  ]);
+  return buildLocalizedMetadata({
+    pathname: '/',
+    language,
+    title: seo?.title ?? composition.seo.title,
+    description: seo?.description ?? composition.seo.description ?? composition.body,
+    keywords: seo?.keywords,
+    imageUrl: seo?.imageUrl ?? composition.seo.imageUrl,
+  });
 }
 
 export default async function Page({ searchParams }: HomeRouteProps) {

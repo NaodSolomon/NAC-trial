@@ -1,0 +1,22 @@
+[
+  {
+    "path": "/*",
+    "resourceSizes": [
+      { "resourceType": "script", "budget": 350 },
+      { "resourceType": "stylesheet", "budget": 120 },
+      { "resourceType": "font", "budget": 250 },
+      { "resourceType": "image", "budget": 1000 },
+      { "resourceType": "total", "budget": 1800 }
+    ],
+    "resourceCounts": [
+      { "resourceType": "script", "budget": 20 },
+      { "resourceType": "third-party", "budget": 2 }
+    ],
+    "timings": [
+      { "metric": "first-contentful-paint", "budget": 1800 },
+      { "metric": "largest-contentful-paint", "budget": 2500 },
+      { "metric": "cumulative-layout-shift", "budget": 0.1 },
+      { "metric": "total-blocking-time", "budget": 200 }
+    ]
+  }
+]

@@ -23,6 +23,23 @@ export async function loadPublishedBlog(slug: string, language: Language) {
   return publishedBlogPostSchema.parse(value);
 }
 
+export async function loadAllPublishedBlogs(language: Language) {
+  const posts = [];
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const value = await client.get<unknown>(
+      `/public/blog?languageCode=${language}&page=${page}&limit=100`,
+      blogCache(600, [`sitemap:blog:${language}`]),
+    );
+    const result = blogPageSchema.parse(value);
+    posts.push(...result.data);
+    totalPages = result.meta.totalPages;
+    page += 1;
+  } while (page <= totalPages);
+  return posts;
+}
+
 export function parseBlogPage(value: string | undefined): number {
   if (!value || !/^[1-9]\d*$/.test(value)) return 1;
   return Math.min(Number(value), 10_000);

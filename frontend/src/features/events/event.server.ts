@@ -24,6 +24,14 @@ export async function loadPublicEvent(slug: string, language: Language) {
   return publicEventSchema.parse(value);
 }
 
+export async function loadAllPublishedEvents(language: Language) {
+  const value = await client.get<unknown>(
+    `/public/events?languageCode=${language}&timeframe=all&sortOrder=desc&page=1&limit=100`,
+    eventCache(600, [`sitemap:events:${language}`]),
+  );
+  return publicEventPageSchema.parse(value).data;
+}
+
 function eventCache(revalidate: number, tags: string[]) {
   return process.env.NODE_ENV === 'development'
     ? { cache: 'no-store' as const }

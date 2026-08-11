@@ -3,7 +3,7 @@ import PageBanner from '@/components/common/PageBanner';
 import TeamGrid from '@/features/team/components/TeamGrid';
 
 export const metadata: Metadata = {
-  title: 'Our Team - Nehemiah',
+  title: 'Our team',
   description:
     'Meet the dedicated individuals who donate their time and skills to make our mission possible.',
 };

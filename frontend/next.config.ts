@@ -28,11 +28,12 @@ const nextConfig: NextConfig = {
   output: process.platform === 'win32' ? undefined : 'standalone',
   images: {
     formats: ['image/avif', 'image/webp'],
-    deviceSizes: [320, 390, 640, 750, 828, 1080, 1200, 1440, 1920],
+    deviceSizes: [320, 390, 448, 640, 750, 828, 1080, 1200, 1366, 1440, 1920],
     imageSizes: [32, 48, 64, 96, 128, 256, 384],
     remotePatterns: mediaRemotePatterns(),
     contentDispositionType: 'attachment',
     dangerouslyAllowSVG: false,
+    minimumCacheTTL: 86400,
   },
 };
 

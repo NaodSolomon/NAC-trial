@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import PageBanner from '@/components/common/PageBanner';
-import { BlogSingle, blogImage, loadPublishedBlog, serializeJsonLd } from '@/features/blog';
+import { BlogSingle, blogImage, loadPublishedBlog } from '@/features/blog';
 import { isApiRequestError } from '@/lib/api/errors';
 import { localizedHref, type Language } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
+import { serializeJsonLd } from '@/lib/seo/json-ld';
+import { absoluteUrl, buildLocalizedMetadata, localizedUrl } from '@/lib/seo/site';
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -18,29 +20,16 @@ export async function generateMetadata({
   const { slug } = await params;
   const language = await resolveRequestLanguage((await searchParams).lang);
   const post = await getPost(slug, language);
-  const canonical = articleUrl(slug, language);
-  const description = post.seoDescription ?? post.excerpt;
-  const image = articleImage(post.seoImageUrl);
-  return {
+  return buildLocalizedMetadata({
+    pathname: `/blog/${slug}`,
+    language,
     title: post.seoTitle ?? post.title,
-    description,
-    alternates: { canonical },
-    openGraph: {
-      type: 'article',
-      url: canonical,
-      title: post.seoTitle ?? post.title,
-      description,
-      publishedTime: post.publishedAt,
-      modifiedTime: post.updatedAt,
-      images: [{ url: image }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: post.seoTitle ?? post.title,
-      description,
-      images: [image],
-    },
-  };
+    description: post.seoDescription ?? post.excerpt,
+    imageUrl: post.seoImageUrl ?? blogImage(null),
+    type: 'article',
+    publishedTime: post.publishedAt,
+    modifiedTime: post.updatedAt,
+  });
 }
 
 export default async function BlogPostPage({ params, searchParams }: BlogPostPageProps) {
@@ -95,14 +84,10 @@ async function getPost(slug: string, language: Language) {
   }
 }
 
-function siteUrl() {
-  return new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000');
-}
-
 function articleUrl(slug: string, language: Language) {
-  return new URL(localizedHref('/blog/' + slug, language), siteUrl()).toString();
+  return localizedUrl('/blog/' + slug, language);
 }
 
 function articleImage(value: string | null) {
-  return new URL(blogImage(value), siteUrl()).toString();
+  return absoluteUrl(blogImage(value));
 }

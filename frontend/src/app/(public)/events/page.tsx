@@ -14,13 +14,23 @@ import {
 import { localizedHref, type Language } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 
-export const metadata: Metadata = {
-  title: 'Events | Nehemiah Autism Center',
-  description: 'Upcoming and past events from Nehemiah Autism Center.',
-};
+import { buildLocalizedMetadata } from '@/lib/seo/site';
 
 interface EventsPageProps {
   searchParams: Promise<{ lang?: string; timeframe?: string; view?: string }>;
+}
+
+export async function generateMetadata({ searchParams }: EventsPageProps): Promise<Metadata> {
+  const language = await resolveRequestLanguage((await searchParams).lang);
+  return buildLocalizedMetadata({
+    pathname: '/events',
+    language,
+    title: language === 'am' ? 'ዝግጅቶች' : 'Events',
+    description:
+      language === 'am'
+        ? 'የነህምያ ኦቲዝም ማዕከል መጪ እና ያለፉ ዝግጅቶች።'
+        : 'Upcoming and past events from Nehemiah Autism Center.',
+  });
 }
 
 export default async function EventsPage({ searchParams }: EventsPageProps) {

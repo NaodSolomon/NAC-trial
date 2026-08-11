@@ -21,8 +21,13 @@ test('blog detail includes share metadata and valid BlogPosting structured data'
     page.getByRole('heading', { level: 1, name: 'How your support changes lives' }),
   ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Facebook' })).toHaveAttribute('rel', /noopener/);
-  const jsonLdText = await page.locator('script[type="application/ld+json"]').textContent();
-  const jsonLd = JSON.parse(jsonLdText ?? '{}') as Record<string, unknown>;
+  const structuredEntries = await page
+    .locator('script[type="application/ld+json"]')
+    .allTextContents();
+  const jsonLd = structuredEntries
+    .map((value) => JSON.parse(value) as Record<string, unknown>)
+    .find((value) => value['@type'] === 'BlogPosting');
+  if (!jsonLd) throw new Error('BlogPosting structured data was not rendered.');
   expect(jsonLd).toMatchObject({
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',

@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { loadFaqs } from '@/features/cms';
 import { FaqPage } from '@/features/faq';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
+import { loadPublicSeo } from '@/features/seo';
+import { buildLocalizedMetadata } from '@/lib/seo/site';
 
 interface FaqRouteProps {
   searchParams: Promise<{ lang?: string }>;
@@ -9,11 +11,18 @@ interface FaqRouteProps {
 
 export async function generateMetadata({ searchParams }: FaqRouteProps): Promise<Metadata> {
   const language = await resolveRequestLanguage((await searchParams).lang);
-  const content = await loadFaqs(language);
-  return {
-    title: `${content.title} | Nehemiah Autism Center`,
-    description: content.body.slice(0, 160),
-  };
+  const [content, seo] = await Promise.all([
+    loadFaqs(language),
+    loadPublicSeo('faqs', language).catch(() => null),
+  ]);
+  return buildLocalizedMetadata({
+    pathname: '/faq',
+    language,
+    title: seo?.title ?? content.title,
+    description: seo?.description ?? content.body,
+    keywords: seo?.keywords,
+    imageUrl: seo?.imageUrl,
+  });
 }
 
 export default async function Page({ searchParams }: FaqRouteProps) {
