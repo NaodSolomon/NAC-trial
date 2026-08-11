@@ -26,4 +26,21 @@ describe('ConfirmedActionButton', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Delete content' }));
     await waitFor(() => expect(action).toHaveBeenCalledTimes(1));
   });
+
+  it('keeps the dialog open when a destructive mutation fails', async () => {
+    render(
+      <ConfirmedActionButton
+        title="Delete content?"
+        description="This cannot be undone."
+        confirmLabel="Delete content"
+        onConfirm={() => Promise.reject(new Error('database unavailable'))}
+      >
+        Delete
+      </ConfirmedActionButton>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete content' }));
+    await waitFor(() => expect(screen.getByText(/Nothing was deleted/)).toBeInTheDocument());
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
 });
