@@ -6,6 +6,7 @@ import { browserApiClient } from '@/lib/api/browser-client';
 import {
   canAccessAdminPath,
   clearLegacyBrowserStorage,
+  authenticationExpiredEvent,
   isAdminPrincipal,
   refreshSession,
   type AdminPrincipal,
@@ -21,6 +22,12 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
   const beginBootstrap = useAuthStore((state) => state.beginBootstrap);
   const setAuthenticated = useAuthStore((state) => state.setAuthenticated);
   const setAnonymous = useAuthStore((state) => state.setAnonymous);
+
+  useEffect(() => {
+    const expire = () => setAnonymous();
+    window.addEventListener(authenticationExpiredEvent, expire);
+    return () => window.removeEventListener(authenticationExpiredEvent, expire);
+  }, [setAnonymous]);
 
   useEffect(() => {
     if (started.current) return;

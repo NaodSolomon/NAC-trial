@@ -267,6 +267,16 @@ restricted to `SUPER_ADMIN` and displays the summary, top pages, coarse country 
 UTC timeline. Every visual bar includes a numeric label and an accompanying visible data table,
 so meaning never depends on color or graphics alone.
 
+Step 45 completes the super-administrator security and operations workspace. `/admin/users`
+enforces the backend's self-deletion and final-active-super-administrator protections;
+`/admin/audit-logs` displays only bounded, allowlisted metadata; and `/admin/sessions` exposes safe
+device summaries without token hashes, raw IP addresses, or token-family identifiers. Revoking a
+current session causes the next rejected API refresh to clear the protected frontend state and
+return to login. `/admin/system` reports API liveness, PostgreSQL readiness, Redis degradation, and
+version/adapters independently. Audited cache clear/warm and allowlisted search reindex operations
+require confirmation, disable duplicate submissions while running, and explain PostgreSQL search
+maintenance conflicts returned as HTTP 409.
+
 ## Authorization and Audit
 
 Private administration endpoints require both a valid access JWT and an explicitly allowed database-backed role. Administrator account management and audit-log access are restricted to `SUPER_ADMIN`.

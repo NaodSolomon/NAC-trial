@@ -8,6 +8,7 @@ interface SuccessEnvelope<T> {
 }
 
 let refreshInFlight: Promise<BrowserAuthSession | null> | null = null;
+export const authenticationExpiredEvent = 'nac:authentication-expired';
 
 export async function loginAdministrator(input: {
   email: string;
@@ -27,7 +28,11 @@ export function refreshSession(): Promise<BrowserAuthSession | null> {
       })
       .catch((error: unknown) => {
         clearAccessToken();
-        if (error instanceof ApiRequestError && error.status === 401) return null;
+        if (error instanceof ApiRequestError && error.status === 401) {
+          if (typeof window !== 'undefined')
+            window.dispatchEvent(new Event(authenticationExpiredEvent));
+          return null;
+        }
         throw error;
       })
       .finally(() => {

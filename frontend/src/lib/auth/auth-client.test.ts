@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { clearAccessToken, getAccessToken } from './access-token';
-import { clearLegacyBrowserStorage, refreshSession } from './auth-client';
+import {
+  authenticationExpiredEvent,
+  clearLegacyBrowserStorage,
+  refreshSession,
+} from './auth-client';
 import { legacyAuthStorageKey } from './constants';
 
 describe('browser authentication lifecycle', () => {
@@ -46,6 +50,29 @@ describe('browser authentication lifecycle', () => {
 
     expect(window.localStorage.getItem(legacyAuthStorageKey)).toBeNull();
     expect(window.sessionStorage.getItem(legacyAuthStorageKey)).toBeNull();
+  });
+
+  it('announces authentication expiry when a revoked refresh session is rejected', async () => {
+    const expired = vi.fn();
+    window.addEventListener(authenticationExpiredEvent, expired);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: false,
+            statusCode: 401,
+            message: 'Session revoked',
+          }),
+          { status: 401, headers: { 'content-type': 'application/json' } },
+        ),
+      ),
+    );
+
+    await expect(refreshSession()).resolves.toBeNull();
+    expect(expired).toHaveBeenCalledTimes(1);
+    expect(getAccessToken()).toBeNull();
+    window.removeEventListener(authenticationExpiredEvent, expired);
   });
 });
 
