@@ -68,6 +68,58 @@ test.beforeEach(async ({ context, page }) => {
       }),
     }),
   );
+  await page.route('**/api/v1/system/version', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        name: 'Nehemiah Autism Center API',
+        version: '0.1.0',
+        environment: 'test',
+        mode: 'trial',
+        adapters: { storage: 'minio', mail: 'mailpit', payment: 'fake', cache: 'redis' },
+        realPaymentsEnabled: false,
+      }),
+    }),
+  );
+  await page.route('**/api/v1/admin/donations?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        data: [
+          {
+            id: '00000000-0000-4000-8000-000000001510',
+            donorName: 'Trial donor',
+            donorEmail: 'donor@example.org',
+            message: 'A simulated gift for family programs.',
+            amount: '25.00',
+            currency: 'USD',
+            gateway: 'PAYPAL',
+            status: 'CONFIRMED',
+            providerOrderId: 'FAKE-ORDER-1510',
+            externalTransactionId: 'FAKE-RECEIPT-1510',
+            receiptUrl: 'http://127.0.0.1:4010/receipts/test.pdf',
+            confirmedAt: '2026-08-10T10:00:00.000Z',
+            createdAt: '2026-08-10T09:55:00.000Z',
+            updatedAt: '2026-08-10T10:00:00.000Z',
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
+      }),
+    }),
+  );
+  await page.route('**/api/v1/admin/analytics/timeline?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope([
+        { date: '2026-08-08', visitors: 320 },
+        { date: '2026-08-09', visitors: 410 },
+        { date: '2026-08-10', visitors: 518 },
+      ]),
+    }),
+  );
   await page.route('**/api/v1/admin/cms/pages**', (route) => {
     const path = new URL(route.request().url()).pathname;
     return route.fulfill({
@@ -348,6 +400,8 @@ for (const screen of [
   { name: 'admin-volunteers', path: '/admin/volunteers', ready: 'Volunteer applications' },
   { name: 'admin-testimonials', path: '/admin/testimonials', ready: 'Testimonials' },
   { name: 'admin-newsletter', path: '/admin/newsletter', ready: 'Newsletter subscribers' },
+  { name: 'admin-donations', path: '/admin/donations', ready: 'Donation records' },
+  { name: 'admin-analytics', path: '/admin/analytics', ready: 'Analytics' },
 ] as const) {
   test(`${screen.name} matches the responsive workspace baseline`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });

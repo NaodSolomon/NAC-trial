@@ -258,6 +258,15 @@ storage, frontend query keys, analytics payloads, client logs, or mutation feedb
 removal uses the backend's existing email-keyed route, but the address is confined to that protected
 request and backend logs record the route template rather than the path value.
 
+Step 44 adds finance and analytics administration without presenting trial records as real
+income. `SUPER_ADMIN` and `FINANCE_VIEWER` can filter and paginate donation demonstrations,
+inspect a record, prepare or resend its test receipt, review confirmed-record statistics, and
+download a filtered CSV. Runtime information places a permanent trial banner above these values
+and labels confirmed amounts as simulations rather than collected funds. Analytics remains
+restricted to `SUPER_ADMIN` and displays the summary, top pages, coarse country dimensions, and
+UTC timeline. Every visual bar includes a numeric label and an accompanying visible data table,
+so meaning never depends on color or graphics alone.
+
 ## Authorization and Audit
 
 Private administration endpoints require both a valid access JWT and an explicitly allowed database-backed role. Administrator account management and audit-log access are restricted to `SUPER_ADMIN`.
