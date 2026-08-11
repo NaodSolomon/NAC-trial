@@ -147,6 +147,99 @@ test.beforeEach(async ({ context, page }) => {
       }),
     }),
   );
+  await page.route('**/api/v1/admin/media?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({ data: [], meta: { total: 0, page: 1, limit: 12, totalPages: 0 } }),
+    }),
+  );
+  await page.route('**/api/v1/public/gallery?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({ data: [], meta: { total: 0, page: 1, limit: 12, totalPages: 0 } }),
+    }),
+  );
+  await page.route('**/api/v1/admin/blog?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        data: [
+          {
+            id: '00000000-0000-4000-8000-000000001501',
+            slug: 'family-support',
+            languageCode: 'en',
+            title: 'Family support',
+            excerpt: 'Practical support for families.',
+            content: 'Article content.',
+            status: 'DRAFT',
+            seoTitle: null,
+            seoDescription: null,
+            seoImageUrl: null,
+            createdBy: '00000000-0000-4000-8000-000000001203',
+            publishedAt: null,
+            createdAt: '2026-08-01T10:00:00.000Z',
+            updatedAt: '2026-08-10T10:00:00.000Z',
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 12, totalPages: 1 },
+      }),
+    }),
+  );
+  await page.route('**/api/v1/admin/resources?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        data: [
+          {
+            id: '00000000-0000-4000-8000-000000001502',
+            title: 'Family guide',
+            description: 'A practical downloadable guide.',
+            fileUrl: 'http://127.0.0.1:4010/media/family-guide.pdf',
+            fileName: 'family-guide.pdf',
+            mimeType: 'application/pdf',
+            languageCode: 'en',
+            status: 'PUBLISHED',
+            downloadCount: 24,
+            createdBy: '00000000-0000-4000-8000-000000001203',
+            createdAt: '2026-08-01T10:00:00.000Z',
+            updatedAt: '2026-08-10T10:00:00.000Z',
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 12, totalPages: 1 },
+      }),
+    }),
+  );
+  await page.route('**/api/v1/admin/events?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        data: [
+          {
+            id: '00000000-0000-4000-8000-000000001503',
+            translationKey: '00000000-0000-4000-8000-000000001504',
+            slug: 'family-day',
+            title: 'Family day',
+            description: 'A welcoming event for families.',
+            startDate: '2030-08-12T10:00:00.000Z',
+            endDate: '2030-08-12T12:00:00.000Z',
+            location: 'Addis Ababa',
+            rsvpEnabled: true,
+            status: 'PUBLISHED',
+            languageCode: 'en',
+            createdBy: '00000000-0000-4000-8000-000000001203',
+            createdAt: '2026-08-01T10:00:00.000Z',
+            updatedAt: '2026-08-10T10:00:00.000Z',
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 12, totalPages: 1 },
+      }),
+    }),
+  );
 });
 
 test('administrator shell matches the responsive workspace baseline', async ({ page }) => {
@@ -165,6 +258,11 @@ for (const screen of [
   { name: 'admin-seo-editor', path: '/admin/seo', ready: 'SEO metadata' },
   { name: 'admin-navigation', path: '/admin/navigation', ready: 'Navigation' },
   { name: 'admin-settings', path: '/admin/settings', ready: 'Public settings' },
+  { name: 'admin-media', path: '/admin/media', ready: 'Media' },
+  { name: 'admin-gallery', path: '/admin/gallery', ready: 'Gallery' },
+  { name: 'admin-blog', path: '/admin/blog', ready: 'Blog administration' },
+  { name: 'admin-resources', path: '/admin/resources', ready: 'Resources' },
+  { name: 'admin-events', path: '/admin/events', ready: 'Event administration' },
 ] as const) {
   test(`${screen.name} matches the responsive workspace baseline`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });

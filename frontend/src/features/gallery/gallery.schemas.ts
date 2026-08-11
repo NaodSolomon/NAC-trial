@@ -22,3 +22,5 @@ export const publicGalleryPageSchema = z.object({
     totalPages: z.number().int().nonnegative(),
   }),
 });
+
+export type GalleryApiItem = z.infer<typeof publicGalleryItemSchema>;

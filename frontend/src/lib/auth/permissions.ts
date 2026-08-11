@@ -16,6 +16,8 @@ export type AdminNavigationIcon =
   | 'blog'
   | 'events'
   | 'gallery'
+  | 'media'
+  | 'resources'
   | 'seo'
   | 'navigation'
   | 'engagement'
@@ -84,6 +86,20 @@ export const adminNavigation: readonly AdminNavigationItem[] = [
     icon: 'gallery',
     permission: 'content:manage',
     description: 'Gallery and media presentation',
+  },
+  {
+    label: 'Media',
+    href: '/admin/media',
+    icon: 'media',
+    permission: 'content:manage',
+    description: 'Validated image, video and document uploads',
+  },
+  {
+    label: 'Resources',
+    href: '/admin/resources',
+    icon: 'resources',
+    permission: 'content:manage',
+    description: 'Published public download library',
   },
   {
     label: 'SEO',

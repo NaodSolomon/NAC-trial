@@ -239,6 +239,15 @@ frontend query cache, so the public header and footer refetch authoritative data
 stored as typed JSON in `site_settings.social_links`, introduced by migration `0012`; they are no
 longer hard-coded in the public footer.
 
+Step 42 completes the content-operations workspace for media, gallery, blog, resources, and events.
+Multipart media and gallery uploads validate type and size before transmission and display real
+browser upload progress. Blog and resource publishing keep drafts visually separate from public
+content, and editing a published blog post visibly returns it to draft. Event administration
+supports localized date/time editing, RSVP review, protected CSV export, and public iCalendar
+downloads. Editors can create, update, and publish content; permanent deletion controls are shown
+only to super administrators, matching backend authorization. Resource records reference files
+uploaded through the approved media-storage workflow and never accept browser-local file paths.
+
 ## Authorization and Audit
 
 Private administration endpoints require both a valid access JWT and an explicitly allowed database-backed role. Administrator account management and audit-log access are restricted to `SUPER_ADMIN`.
