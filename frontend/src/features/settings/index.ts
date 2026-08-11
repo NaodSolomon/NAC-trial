@@ -1,0 +1,1 @@
+export { SettingsAdmin } from './SettingsAdmin';

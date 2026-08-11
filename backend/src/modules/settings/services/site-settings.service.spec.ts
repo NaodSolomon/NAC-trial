@@ -20,6 +20,7 @@ const settings: SiteSetting = {
   contactEmail: 'info@example.com',
   phone: null,
   address: null,
+  socialLinks: {},
   updatedBy: actor.id,
   createdAt: now,
   updatedAt: now,
@@ -52,6 +53,7 @@ describe('SiteSettingsService', () => {
         siteName: '  Nehemiah Autism Center  ',
         contactEmail: 'INFO@EXAMPLE.COM',
         supportedLanguages: ['en', 'en', 'am'],
+        socialLinks: { facebook: '  https://facebook.com/nehemiah  ' },
       },
       actor,
     );
@@ -61,6 +63,7 @@ describe('SiteSettingsService', () => {
         siteName: 'Nehemiah Autism Center',
         contactEmail: 'info@example.com',
         supportedLanguages: ['en', 'am'],
+        socialLinks: { facebook: 'https://facebook.com/nehemiah' },
       }),
       actor.id,
     );

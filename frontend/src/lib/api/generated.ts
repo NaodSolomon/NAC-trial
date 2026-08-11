@@ -1637,7 +1637,19 @@ export interface components {
             message?: string;
         };
         CreateEventDto: Record<string, never>;
-        CreateNavigationItemDto: Record<string, never>;
+        CreateNavigationItemDto: {
+            /** @example About us */
+            label: string;
+            /**
+             * @example en
+             * @enum {string}
+             */
+            languageCode: "en" | "am";
+            /** @example 10 */
+            order: number;
+            /** @example /about */
+            url: string;
+        };
         CreateResourceDto: Record<string, never>;
         CreateRsvpDto: Record<string, never>;
         CreateTestimonialDto: Record<string, never>;
@@ -1768,13 +1780,32 @@ export interface components {
             slug: string;
             title: string;
         };
+        SocialLinksDto: {
+            /** @example https://facebook.com/nehemiah */
+            facebook?: string;
+            /** @example https://instagram.com/nehemiah */
+            instagram?: string;
+            /** @example https://linkedin.com/company/nehemiah */
+            linkedin?: string;
+            /** @example https://youtube.com/@nehemiah */
+            youtube?: string;
+        };
         TrackAnalyticsEventDto: Record<string, never>;
         UpdateAdminDto: Record<string, never>;
         UpdateBlogPostDto: Record<string, never>;
         UpdateCmsPageDto: Record<string, never>;
         UpdateEventDto: Record<string, never>;
         UpdateGalleryItemDto: Record<string, never>;
-        UpdateNavigationItemDto: Record<string, never>;
+        UpdateNavigationItemDto: {
+            /** @example true */
+            isVisible?: boolean;
+            /** @example About us */
+            label?: string;
+            /** @example 10 */
+            order?: number;
+            /** @example /about */
+            url?: string;
+        };
         UpdateSeoDto: {
             description?: string | null;
             imageUrl?: string | null;
@@ -1783,7 +1814,29 @@ export interface components {
             languageCode: "en" | "am";
             title?: string | null;
         };
-        UpdateSiteSettingsDto: Record<string, never>;
+        UpdateSiteSettingsDto: {
+            /** @example Addis Ababa, Ethiopia */
+            address?: string;
+            /** @example info@example.org */
+            contactEmail?: string;
+            /**
+             * @example en
+             * @enum {string}
+             */
+            defaultLanguage?: "en" | "am";
+            /** @example +251 11 000 0000 */
+            phone?: string;
+            /** @example Nehemiah Autism Center */
+            siteName?: string;
+            socialLinks?: components["schemas"]["SocialLinksDto"];
+            /**
+             * @example [
+             *       "en",
+             *       "am"
+             *     ]
+             */
+            supportedLanguages?: ("en" | "am")[];
+        };
         UpdateTestimonialDto: Record<string, never>;
     };
     responses: never;

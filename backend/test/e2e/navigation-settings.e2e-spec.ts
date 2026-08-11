@@ -69,6 +69,9 @@ describe('Navigation and settings (e2e)', () => {
         siteName: 'Nehemiah Autism Center E2E',
         contactEmail: 'hello@nehemiah.test',
         supportedLanguages: ['en', 'am'],
+        socialLinks: {
+          facebook: 'https://facebook.com/nehemiah-e2e',
+        },
       })
       .expect(200);
     await request(context.app.getHttpServer())
@@ -80,6 +83,9 @@ describe('Navigation and settings (e2e)', () => {
       .expect(200)
       .expect(({ body }) => {
         expect(body.data.siteName).toBe('Nehemiah Autism Center E2E');
+        expect(body.data.socialLinks).toEqual({
+          facebook: 'https://facebook.com/nehemiah-e2e',
+        });
         expect(body.data).not.toHaveProperty('updatedBy');
       });
   });

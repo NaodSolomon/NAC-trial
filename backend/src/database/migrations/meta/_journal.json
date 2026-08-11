@@ -85,6 +85,13 @@
       "when": 1785942272670,
       "tag": "0011_add_cms_seo_keywords",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1786467268390,
+      "tag": "0012_add-site-social-links",
+      "breakpoints": true
     }
   ]
 }

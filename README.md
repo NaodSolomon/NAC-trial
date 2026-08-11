@@ -230,6 +230,15 @@ characters, 160 description characters, ten normalized keywords of at most 40 ch
 2,048-character HTTPS or approved-local-MinIO image URL. Failed mutations do not reset editor
 state, so unsaved CMS and SEO input remains available for correction or retry.
 
+Step 41 adds localized navigation and global public-settings administration. Super administrators
+and content editors can manage English and Amharic navigation independently, reorder items, and
+control public visibility; deletion remains restricted to super administrators. Global site name,
+enabled/default languages, contact details, and HTTPS social links are editable only by a super
+administrator. Every successful mutation invalidates the matching backend Redis cache and the
+frontend query cache, so the public header and footer refetch authoritative data. Social links are
+stored as typed JSON in `site_settings.social_links`, introduced by migration `0012`; they are no
+longer hard-coded in the public footer.
+
 ## Authorization and Audit
 
 Private administration endpoints require both a valid access JWT and an explicitly allowed database-backed role. Administrator account management and audit-log access are restricted to `SUPER_ADMIN`.

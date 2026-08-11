@@ -9378,15 +9378,141 @@
       },
       "CreateNavigationItemDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "label": {
+            "type": "string",
+            "example": "About us",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "url": {
+            "type": "string",
+            "example": "/about",
+            "maxLength": 500
+          },
+          "order": {
+            "type": "number",
+            "example": 10,
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "languageCode": {
+            "type": "string",
+            "enum": [
+              "en",
+              "am"
+            ],
+            "example": "en"
+          }
+        },
+        "required": [
+          "label",
+          "url",
+          "order",
+          "languageCode"
+        ]
       },
       "UpdateNavigationItemDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "label": {
+            "type": "string",
+            "example": "About us",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "url": {
+            "type": "string",
+            "example": "/about",
+            "maxLength": 500
+          },
+          "order": {
+            "type": "number",
+            "example": 10,
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "isVisible": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "SocialLinksDto": {
+        "type": "object",
+        "properties": {
+          "facebook": {
+            "type": "string",
+            "example": "https://facebook.com/nehemiah",
+            "maxLength": 2048
+          },
+          "instagram": {
+            "type": "string",
+            "example": "https://instagram.com/nehemiah",
+            "maxLength": 2048
+          },
+          "youtube": {
+            "type": "string",
+            "example": "https://youtube.com/@nehemiah",
+            "maxLength": 2048
+          },
+          "linkedin": {
+            "type": "string",
+            "example": "https://linkedin.com/company/nehemiah",
+            "maxLength": 2048
+          }
+        }
       },
       "UpdateSiteSettingsDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "siteName": {
+            "type": "string",
+            "example": "Nehemiah Autism Center",
+            "minLength": 2,
+            "maxLength": 150
+          },
+          "defaultLanguage": {
+            "type": "string",
+            "enum": [
+              "en",
+              "am"
+            ],
+            "example": "en"
+          },
+          "supportedLanguages": {
+            "type": "array",
+            "example": [
+              "en",
+              "am"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          },
+          "contactEmail": {
+            "type": "string",
+            "example": "info@example.org",
+            "maxLength": 255
+          },
+          "phone": {
+            "type": "string",
+            "example": "+251 11 000 0000",
+            "maxLength": 50
+          },
+          "address": {
+            "type": "string",
+            "example": "Addis Ababa, Ethiopia",
+            "maxLength": 500
+          },
+          "socialLinks": {
+            "$ref": "#/components/schemas/SocialLinksDto"
+          }
+        }
       },
       "CreateContactSubmissionDto": {
         "type": "object",

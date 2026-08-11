@@ -94,6 +94,59 @@ test.beforeEach(async ({ context, page }) => {
       ),
     });
   });
+  await page.route('**/api/v1/admin/navigation?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        data: [
+          {
+            id: '00000000-0000-4000-8000-000000001301',
+            label: 'Home',
+            url: '/',
+            order: 0,
+            languageCode: 'en',
+            isVisible: true,
+            createdBy: '00000000-0000-4000-8000-000000001203',
+            createdAt: '2026-08-01T10:00:00.000Z',
+            updatedAt: '2026-08-10T10:00:00.000Z',
+          },
+          {
+            id: '00000000-0000-4000-8000-000000001302',
+            label: 'About us',
+            url: '/about',
+            order: 10,
+            languageCode: 'en',
+            isVisible: true,
+            createdBy: '00000000-0000-4000-8000-000000001203',
+            createdAt: '2026-08-01T10:00:00.000Z',
+            updatedAt: '2026-08-10T10:00:00.000Z',
+          },
+        ],
+        meta: { total: 2, page: 1, limit: 100, totalPages: 1 },
+      }),
+    }),
+  );
+  await page.route('**/api/v1/admin/settings', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        id: '00000000-0000-4000-8000-000000001303',
+        key: 'global',
+        siteName: 'Nehemiah Autism Center',
+        defaultLanguage: 'en',
+        supportedLanguages: ['en', 'am'],
+        contactEmail: 'info@nehemiah.example',
+        phone: '+251 11 000 0000',
+        address: 'Addis Ababa, Ethiopia',
+        socialLinks: { facebook: 'https://facebook.com/nehemiah' },
+        updatedBy: '00000000-0000-4000-8000-000000001203',
+        createdAt: '2026-08-01T10:00:00.000Z',
+        updatedAt: '2026-08-10T10:00:00.000Z',
+      }),
+    }),
+  );
 });
 
 test('administrator shell matches the responsive workspace baseline', async ({ page }) => {
@@ -110,6 +163,8 @@ for (const screen of [
   { name: 'admin-cms-list', path: '/admin/content', ready: 'CMS pages' },
   { name: 'admin-cms-editor', path: `/admin/content/${cmsPage.id}`, ready: 'Edit Homepage' },
   { name: 'admin-seo-editor', path: '/admin/seo', ready: 'SEO metadata' },
+  { name: 'admin-navigation', path: '/admin/navigation', ready: 'Navigation' },
+  { name: 'admin-settings', path: '/admin/settings', ready: 'Public settings' },
 ] as const) {
   test(`${screen.name} matches the responsive workspace baseline`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });

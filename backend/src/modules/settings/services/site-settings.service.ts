@@ -56,6 +56,13 @@ export class SiteSettingsService {
         }),
         ...(dto.phone !== undefined && { phone: dto.phone.trim() }),
         ...(dto.address !== undefined && { address: dto.address.trim() }),
+        ...(dto.socialLinks !== undefined && {
+          socialLinks: Object.fromEntries(
+            Object.entries(dto.socialLinks)
+              .map(([network, url]) => [network, url?.trim()])
+              .filter((entry): entry is [string, string] => Boolean(entry[1])),
+          ),
+        }),
       },
       actor.id,
     );
@@ -86,6 +93,7 @@ export class SiteSettingsService {
       contactEmail: settings.contactEmail,
       phone: settings.phone,
       address: settings.address,
+      socialLinks: settings.socialLinks,
     };
   }
 }

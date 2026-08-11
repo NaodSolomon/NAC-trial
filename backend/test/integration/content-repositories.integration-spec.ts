@@ -168,14 +168,22 @@ describeWithPostgres('CMS, navigation, and settings repositories (PostgreSQL)', 
       updatedBy: ACTOR_ID,
     });
     await expect(
-      settingsRepository.update({ contactEmail: 'info@integration.test' }, ACTOR_ID),
+      settingsRepository.update(
+        {
+          contactEmail: 'info@integration.test',
+          socialLinks: { facebook: 'https://facebook.com/nehemiah-integration' },
+        },
+        ACTOR_ID,
+      ),
     ).resolves.toMatchObject({
       contactEmail: 'info@integration.test',
+      socialLinks: { facebook: 'https://facebook.com/nehemiah-integration' },
       updatedBy: ACTOR_ID,
     });
     await expect(settingsRepository.get()).resolves.toMatchObject({
       key: 'global',
       contactEmail: 'info@integration.test',
+      socialLinks: { facebook: 'https://facebook.com/nehemiah-integration' },
     });
     const [audit] = await context.db
       .select()

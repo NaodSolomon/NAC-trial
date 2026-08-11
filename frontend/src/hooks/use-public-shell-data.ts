@@ -74,6 +74,7 @@ function createFallbackSettings(): PublicSiteSettings {
     contactEmail: SITE_CONFIG.email,
     phone: SITE_CONFIG.phone,
     address: SITE_CONFIG.address,
+    socialLinks: {},
   };
 }
 
@@ -119,7 +120,19 @@ function normalizeSettings(value: unknown, fallback: PublicSiteSettings): Public
     contactEmail: nullableString(candidate.contactEmail, fallback.contactEmail),
     phone: nullableString(candidate.phone, fallback.phone),
     address: nullableString(candidate.address, fallback.address),
+    socialLinks: normalizeSocialLinks(candidate.socialLinks),
   };
+}
+
+function normalizeSocialLinks(value: unknown): PublicSiteSettings['socialLinks'] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const candidate = value as Record<string, unknown>;
+  return Object.fromEntries(
+    ['facebook', 'instagram', 'youtube', 'linkedin'].flatMap((network) => {
+      const url = candidate[network];
+      return typeof url === 'string' && /^https:\/\/\S+$/i.test(url) ? [[network, url]] : [];
+    }),
+  );
 }
 
 function isSafeNavigationUrl(value: unknown): value is string {

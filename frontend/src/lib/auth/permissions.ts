@@ -17,12 +17,14 @@ export type AdminNavigationIcon =
   | 'events'
   | 'gallery'
   | 'seo'
+  | 'navigation'
   | 'engagement'
   | 'donations'
   | 'analytics'
   | 'administrators'
   | 'audit'
-  | 'system';
+  | 'system'
+  | 'settings';
 
 export interface AdminNavigationItem {
   label: string;
@@ -91,6 +93,13 @@ export const adminNavigation: readonly AdminNavigationItem[] = [
     description: 'Localized search and social metadata',
   },
   {
+    label: 'Navigation',
+    href: '/admin/navigation',
+    icon: 'navigation',
+    permission: 'content:manage',
+    description: 'Localized public navigation and visibility',
+  },
+  {
     label: 'Engagement',
     href: '/admin/engagement',
     icon: 'engagement',
@@ -131,6 +140,13 @@ export const adminNavigation: readonly AdminNavigationItem[] = [
     icon: 'system',
     permission: 'system:manage',
     description: 'Cache, health and search maintenance',
+  },
+  {
+    label: 'Public settings',
+    href: '/admin/settings',
+    icon: 'settings',
+    permission: 'system:manage',
+    description: 'Global language, contact and social settings',
   },
 ] as const;
 

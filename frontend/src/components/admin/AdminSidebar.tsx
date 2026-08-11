@@ -11,8 +11,10 @@ import {
   Gauge,
   Images,
   MessageSquareText,
+  MenuSquare,
   Search,
   Settings,
+  SlidersHorizontal,
   ShieldCheck,
   Users,
 } from 'lucide-react';
@@ -31,12 +33,14 @@ const icons: Record<AdminNavigationIcon, typeof Gauge> = {
   events: CalendarDays,
   gallery: Images,
   seo: Search,
+  navigation: MenuSquare,
   engagement: MessageSquareText,
   donations: CircleDollarSign,
   analytics: BarChart3,
   administrators: Users,
   audit: FileClock,
   system: Settings,
+  settings: SlidersHorizontal,
 };
 
 export function AdminSidebar({
