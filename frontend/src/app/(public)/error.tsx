@@ -23,7 +23,7 @@ export default function PublicError({
         <button
           type="button"
           onClick={reset}
-          className="bg-primary min-h-11 rounded px-6 font-semibold text-white"
+          className="bg-primary-dark min-h-11 rounded px-6 font-semibold text-white"
         >
           {t('retry')}
         </button>

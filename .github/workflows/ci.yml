@@ -90,9 +90,28 @@ jobs:
           name: openapi-contract
           path: backend/dist
       - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --prod --audit-level high
       - run: pnpm api:check
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm test
+      - run: pnpm test:coverage
       - run: pnpm build
       - run: pnpm performance:check
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+
+  full-stack-e2e:
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate disposable E2E stack
+        run: docker compose -f docker-compose.e2e.yml config --quiet
+      - name: Run real full-stack journeys
+        run: >-
+          docker compose -f docker-compose.e2e.yml up --build
+          --abort-on-container-exit --exit-code-from playwright-e2e playwright-e2e
+      - name: Remove disposable E2E data
+        if: always()
+        run: docker compose -f docker-compose.e2e.yml down --volumes --remove-orphans
