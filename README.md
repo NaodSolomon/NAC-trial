@@ -248,6 +248,16 @@ downloads. Editors can create, update, and publish content; permanent deletion c
 only to super administrators, matching backend authorization. Resource records reference files
 uploaded through the approved media-storage workflow and never accept browser-local file paths.
 
+Step 43 separates private engagement work into `/admin/contact`, `/admin/volunteers`,
+`/admin/testimonials`, and `/admin/newsletter`. Contact submissions and volunteer applications
+support search, language/status filters, pagination, and authorized review; permanent deletion is
+restricted to super administrators. Content editors can create, edit, publish, and delete localized
+testimonials, while newsletter subscriber management is visible only to super administrators.
+Personal information remains in authenticated component memory only: it is never placed in browser
+storage, frontend query keys, analytics payloads, client logs, or mutation feedback. Newsletter
+removal uses the backend's existing email-keyed route, but the address is confined to that protected
+request and backend logs record the route template rather than the path value.
+
 ## Authorization and Audit
 
 Private administration endpoints require both a valid access JWT and an explicitly allowed database-backed role. Administrator account management and audit-log access are restricted to `SUPER_ADMIN`.

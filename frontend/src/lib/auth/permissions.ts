@@ -4,6 +4,7 @@ export type AdminPermission =
   | 'dashboard:view'
   | 'content:manage'
   | 'engagement:manage'
+  | 'newsletter:manage'
   | 'donations:view'
   | 'analytics:view'
   | 'administrators:manage'
@@ -20,7 +21,10 @@ export type AdminNavigationIcon =
   | 'resources'
   | 'seo'
   | 'navigation'
-  | 'engagement'
+  | 'contact'
+  | 'volunteers'
+  | 'testimonials'
+  | 'newsletter'
   | 'donations'
   | 'analytics'
   | 'administrators'
@@ -41,6 +45,7 @@ const rolePermissions: Record<AdminRole, ReadonlySet<AdminPermission>> = {
     'dashboard:view',
     'content:manage',
     'engagement:manage',
+    'newsletter:manage',
     'donations:view',
     'analytics:view',
     'administrators:manage',
@@ -116,11 +121,32 @@ export const adminNavigation: readonly AdminNavigationItem[] = [
     description: 'Localized public navigation and visibility',
   },
   {
-    label: 'Engagement',
-    href: '/admin/engagement',
-    icon: 'engagement',
+    label: 'Contact',
+    href: '/admin/contact',
+    icon: 'contact',
     permission: 'engagement:manage',
-    description: 'Contact, volunteer and newsletter activity',
+    description: 'Private contact form submissions',
+  },
+  {
+    label: 'Volunteers',
+    href: '/admin/volunteers',
+    icon: 'volunteers',
+    permission: 'engagement:manage',
+    description: 'Volunteer application review',
+  },
+  {
+    label: 'Testimonials',
+    href: '/admin/testimonials',
+    icon: 'testimonials',
+    permission: 'engagement:manage',
+    description: 'Localized testimonial moderation',
+  },
+  {
+    label: 'Newsletter',
+    href: '/admin/newsletter',
+    icon: 'newsletter',
+    permission: 'newsletter:manage',
+    description: 'Private subscriber management',
   },
   {
     label: 'Donations',
@@ -181,8 +207,10 @@ const protectedRoutePermissions: Array<{ prefix: string; permission: AdminPermis
   { prefix: '/admin/resources', permission: 'content:manage' },
   { prefix: '/admin/navigation', permission: 'content:manage' },
   { prefix: '/admin/seo', permission: 'content:manage' },
-  { prefix: '/admin/engagement', permission: 'engagement:manage' },
   { prefix: '/admin/contact', permission: 'engagement:manage' },
+  { prefix: '/admin/volunteers', permission: 'engagement:manage' },
+  { prefix: '/admin/testimonials', permission: 'engagement:manage' },
+  { prefix: '/admin/newsletter', permission: 'newsletter:manage' },
 ];
 
 export function hasAdminPermission(role: AdminRole, permission: AdminPermission): boolean {

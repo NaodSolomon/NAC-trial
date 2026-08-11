@@ -9,15 +9,20 @@ describe('administrator permissions', () => {
     expect(links).toContain('/admin/donations');
     expect(links).toContain('/admin/content');
     expect(links).toContain('/admin/system');
+    expect(links).toContain('/admin/newsletter');
   });
 
   it('limits content editors to content and engagement destinations', () => {
     const links = navigationForRole('CONTENT_EDITOR').map(({ href }) => href);
     expect(links).toContain('/admin/content');
-    expect(links).toContain('/admin/engagement');
+    expect(links).toContain('/admin/contact');
+    expect(links).toContain('/admin/volunteers');
+    expect(links).toContain('/admin/testimonials');
+    expect(links).not.toContain('/admin/newsletter');
     expect(links).not.toContain('/admin/donations');
     expect(links).not.toContain('/admin/system');
     expect(canAccessAdminPath('CONTENT_EDITOR', '/admin/events/example')).toBe(true);
+    expect(canAccessAdminPath('CONTENT_EDITOR', '/admin/newsletter')).toBe(false);
   });
 
   it('limits finance viewers to dashboard and donation data', () => {

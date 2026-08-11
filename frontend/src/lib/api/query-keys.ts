@@ -41,6 +41,15 @@ export const queryKeys = {
     volunteer: (languageCode = 'en') => ['engagement', 'volunteer', languageCode] as const,
     testimonials: (parameters: QueryParameters = {}) =>
       ['engagement', 'testimonials', parameters] as const,
+    adminContact: (parameters: QueryParameters = {}) =>
+      ['engagement', 'admin', 'contact', parameters] as const,
+    adminVolunteers: (parameters: QueryParameters = {}) =>
+      ['engagement', 'admin', 'volunteers', parameters] as const,
+    adminTestimonials: (parameters: QueryParameters = {}) =>
+      ['engagement', 'admin', 'testimonials', parameters] as const,
+    // Subscriber addresses must never be passed into this key.
+    adminNewsletter: (parameters: QueryParameters = {}) =>
+      ['engagement', 'admin', 'newsletter', parameters] as const,
   },
   resources: {
     all: ['resources'] as const,
