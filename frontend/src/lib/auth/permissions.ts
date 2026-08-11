@@ -28,6 +28,7 @@ export type AdminNavigationIcon =
   | 'donations'
   | 'analytics'
   | 'administrators'
+  | 'sessions'
   | 'audit'
   | 'system'
   | 'settings';
@@ -164,10 +165,17 @@ export const adminNavigation: readonly AdminNavigationItem[] = [
   },
   {
     label: 'Administrators',
-    href: '/admin/administrators',
+    href: '/admin/users',
     icon: 'administrators',
     permission: 'administrators:manage',
     description: 'Accounts, roles and sessions',
+  },
+  {
+    label: 'Sessions',
+    href: '/admin/sessions',
+    icon: 'sessions',
+    permission: 'administrators:manage',
+    description: 'Active devices and session revocation',
   },
   {
     label: 'Audit logs',
@@ -196,6 +204,8 @@ const protectedRoutePermissions: Array<{ prefix: string; permission: AdminPermis
   { prefix: '/admin/system', permission: 'system:manage' },
   { prefix: '/admin/settings', permission: 'system:manage' },
   { prefix: '/admin/administrators', permission: 'administrators:manage' },
+  { prefix: '/admin/users', permission: 'administrators:manage' },
+  { prefix: '/admin/sessions', permission: 'administrators:manage' },
   { prefix: '/admin/audit-logs', permission: 'audit:view' },
   { prefix: '/admin/analytics', permission: 'analytics:view' },
   { prefix: '/admin/donations', permission: 'donations:view' },

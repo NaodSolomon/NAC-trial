@@ -120,6 +120,98 @@ test.beforeEach(async ({ context, page }) => {
       ]),
     }),
   );
+  await page.route('**/api/v1/admin/users?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        data: [
+          {
+            id: '00000000-0000-4000-8000-000000001511',
+            name: 'Root administrator',
+            email: 'root@example.org',
+            role: 'SUPER_ADMIN',
+            isActive: true,
+            lastLoginAt: '2026-08-10T10:00:00.000Z',
+            createdAt: '2026-08-01T10:00:00.000Z',
+            updatedAt: '2026-08-10T10:00:00.000Z',
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
+      }),
+    }),
+  );
+  await page.route('**/api/v1/admin/audit-logs?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        data: [
+          {
+            id: '00000000-0000-4000-8000-000000001512',
+            adminId: '00000000-0000-4000-8000-000000001511',
+            action: 'REINDEX',
+            entityType: 'SEARCH',
+            entityId: null,
+            metadata: { indexes: ['cms_pages_title_trgm_idx'], durationMs: 218 },
+            createdAt: '2026-08-10T10:00:00.000Z',
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+      }),
+    }),
+  );
+  await page.route('**/api/v1/admin/system/sessions?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        data: [
+          {
+            id: '00000000-0000-4000-8000-000000001513',
+            admin: {
+              id: '00000000-0000-4000-8000-000000001511',
+              name: 'Root administrator',
+              email: 'root@example.org',
+            },
+            userAgent: 'Accessible desktop browser',
+            ipFingerprint: 'a1b2c3d4e5f6',
+            createdAt: '2026-08-10T09:00:00.000Z',
+            lastUsedAt: '2026-08-10T10:00:00.000Z',
+            expiresAt: '2026-08-11T10:00:00.000Z',
+            status: 'ACTIVE',
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+      }),
+    }),
+  );
+  await page.route('**/api/v1/system/health/live', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        status: 'ok',
+        process: 'alive',
+        mode: 'trial',
+        timestamp: '2026-08-10T10:00:00.000Z',
+      }),
+    }),
+  );
+  await page.route('**/api/v1/system/health/ready', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        status: 'degraded',
+        checks: { postgresql: 'connected', redis: 'unavailable' },
+        database: 'connected',
+        redis: 'unavailable',
+        mode: 'trial',
+        timestamp: '2026-08-10T10:00:00.000Z',
+      }),
+    }),
+  );
   await page.route('**/api/v1/admin/cms/pages**', (route) => {
     const path = new URL(route.request().url()).pathname;
     return route.fulfill({
@@ -402,6 +494,10 @@ for (const screen of [
   { name: 'admin-newsletter', path: '/admin/newsletter', ready: 'Newsletter subscribers' },
   { name: 'admin-donations', path: '/admin/donations', ready: 'Donation records' },
   { name: 'admin-analytics', path: '/admin/analytics', ready: 'Analytics' },
+  { name: 'admin-users', path: '/admin/users', ready: 'Administrators' },
+  { name: 'admin-audit-logs', path: '/admin/audit-logs', ready: 'Audit logs' },
+  { name: 'admin-sessions', path: '/admin/sessions', ready: 'Administrator sessions' },
+  { name: 'admin-system', path: '/admin/system', ready: 'System administration' },
 ] as const) {
   test(`${screen.name} matches the responsive workspace baseline`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });

@@ -79,6 +79,7 @@ export function ConfirmedActionButton({
   onConfirm,
   className,
   destructive = true,
+  disabled = false,
 }: {
   children: React.ReactNode;
   title: string;
@@ -87,6 +88,7 @@ export function ConfirmedActionButton({
   onConfirm: () => void | Promise<void>;
   className?: string;
   destructive?: boolean;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -110,7 +112,8 @@ export function ConfirmedActionButton({
     <>
       <Button
         type="button"
-        variant="destructive"
+        variant={destructive ? 'destructive' : 'outline'}
+        disabled={disabled}
         className={className}
         onClick={() => setOpen(true)}
       >

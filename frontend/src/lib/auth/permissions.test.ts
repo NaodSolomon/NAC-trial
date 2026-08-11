@@ -4,7 +4,8 @@ import { canAccessAdminPath, hasAdminPermission, navigationForRole } from './per
 describe('administrator permissions', () => {
   it('shows super administrators every administration destination', () => {
     const links = navigationForRole('SUPER_ADMIN').map(({ href }) => href);
-    expect(links).toContain('/admin/administrators');
+    expect(links).toContain('/admin/users');
+    expect(links).toContain('/admin/sessions');
     expect(links).toContain('/admin/audit-logs');
     expect(links).toContain('/admin/donations');
     expect(links).toContain('/admin/content');

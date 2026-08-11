@@ -187,7 +187,7 @@ test('finance navigation remains usable at mobile width', async ({ page }) => {
   await expect(navigation.getByRole('link', { name: 'CMS pages' })).toHaveCount(0);
   await navigation.getByRole('link', { name: 'Donations' }).click();
   await expect(page).toHaveURL(/\/admin\/donations$/);
-  await expect(page.getByRole('heading', { name: 'Donations' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Donation records' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
