@@ -67,6 +67,7 @@ export const queryKeys = {
     gateways: () => ['donations', 'gateways'] as const,
     detail: (id: string) => ['donations', id] as const,
     adminList: (parameters: QueryParameters = {}) => ['donations', 'admin', parameters] as const,
+    adminStats: () => ['donations', 'admin', 'stats'] as const,
   },
   administrators: {
     all: ['administrators'] as const,
@@ -84,5 +85,6 @@ export const queryKeys = {
   analytics: {
     all: ['analytics'] as const,
     summary: (parameters: QueryParameters = {}) => ['analytics', 'summary', parameters] as const,
+    timeline: (range: string) => ['analytics', 'timeline', range] as const,
   },
 } as const;

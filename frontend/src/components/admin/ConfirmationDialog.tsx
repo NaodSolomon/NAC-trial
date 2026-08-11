@@ -78,6 +78,7 @@ export function ConfirmedActionButton({
   confirmLabel,
   onConfirm,
   className,
+  destructive = true,
 }: {
   children: React.ReactNode;
   title: string;
@@ -85,6 +86,7 @@ export function ConfirmedActionButton({
   confirmLabel: string;
   onConfirm: () => void | Promise<void>;
   className?: string;
+  destructive?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -119,6 +121,7 @@ export function ConfirmedActionButton({
         title={title}
         description={description}
         confirmLabel={confirmLabel}
+        destructive={destructive}
         busy={busy}
         error={actionError}
         onConfirm={confirm}
