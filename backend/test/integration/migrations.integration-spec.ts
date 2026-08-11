@@ -66,7 +66,26 @@ describe('Drizzle migration chain', () => {
       const migrations = await context.pool.query<{ count: string }>(
         'select count(*) from drizzle.__drizzle_migrations',
       );
-      expect(Number(migrations.rows[0].count)).toBe(12);
+      expect(Number(migrations.rows[0].count)).toBe(13);
+
+      const socialLinksColumn = await context.pool.query<{
+        data_type: string;
+        is_nullable: string;
+        column_default: string;
+      }>(
+        `select data_type, is_nullable, column_default
+         from information_schema.columns
+         where table_schema = 'public'
+           and table_name = 'site_settings'
+           and column_name = 'social_links'`,
+      );
+      expect(socialLinksColumn.rows).toEqual([
+        {
+          data_type: 'jsonb',
+          is_nullable: 'NO',
+          column_default: "'{}'::jsonb",
+        },
+      ]);
 
       const sessionIndex = await context.pool.query<{ indexdef: string }>(
         `select indexdef

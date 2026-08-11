@@ -2,6 +2,13 @@ import { jsonb, pgTable, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-o
 import { admins } from './admin.schema';
 import { languageCodeEnum } from './enums';
 
+export interface SiteSocialLinks {
+  facebook?: string;
+  instagram?: string;
+  youtube?: string;
+  linkedin?: string;
+}
+
 export const siteSettings = pgTable(
   'site_settings',
   {
@@ -16,6 +23,7 @@ export const siteSettings = pgTable(
     contactEmail: varchar('contact_email', { length: 255 }),
     phone: varchar('phone', { length: 50 }),
     address: varchar('address', { length: 500 }),
+    socialLinks: jsonb('social_links').$type<SiteSocialLinks>().default({}).notNull(),
     updatedBy: uuid('updated_by').references(() => admins.id, {
       onDelete: 'set null',
     }),

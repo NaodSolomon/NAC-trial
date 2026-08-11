@@ -14,4 +14,10 @@ export interface PublicSiteSettings {
   contactEmail: string | null;
   phone: string | null;
   address: string | null;
+  socialLinks: {
+    facebook?: string;
+    instagram?: string;
+    youtube?: string;
+    linkedin?: string;
+  };
 }

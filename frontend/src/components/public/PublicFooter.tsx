@@ -2,9 +2,19 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronRight, Mail, MapPinned, Phone } from 'lucide-react';
+import {
+  ChevronRight,
+  Facebook,
+  Instagram,
+  Linkedin,
+  Mail,
+  MapPinned,
+  Phone,
+  Youtube,
+} from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
 import { usePublicShellData } from '@/hooks/use-public-shell-data';
+import type { PublicSiteSettings } from './public-shell.types';
 
 export function PublicFooter() {
   const { language, href, t } = useLanguage();
@@ -63,6 +73,7 @@ export function PublicFooter() {
               href={settings.phone ? `tel:${settings.phone.replace(/[^+\d]/g, '')}` : undefined}
             />
           </address>
+          <SocialLinks links={settings.socialLinks} />
         </div>
       </div>
       <div className="border-t border-white/15 py-6">
@@ -71,6 +82,33 @@ export function PublicFooter() {
         </div>
       </div>
     </footer>
+  );
+}
+
+function SocialLinks({ links }: { links: PublicSiteSettings['socialLinks'] }) {
+  const networks = [
+    ['facebook', Facebook],
+    ['instagram', Instagram],
+    ['youtube', Youtube],
+    ['linkedin', Linkedin],
+  ] as const;
+  const active = networks.filter(([network]) => links[network]);
+  if (!active.length) return null;
+  return (
+    <nav aria-label="Social media" className="mt-6 flex flex-wrap gap-2">
+      {active.map(([network, Icon]) => (
+        <a
+          key={network}
+          href={links[network]}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`${network} (opens in a new tab)`}
+          className="hover:bg-primary flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/30"
+        >
+          <Icon aria-hidden="true" className="size-5" />
+        </a>
+      ))}
+    </nav>
   );
 }
 

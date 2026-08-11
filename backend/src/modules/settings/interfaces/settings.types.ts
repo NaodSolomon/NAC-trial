@@ -7,4 +7,5 @@ export interface PublicSiteSettings {
   contactEmail: string | null;
   phone: string | null;
   address: string | null;
+  socialLinks: SiteSetting['socialLinks'];
 }
