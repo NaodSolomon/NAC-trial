@@ -240,6 +240,87 @@ test.beforeEach(async ({ context, page }) => {
       }),
     }),
   );
+  await page.route('**/api/v1/admin/contact?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        data: [
+          {
+            id: '00000000-0000-4000-8000-000000001505',
+            name: 'Family representative',
+            email: 'family@example.org',
+            subject: 'Support request',
+            message: 'Please share information about available family support programs.',
+            languageCode: 'en',
+            createdAt: '2026-08-10T10:00:00.000Z',
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
+      }),
+    }),
+  );
+  await page.route('**/api/v1/admin/volunteers?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        data: [
+          {
+            id: '00000000-0000-4000-8000-000000001506',
+            name: 'Community volunteer',
+            email: 'volunteer@example.org',
+            phone: '+251 911 000 000',
+            roleInterest: 'Family support',
+            message: 'I would like to help with family programs and community events.',
+            languageCode: 'en',
+            status: 'PENDING',
+            createdAt: '2026-08-10T10:00:00.000Z',
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
+      }),
+    }),
+  );
+  await page.route('**/api/v1/admin/testimonials?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        data: [
+          {
+            id: '00000000-0000-4000-8000-000000001507',
+            translationKey: '00000000-0000-4000-8000-000000001508',
+            name: 'Family advocate',
+            text: 'The center gave our family practical and meaningful support.',
+            languageCode: 'en',
+            status: 'PUBLISHED',
+            createdBy: '00000000-0000-4000-8000-000000001203',
+            createdAt: '2026-08-01T10:00:00.000Z',
+            updatedAt: '2026-08-10T10:00:00.000Z',
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
+      }),
+    }),
+  );
+  await page.route('**/api/v1/admin/newsletter?**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: envelope({
+        data: [
+          {
+            id: '00000000-0000-4000-8000-000000001509',
+            email: 'subscriber@example.org',
+            languageCode: 'en',
+            createdAt: '2026-08-10T10:00:00.000Z',
+          },
+        ],
+        meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
+      }),
+    }),
+  );
 });
 
 test('administrator shell matches the responsive workspace baseline', async ({ page }) => {
@@ -263,6 +344,10 @@ for (const screen of [
   { name: 'admin-blog', path: '/admin/blog', ready: 'Blog administration' },
   { name: 'admin-resources', path: '/admin/resources', ready: 'Resources' },
   { name: 'admin-events', path: '/admin/events', ready: 'Event administration' },
+  { name: 'admin-contact', path: '/admin/contact', ready: 'Contact submissions' },
+  { name: 'admin-volunteers', path: '/admin/volunteers', ready: 'Volunteer applications' },
+  { name: 'admin-testimonials', path: '/admin/testimonials', ready: 'Testimonials' },
+  { name: 'admin-newsletter', path: '/admin/newsletter', ready: 'Newsletter subscribers' },
 ] as const) {
   test(`${screen.name} matches the responsive workspace baseline`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });

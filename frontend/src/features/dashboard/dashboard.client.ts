@@ -59,7 +59,7 @@ async function contentMetrics(signal?: AbortSignal): Promise<DashboardMetric[]> 
       label: 'Contact submissions',
       value: contacts.meta.total.toLocaleString(),
       description: 'Messages available to the content team',
-      href: '/admin/engagement',
+      href: '/admin/contact',
     },
     {
       label: 'Events',

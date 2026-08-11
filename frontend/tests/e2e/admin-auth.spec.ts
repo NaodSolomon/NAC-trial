@@ -157,7 +157,10 @@ test('content-editor navigation excludes finance and system sections', async ({ 
 
   const navigation = page.getByRole('navigation', { name: 'Administrator navigation' });
   await expect(navigation.getByRole('link', { name: 'CMS pages' })).toBeVisible();
-  await expect(navigation.getByRole('link', { name: 'Engagement' })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'Contact' })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'Volunteers' })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'Testimonials' })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'Newsletter' })).toHaveCount(0);
   await expect(navigation.getByRole('link', { name: 'Donations' })).toHaveCount(0);
   await expect(navigation.getByRole('link', { name: 'Analytics' })).toHaveCount(0);
   await expect(navigation.getByRole('link', { name: 'System' })).toHaveCount(0);
