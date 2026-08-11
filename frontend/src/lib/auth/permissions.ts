@@ -16,6 +16,7 @@ export type AdminNavigationIcon =
   | 'blog'
   | 'events'
   | 'gallery'
+  | 'seo'
   | 'engagement'
   | 'donations'
   | 'analytics'
@@ -81,6 +82,13 @@ export const adminNavigation: readonly AdminNavigationItem[] = [
     icon: 'gallery',
     permission: 'content:manage',
     description: 'Gallery and media presentation',
+  },
+  {
+    label: 'SEO',
+    href: '/admin/seo',
+    icon: 'seo',
+    permission: 'content:manage',
+    description: 'Localized search and social metadata',
   },
   {
     label: 'Engagement',

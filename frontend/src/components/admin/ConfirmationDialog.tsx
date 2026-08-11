@@ -12,6 +12,7 @@ export function ConfirmationDialog({
   confirmLabel = 'Confirm',
   busy = false,
   destructive = true,
+  error,
   onConfirm,
   onOpenChange,
 }: {
@@ -21,6 +22,7 @@ export function ConfirmationDialog({
   confirmLabel?: string;
   busy?: boolean;
   destructive?: boolean;
+  error?: string;
   onConfirm: () => void | Promise<void>;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -55,6 +57,14 @@ export function ConfirmationDialog({
               {busy ? 'Working…' : confirmLabel}
             </Button>
           </div>
+          {error && (
+            <p
+              role="alert"
+              className="mt-4 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-900"
+            >
+              {error}
+            </p>
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
@@ -78,13 +88,17 @@ export function ConfirmedActionButton({
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   async function confirm() {
     if (busy) return;
     setBusy(true);
+    setActionError('');
     try {
       await onConfirm();
       setOpen(false);
+    } catch {
+      setActionError('The action could not be completed. Nothing was deleted.');
     } finally {
       setBusy(false);
     }
@@ -106,6 +120,7 @@ export function ConfirmedActionButton({
         description={description}
         confirmLabel={confirmLabel}
         busy={busy}
+        error={actionError}
         onConfirm={confirm}
         onOpenChange={setOpen}
       />

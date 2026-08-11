@@ -219,6 +219,17 @@ only APIs available to the current role: content editors receive contact and eve
 viewers receive donation statistics, and super administrators receive analytics and donation
 summaries. An API-level `403` renders a controlled access-denied state.
 
+Step 40 adds CMS and SEO administration for super administrators and content editors. The CMS
+workspace provides URL-backed language/status filters, pagination, slug checks, draft creation,
+editing, immediate publishing, and future scheduling. Schedule inputs use the administrator's
+local date and time and are converted to ISO timestamps before the API request. Published-page
+edits visibly return the content to draft, matching the backend transaction rule. Homepage and FAQ
+metadata use structured editors, while generic preview content passes through the existing
+text-only sanitization policy. The separate SEO workspace applies the backend limits of 70 title
+characters, 160 description characters, ten normalized keywords of at most 40 characters, and a
+2,048-character HTTPS or approved-local-MinIO image URL. Failed mutations do not reset editor
+state, so unsaved CMS and SEO input remains available for correction or retry.
+
 ## Authorization and Audit
 
 Private administration endpoints require both a valid access JWT and an explicitly allowed database-backed role. Administrator account management and audit-log access are restricted to `SUPER_ADMIN`.
