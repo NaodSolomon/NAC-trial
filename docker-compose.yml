@@ -38,8 +38,7 @@ services:
       mailpit:
         condition: service_started
     healthcheck:
-      test:
-        ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/api/v1/system/health/ready"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/api/v1/system/health/ready"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -53,6 +52,9 @@ services:
     command: pnpm dev
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+      NEXT_PUBLIC_STORAGE_ORIGIN: http://localhost:9000
+      NEXT_PUBLIC_MEDIA_HOSTS: ${NEXT_PUBLIC_MEDIA_HOSTS:-}
+      MEDIA_IMAGE_ORIGIN: http://minio:9000
       NODE_ENV: development
     ports:
       - "3000:3000"

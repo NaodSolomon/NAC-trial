@@ -281,6 +281,13 @@ Uploads use `multipart/form-data` with a required `file` and optional `languageC
 `STORAGE_*` variables for Cloudflare R2 in production; the example values target MinIO during
 local development. Set `STORAGE_PUBLIC_URL` to the public CDN or custom-domain base URL.
 
+The frontend gallery accepts media only from explicit origins. `NEXT_PUBLIC_STORAGE_ORIGIN`
+is the browser-visible MinIO or storage origin, while optional `NEXT_PUBLIC_MEDIA_HOSTS` is a
+comma-separated allowlist of production CDN origins. In Docker, set `MEDIA_IMAGE_ORIGIN` to
+the container-reachable storage origin (the default is `http://minio:9000`) so the Next.js
+image optimizer can load MinIO objects without exposing that internal hostname to browsers.
+Keep these origins exact; paths and wildcard hostnames are intentionally not accepted.
+
 ## Contact Form
 
 Step 7 composes the public Contact page from the published `contact` CMS page and global site

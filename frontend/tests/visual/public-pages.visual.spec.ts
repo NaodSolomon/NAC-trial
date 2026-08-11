@@ -13,6 +13,7 @@ const publicScreens = [
   { name: 'search', path: '/search?q=support' },
   { name: 'gallery', path: '/gallery' },
   { name: 'gallery-masonry', path: '/gallery/masonry' },
+  { name: 'gallery-video', path: '/gallery?type=video' },
   { name: 'faq', path: '/faq' },
   { name: 'resources', path: '/resources' },
   { name: 'contact', path: '/contact' },

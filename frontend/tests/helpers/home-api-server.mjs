@@ -94,7 +94,11 @@ createServer(async (request, response) => {
       : json(response, { success: false, statusCode: 404, message: 'Not found' }, 404);
   }
   if (url.pathname === '/api/v1/public/gallery') {
-    return envelope(response, paginated(gallery(language)));
+    const requestedType = url.searchParams.get('type');
+    const filtered = gallery(language).filter(
+      (item) => !requestedType || item.type === requestedType,
+    );
+    return envelope(response, paginated(filtered, url));
   }
   if (url.pathname === '/api/v1/public/pages/about') {
     return envelope(response, about(language));
@@ -314,13 +318,38 @@ function events(language) {
 }
 
 function gallery(language) {
-  return [1, 2, 3, 4].map((number) => ({
-    id: `gallery-${number}`,
-    title: language === 'am' ? `የማህበረሰብ ቅጽበት ${number}` : `Community moment ${number}`,
-    altText: language === 'am' ? 'በማዕከሉ የተወሰደ ምስል' : 'A moment at Nehemiah Autism Center',
-    mediaUrl: `http://127.0.0.1:${port}/assets/gallery_${number}.jpg`,
-    type: 'IMAGE',
+  const images = Array.from({ length: 15 }, (_, index) => {
+    const number = index + 1;
+    return {
+      id: `00000000-0000-4000-8000-${String(600 + number).padStart(12, '0')}`,
+      mediaId: `00000000-0000-4000-8000-${String(700 + number).padStart(12, '0')}`,
+      title: language === 'am' ? `የማህበረሰብ ቅጽበት ${number}` : `Community moment ${number}`,
+      altText:
+        language === 'am'
+          ? `በነህምያ ኦቲዝም ማዕከል የተካሄደ የማህበረሰብ እንቅስቃሴ ${number}`
+          : `Community activity ${number} at Nehemiah Autism Center`,
+      languageCode: language,
+      mediaUrl: `http://127.0.0.1:${port}/assets/gallery_${((number - 1) % 8) + 1}.jpg`,
+      type: 'IMAGE',
+      createdAt: new Date(Date.UTC(2026, 6, number)).toISOString(),
+      updatedAt: new Date(Date.UTC(2026, 6, number)).toISOString(),
+    };
+  });
+  const videos = [1, 2].map((number) => ({
+    id: `00000000-0000-4000-8000-${String(650 + number).padStart(12, '0')}`,
+    mediaId: `00000000-0000-4000-8000-${String(750 + number).padStart(12, '0')}`,
+    title: language === 'am' ? `የማዕከሉ ቪዲዮ ${number}` : `Center video ${number}`,
+    altText:
+      language === 'am'
+        ? `በነህምያ ኦቲዝም ማዕከል የተካሄደ እንቅስቃሴ ቪዲዮ ${number}`
+        : `Video ${number} showing an activity at Nehemiah Autism Center`,
+    languageCode: language,
+    mediaUrl: `http://127.0.0.1:${port}/assets/gallery-video-${number}.mp4`,
+    type: 'VIDEO',
+    createdAt: new Date(Date.UTC(2026, 7, number)).toISOString(),
+    updatedAt: new Date(Date.UTC(2026, 7, number)).toISOString(),
   }));
+  return [...videos, ...images];
 }
 
 function about(language) {
@@ -406,6 +435,13 @@ async function asset(response, pathname) {
     .at(-1)
     ?.replace(/[^a-zA-Z0-9_.-]/g, '');
   if (!filename) return json(response, { message: 'Not found' }, 404);
+  if (filename.endsWith('.mp4')) {
+    response.writeHead(200, {
+      'content-type': 'video/mp4',
+      'cache-control': 'public, max-age=60',
+    });
+    return response.end(Buffer.alloc(0));
+  }
   try {
     const image = await readFile(resolve('public/images', filename));
     response.writeHead(200, {
