@@ -96,6 +96,13 @@ export function getApiErrorMessage(error: unknown): string {
     : 'Something went wrong. Please try again.';
 }
 
+export function getApiErrorMessageWithDetails(error: unknown): string {
+  if (error instanceof ApiRequestError && error.details.length) {
+    return error.details.join(' ');
+  }
+  return getApiErrorMessage(error);
+}
+
 export function isApiRequestError(error: unknown): error is ApiRequestError {
   return error instanceof ApiRequestError;
 }
