@@ -4,13 +4,23 @@ import { ResourceExplorer, loadPublicResources } from '@/features/resources';
 import { localizedHref } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 
-export const metadata: Metadata = {
-  title: 'Resources | Nehemiah Autism Center',
-  description: 'Download published family information and resources from Nehemiah Autism Center.',
-};
+import { buildLocalizedMetadata } from '@/lib/seo/site';
 
 interface ResourcesRouteProps {
   searchParams: Promise<{ lang?: string }>;
+}
+
+export async function generateMetadata({ searchParams }: ResourcesRouteProps): Promise<Metadata> {
+  const language = await resolveRequestLanguage((await searchParams).lang);
+  return buildLocalizedMetadata({
+    pathname: '/resources',
+    language,
+    title: language === 'am' ? 'ግብዓቶች' : 'Resources',
+    description:
+      language === 'am'
+        ? 'ለቤተሰቦች የታተሙ መረጃዎችን እና ግብዓቶችን ያውርዱ።'
+        : 'Download published family information and resources from Nehemiah Autism Center.',
+  });
 }
 
 export default async function Page({ searchParams }: ResourcesRouteProps) {

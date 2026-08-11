@@ -28,7 +28,7 @@ test('contact form is keyboard-usable, duplicate-safe, and keeps PII out of clie
   let submissions = 0;
   page.on('console', (message) => consoleMessages.push(message.text()));
   page.on('request', (request) => {
-    if (request.method() === 'POST') {
+    if (request.method() === 'POST' && request.url().endsWith('/public/contact')) {
       submissions += 1;
       submissionUrls.push(request.url());
     }

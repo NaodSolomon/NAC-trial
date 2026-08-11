@@ -1,12 +1,25 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { BarChart3, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { getAnalyticsSummary, getAnalyticsTimeline } from './analytics.client';
 import type { AnalyticsRange, AnalyticsSummary, AnalyticsTimeline } from './analytics.schemas';
-import { AccessibleBarChart } from './AccessibleBarChart';
+
+const AccessibleBarChart = dynamic(
+  () => import('./AccessibleBarChart').then((module) => module.AccessibleBarChart),
+  {
+    loading: () => (
+      <div
+        role="status"
+        aria-label="Loading chart"
+        className="h-72 animate-pulse rounded-xl border bg-slate-100 motion-reduce:animate-none"
+      />
+    ),
+  },
+);
 
 const emptySummary: AnalyticsSummary = { totalVisitors: 0, topCountries: [], topPages: [] };
 

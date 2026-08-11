@@ -6,11 +6,24 @@ import { DonationUnavailable } from '@/features/donations/components/DonationUna
 import { loadDonationCapabilities } from '@/features/donations/donation.server';
 import { localizedHref } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
+import { buildLocalizedMetadata } from '@/lib/seo/site';
 
-export const metadata: Metadata = {
-  title: 'Donate | Nehemiah',
-  description: 'Try the Nehemiah Autism Center donation demonstration without a real payment.',
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ lang?: string }>;
+}): Promise<Metadata> {
+  const language = await resolveRequestLanguage((await searchParams).lang);
+  return buildLocalizedMetadata({
+    pathname: '/donate',
+    language,
+    title: language === 'am' ? 'ይለግሱ' : 'Donation demonstration',
+    description:
+      language === 'am'
+        ? 'ያለ እውነተኛ ክፍያ የሙከራ ልገሳ ሂደቱን ይመልከቱ።'
+        : 'Try the Nehemiah Autism Center donation demonstration without a real payment.',
+  });
+}
 
 export default async function DonatePage({
   searchParams,

@@ -3,25 +3,28 @@ import { Open_Sans, Trirong } from 'next/font/google';
 import './globals.css';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { ThemeProvider } from '@/providers/ThemeProvider';
+import { defaultDescription, getSiteUrl, siteName } from '@/lib/seo/site';
 
 const openSans = Open_Sans({
   subsets: ['latin'],
-  weight: ['300', '400', '600', '700', '800'],
+  weight: ['400', '600', '700'],
   variable: '--font-sans',
   display: 'swap',
 });
 
 const trirong = Trirong({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  weight: ['400', '600', '700'],
   variable: '--font-serif',
   display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: 'Nehemiah Autism Center',
-  description:
-    'Nehemiah Autism Center supports autistic children and their families in Ethiopia.',
+  metadataBase: getSiteUrl(),
+  title: { default: siteName, template: `%s | ${siteName}` },
+  description: defaultDescription,
+  applicationName: siteName,
+  authors: [{ name: siteName }],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

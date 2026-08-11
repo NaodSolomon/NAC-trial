@@ -4,13 +4,23 @@ import PageBanner from '@/components/common/PageBanner';
 import { SearchResults, loadPublicSearch, validateSearchTerm } from '@/features/search';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 
-export const metadata: Metadata = {
-  title: 'Search | Nehemiah Autism Center',
-  description: 'Search published pages, events, and blog posts from Nehemiah Autism Center.',
-};
+import { buildLocalizedMetadata } from '@/lib/seo/site';
 
 interface SearchRouteProps {
   searchParams: Promise<{ q?: string; lang?: string }>;
+}
+
+export async function generateMetadata({ searchParams }: SearchRouteProps): Promise<Metadata> {
+  const language = await resolveRequestLanguage((await searchParams).lang);
+  return {
+    ...buildLocalizedMetadata({
+      pathname: '/search',
+      language,
+      title: language === 'am' ? 'ፍለጋ' : 'Search',
+      description: 'Search published pages, events, and blog posts from Nehemiah Autism Center.',
+    }),
+    robots: { index: false, follow: true },
+  };
 }
 
 export default async function SearchPage({ searchParams }: SearchRouteProps) {

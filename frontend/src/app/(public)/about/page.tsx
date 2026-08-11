@@ -4,6 +4,8 @@ import { AboutPage } from '@/features/about';
 import { loadPublishedPage } from '@/features/cms';
 import { isApiRequestError } from '@/lib/api/errors';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
+import { loadPublicSeo } from '@/features/seo';
+import { buildLocalizedMetadata } from '@/lib/seo/site';
 
 interface AboutRouteProps {
   searchParams: Promise<{ lang?: string }>;
@@ -11,11 +13,18 @@ interface AboutRouteProps {
 
 export async function generateMetadata({ searchParams }: AboutRouteProps): Promise<Metadata> {
   const language = await resolveRequestLanguage((await searchParams).lang);
-  const page = await getAboutPage(language);
-  return {
-    title: page.seoTitle ?? page.title,
-    description: page.seoDescription ?? page.content.slice(0, 160),
-  };
+  const [page, seo] = await Promise.all([
+    getAboutPage(language),
+    loadPublicSeo('about', language).catch(() => null),
+  ]);
+  return buildLocalizedMetadata({
+    pathname: '/about',
+    language,
+    title: seo?.title ?? page.seoTitle ?? page.title,
+    description: seo?.description ?? page.seoDescription ?? page.content,
+    keywords: seo?.keywords,
+    imageUrl: seo?.imageUrl ?? page.seoImageUrl,
+  });
 }
 
 export default async function Page({ searchParams }: AboutRouteProps) {

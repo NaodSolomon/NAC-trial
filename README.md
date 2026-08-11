@@ -277,6 +277,28 @@ version/adapters independently. Audited cache clear/warm and allowlisted search 
 require confirmation, disable duplicate submissions while running, and explain PostgreSQL search
 maintenance conflicts returned as HTTP 409.
 
+Step 46 completes public discoverability, anonymous measurement, and enforceable performance
+budgets. Published CMS SEO data drives localized canonical, Open Graph, Twitter, and
+English/Amharic alternate metadata; published articles and events add schema.org Article/Event
+data, while the public shell supplies Organization data. `sitemap.xml` obtains dynamic blog and
+event routes only from published public APIs, and `robots.txt` excludes administrator, API,
+compatibility-login, and dashboard paths. Search results and simulated checkout pages explicitly
+remain out of the index.
+
+The public layout records anonymous route views on a best-effort basis. Its payload contains only
+`page_view`, a normalized local pathname, and a coarse mobile/tablet/desktop class. Query strings,
+fragments, referrers, cookies, form values, administrator routes, and identifiers are never sent;
+analytics timeout or failure does not affect page content. Chart and CMS/blog/SEO editor code is
+split into route-specific chunks. Next Image serves AVIF/WebP with responsive sizes and a bounded
+cache, and the two bundled Google font families include only their used Latin subset and weights.
+
+After `pnpm build`, run `pnpm performance:check` from `frontend/` to enforce optimized chunk
+budgets in CI. With the local Docker services and production frontend server already running, run
+`pnpm lighthouse:ci` for three audits of the home, About, Blog, and Events routes. The committed
+Lighthouse resource budgets and assertions require at least 0.90 for performance, accessibility,
+best practices, and SEO; retain the reports when preparing a release because scores depend on the
+deployment hardware and network.
+
 ## Authorization and Audit
 
 Private administration endpoints require both a valid access JWT and an explicitly allowed database-backed role. Administrator account management and audit-log access are restricted to `SUPER_ADMIN`.

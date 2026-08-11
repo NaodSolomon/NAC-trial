@@ -15,7 +15,9 @@
     "test:visual:update": "playwright test --project=visual-desktop --project=visual-mobile --update-snapshots",
     "test:coverage": "vitest run --coverage",
     "api:generate": "node openapi/generate.mjs",
-    "api:check": "node openapi/generate.mjs --check"
+    "api:check": "node openapi/generate.mjs --check",
+    "performance:check": "node scripts/check-performance-budget.mjs",
+    "lighthouse:ci": "pnpm dlx @lhci/cli@0.15.1 autorun"
   },
   "dependencies": {
     "@hookform/resolvers": "latest",
