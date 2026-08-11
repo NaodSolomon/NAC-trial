@@ -570,6 +570,14 @@ The `/test/payments` controller is registered only for `NODE_ENV=test` or when
 and independently omits these routes. Repeating a confirmation uses the same fake event ID:
 the database accepts it once, returns `duplicate: true` thereafter, and sends only one email.
 
+The frontend independently verifies `/api/v1/system/version` and gateway discovery before
+enabling the flow. Trial confirmation and failure controls render only when the backend reports
+trial mode, a non-production environment, the fake adapter, and real payments disabled. The form
+requests only a donor name, email, amount, currency, and optional message; it never requests card
+or bank details. The checkout URL contains only the donation ID, so refreshing it reloads the
+existing donation instead of creating another one. When no eligible gateway is available, the
+page presents a controlled unavailable state without submitting donor information.
+
 ### Step 20: Redis caching and health
 
 Public settings, navigation, published CMS pages, published events, and gallery results use

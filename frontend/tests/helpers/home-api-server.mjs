@@ -5,6 +5,21 @@ import { resolve } from 'node:path';
 const port = 4010;
 const downloadCounts = new Map();
 const eventRsvpEmails = new Set();
+const demoDonationId = '00000000-0000-4000-8000-000000000901';
+let nextDonationSequence = 902;
+const donations = new Map([
+  [
+    demoDonationId,
+    {
+      id: demoDonationId,
+      amount: '50.00',
+      currency: 'USD',
+      status: 'PENDING',
+      gateway: 'PAYPAL',
+      createdAt: '2026-08-11T10:00:00.000Z',
+    },
+  ],
+]);
 
 createServer(async (request, response) => {
   const url = new URL(request.url ?? '/', `http://127.0.0.1:${port}`);
@@ -22,6 +37,79 @@ createServer(async (request, response) => {
   if (url.pathname.startsWith('/downloads/')) return downloadAsset(response);
 
   const language = url.searchParams.get('languageCode') === 'am' ? 'am' : 'en';
+  if (url.pathname === '/api/v1/system/version') {
+    return envelope(response, {
+      name: 'Nehemiah Autism Center API',
+      version: '0.1.0',
+      environment: 'development',
+      mode: 'trial',
+      adapters: { storage: 'minio', mail: 'mailpit', payment: 'fake', cache: 'redis' },
+      realPaymentsEnabled: false,
+    });
+  }
+  if (url.pathname === '/api/v1/public/donations/gateways') {
+    return envelope(response, ['PAYPAL']);
+  }
+  if (url.pathname === '/api/v1/public/donations' && request.method === 'POST') {
+    const body = await readJson(request);
+    const id = `00000000-0000-4000-8000-${String(nextDonationSequence++).padStart(12, '0')}`;
+    const donation = {
+      id,
+      amount: Number(body.amount).toFixed(2),
+      currency: body.currency,
+      status: 'PENDING',
+      gateway: body.gateway,
+      createdAt: new Date().toISOString(),
+    };
+    donations.set(id, donation);
+    return envelope(
+      response,
+      {
+        donationId: id,
+        status: 'PENDING',
+        paymentUrl: `http://localhost:3000/donate/simulated?donation=${id}`,
+      },
+      201,
+    );
+  }
+  const donationCancellation = url.pathname.match(
+    /^\/api\/v1\/public\/donations\/([0-9a-f-]+)\/cancel$/,
+  );
+  if (donationCancellation && request.method === 'POST') {
+    const donation = donations.get(donationCancellation[1]);
+    if (!donation) return json(response, { message: 'Not found' }, 404);
+    if (donation.status !== 'PENDING') return json(response, { message: 'Not pending' }, 409);
+    donation.status = 'CANCELLED';
+    return envelope(response, { status: 'CANCELLED' });
+  }
+  const trialPayment = url.pathname.match(
+    /^\/api\/v1\/test\/payments\/([0-9a-f-]+)\/(confirm|fail)$/,
+  );
+  if (trialPayment && request.method === 'POST') {
+    const donation = donations.get(trialPayment[1]);
+    if (!donation) return json(response, { message: 'Not found' }, 404);
+    const status = trialPayment[2] === 'confirm' ? 'CONFIRMED' : 'FAILED';
+    const duplicate = donation.status === status;
+    if (!duplicate && donation.status !== 'PENDING') {
+      return json(response, { message: 'Donation is already complete' }, 409);
+    }
+    donation.status = status;
+    return envelope(response, {
+      donationId: donation.id,
+      status,
+      duplicate,
+      ...(status === 'CONFIRMED'
+        ? { receiptUrl: `http://127.0.0.1:${port}/downloads/test-receipt.pdf` }
+        : {}),
+    });
+  }
+  const donationDetail = url.pathname.match(/^\/api\/v1\/public\/donations\/([0-9a-f-]+)$/);
+  if (donationDetail && request.method === 'GET') {
+    const donation = donations.get(donationDetail[1]);
+    return donation
+      ? envelope(response, donation)
+      : json(response, { success: false, statusCode: 404, message: 'Not found' }, 404);
+  }
   if (url.pathname === '/api/v1/public/contact') {
     if (request.method === 'GET') return envelope(response, contactPage(language));
     if (request.method === 'POST') {

@@ -54,6 +54,8 @@ export const queryKeys = {
   },
   donations: {
     all: ['donations'] as const,
+    runtime: () => ['donations', 'runtime'] as const,
+    gateways: () => ['donations', 'gateways'] as const,
     detail: (id: string) => ['donations', id] as const,
     adminList: (parameters: QueryParameters = {}) => ['donations', 'admin', parameters] as const,
   },
