@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type Route } from '@playwright/test';
 
 const superAdministrator = {
   id: 'admin-super',
@@ -23,7 +23,9 @@ test('login, reload refresh, current-admin bootstrap, and logout use no browser 
   await page.getByRole('button', { name: 'Sign In' }).click();
 
   await expect(page).toHaveURL(/\/admin$/);
-  await expect(page.getByRole('heading', { name: 'Administration dashboard' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Welcome back, Super Administrator' }),
+  ).toBeVisible();
   expect(calls.login).toBe(1);
   expect(calls.refresh).toBeGreaterThanOrEqual(1);
   expect(calls.me).toBeGreaterThanOrEqual(1);
@@ -34,7 +36,9 @@ test('login, reload refresh, current-admin bootstrap, and logout use no browser 
   expect(await page.evaluate(() => document.cookie)).not.toContain('nac-admin-refresh');
 
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Administration dashboard' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Welcome back, Super Administrator' }),
+  ).toBeVisible();
   expect(calls.refresh).toBeGreaterThanOrEqual(2);
   await expectNoStoredTokens(page);
 
@@ -126,6 +130,88 @@ test('a wrong-role administrator is redirected away from system administration',
   ).toBeVisible();
 });
 
+test('super administrators receive complete role navigation and accessible dashboard cards', async ({
+  page,
+}) => {
+  await mockAuthentication(page, superAdministrator);
+  await signIn(page, superAdministrator.email);
+
+  const navigation = page.getByRole('navigation', { name: 'Administrator navigation' });
+  await expect(navigation.getByRole('link', { name: 'CMS pages' })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'Donations' })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'Administrators' })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'System' })).toBeVisible();
+  await expect(page.getByText('1,248')).toBeVisible();
+  await expect(page.getByText('1250.00 USD')).toBeVisible();
+});
+
+test('content-editor navigation excludes finance and system sections', async ({ page }) => {
+  const editor = {
+    ...superAdministrator,
+    id: 'admin-editor',
+    name: 'Content Editor',
+    role: 'CONTENT_EDITOR' as const,
+  };
+  await mockAuthentication(page, editor);
+  await signIn(page, editor.email);
+
+  const navigation = page.getByRole('navigation', { name: 'Administrator navigation' });
+  await expect(navigation.getByRole('link', { name: 'CMS pages' })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'Engagement' })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'Donations' })).toHaveCount(0);
+  await expect(navigation.getByRole('link', { name: 'Analytics' })).toHaveCount(0);
+  await expect(navigation.getByRole('link', { name: 'System' })).toHaveCount(0);
+  await expect(page.getByText('Contact submissions')).toBeVisible();
+  await expect(page.getByText('Events', { exact: true }).last()).toBeVisible();
+});
+
+test('finance navigation remains usable at mobile width', async ({ page }) => {
+  const finance = {
+    ...superAdministrator,
+    id: 'admin-finance-mobile',
+    name: 'Finance Viewer',
+    role: 'FINANCE_VIEWER' as const,
+  };
+  await page.setViewportSize({ width: 320, height: 760 });
+  await mockAuthentication(page, finance);
+  await signIn(page, finance.email);
+
+  await expect(page.getByText('Confirmed donations')).toBeVisible();
+  await page.getByRole('button', { name: 'Open administrator navigation' }).click();
+  const navigation = page.getByRole('navigation', { name: 'Administrator navigation' });
+  await expect(navigation.getByRole('link', { name: 'Dashboard' })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'Donations' })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'CMS pages' })).toHaveCount(0);
+  await navigation.getByRole('link', { name: 'Donations' }).click();
+  await expect(page).toHaveURL(/\/admin\/donations$/);
+  await expect(page.getByRole('heading', { name: 'Donations' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+});
+
+test('a backend 403 becomes a controlled access-denied dashboard state', async ({ page }) => {
+  const editor = {
+    ...superAdministrator,
+    id: 'admin-editor-forbidden',
+    name: 'Content Editor',
+    role: 'CONTENT_EDITOR' as const,
+  };
+  await mockAuthentication(page, editor);
+  await page.route('**/api/v1/admin/contact?**', (route) =>
+    route.fulfill({
+      status: 403,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: false, statusCode: 403, message: 'Forbidden' }),
+    }),
+  );
+  await signIn(page, editor.email);
+  await expect(
+    page.getByRole('heading', { name: 'Your role cannot access this section' }),
+  ).toBeVisible();
+  await expect(page.getByText('The API rejected access')).toBeVisible();
+});
+
 async function mockAuthentication(
   page: Page,
   admin: {
@@ -173,7 +259,59 @@ async function mockAuthentication(
       body: successEnvelope(admin),
     });
   });
+  await page.route('**/api/v1/admin/analytics/summary', (route) =>
+    route.fulfill({
+      status: admin.role === 'SUPER_ADMIN' ? 200 : 403,
+      contentType: 'application/json',
+      body:
+        admin.role === 'SUPER_ADMIN'
+          ? successEnvelope({
+              totalVisitors: 1248,
+              topCountries: [{ country: 'ET', visits: 900 }],
+              topPages: [{ route: '/', visits: 720 }],
+            })
+          : JSON.stringify({ success: false, statusCode: 403, message: 'Forbidden' }),
+    }),
+  );
+  await page.route('**/api/v1/admin/donations/stats', (route) =>
+    route.fulfill({
+      status: admin.role === 'CONTENT_EDITOR' ? 403 : 200,
+      contentType: 'application/json',
+      body:
+        admin.role === 'CONTENT_EDITOR'
+          ? JSON.stringify({ success: false, statusCode: 403, message: 'Forbidden' })
+          : successEnvelope({
+              totalDonations: 18,
+              totals: [{ currency: 'USD', amount: '1250.00' }],
+            }),
+    }),
+  );
+  await page.route('**/api/v1/admin/contact?**', (route) =>
+    paginatedAdminResponse(route, admin.role === 'FINANCE_VIEWER' ? 403 : 200, 7),
+  );
+  await page.route('**/api/v1/admin/events?**', (route) =>
+    paginatedAdminResponse(route, admin.role === 'FINANCE_VIEWER' ? 403 : 200, 4),
+  );
   return calls;
+}
+
+async function signIn(page: Page, email: string) {
+  await page.goto('/admin/login');
+  await page.getByLabel('Email address').fill(email);
+  await page.getByLabel('Password').fill('StrongPassword123');
+  await page.getByRole('button', { name: 'Sign In' }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+}
+
+async function paginatedAdminResponse(route: Route, status: number, total: number) {
+  await route.fulfill({
+    status,
+    contentType: 'application/json',
+    body:
+      status === 200
+        ? successEnvelope({ data: [], meta: { total, page: 1, limit: 1, totalPages: total } })
+        : JSON.stringify({ success: false, statusCode: status, message: 'Forbidden' }),
+  });
 }
 
 async function expectNoStoredTokens(page: Page) {

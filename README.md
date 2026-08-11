@@ -210,6 +210,15 @@ no usable login credential, never creates a default administrator, and leaves ex
 unchanged when the script is run again. Demonstration content is not part of the production
 bootstrap seed.
 
+The Step 39 frontend provides the shared private administrator workspace under `/admin`.
+Navigation and client-side route gating derive from one permission map for `SUPER_ADMIN`,
+`CONTENT_EDITOR`, and `FINANCE_VIEWER`; the backend still independently authorizes every API
+request. The responsive shell includes desktop and mobile navigation, breadcrumbs, page titles,
+global mutation feedback, and explicit confirmation for destructive actions. Dashboard cards call
+only APIs available to the current role: content editors receive contact and event counts, finance
+viewers receive donation statistics, and super administrators receive analytics and donation
+summaries. An API-level `403` renders a controlled access-denied state.
+
 ## Authorization and Audit
 
 Private administration endpoints require both a valid access JWT and an explicitly allowed database-backed role. Administrator account management and audit-log access are restricted to `SUPER_ADMIN`.
