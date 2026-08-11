@@ -10,7 +10,7 @@ export function PublicFooter() {
   const { language, href, t } = useLanguage();
   const { navigation, settings } = usePublicShellData(language);
   const supportLinks = [
-    { label: t('volunteers'), url: '/contact' },
+    { label: t('volunteers'), url: '/volunteer' },
     { label: t('faq'), url: '/faq' },
     { label: t('events'), url: '/events' },
   ];

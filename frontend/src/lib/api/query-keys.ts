@@ -35,6 +35,13 @@ export const queryKeys = {
     publicList: (parameters: QueryParameters = {}) => ['gallery', 'public', parameters] as const,
     adminList: (parameters: QueryParameters = {}) => ['gallery', 'admin', parameters] as const,
   },
+  engagement: {
+    all: ['engagement'] as const,
+    contact: (languageCode = 'en') => ['engagement', 'contact', languageCode] as const,
+    volunteer: (languageCode = 'en') => ['engagement', 'volunteer', languageCode] as const,
+    testimonials: (parameters: QueryParameters = {}) =>
+      ['engagement', 'testimonials', parameters] as const,
+  },
   resources: {
     all: ['resources'] as const,
     publicList: (parameters: QueryParameters = {}) => ['resources', 'public', parameters] as const,

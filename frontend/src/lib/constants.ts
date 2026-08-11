@@ -18,7 +18,7 @@ export const NAV_ITEMS: NavItem[] = [
       { label: 'About Us', href: '/about' },
       { label: 'Our Team', href: '/team' },
       { label: 'Gallery', href: '/gallery' },
-      { label: 'Volunteers', href: '/team' },
+      { label: 'Volunteers', href: '/volunteer' },
       { label: 'FAQ', href: '/about#faq' },
     ],
   },
@@ -55,7 +55,7 @@ export const SITE_CONFIG = {
       { label: 'Donate', href: '/donate' },
     ],
     support: [
-      { label: 'Volunteer', href: '/contact' },
+      { label: 'Volunteer', href: '/volunteer' },
       { label: 'Frequently Asked Questions', href: '/faq' },
       { label: 'Events', href: '/events' },
       { label: 'Resources', href: '/resources' },

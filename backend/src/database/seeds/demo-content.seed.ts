@@ -1,6 +1,6 @@
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../schema';
-import { admins, blogPosts, cmsPages, events } from '../schema';
+import { admins, blogPosts, cmsPages, events, testimonials } from '../schema';
 
 export const DEMO_SEED_AUTHOR_ID = '00000000-0000-4000-8000-000000000004';
 
@@ -168,6 +168,75 @@ const demoPages = [
     },
     seoTitle: 'ተደጋጋሚ ጥያቄዎች | ነህምያ ኦቲዝም ማዕከል',
     seoDescription: 'ስለ ነህምያ ኦቲዝም ማዕከልና የቤተሰብ ድጋፍ የተለመዱ ጥያቄዎች መልሶች።',
+  },
+  {
+    slug: 'contact',
+    languageCode: 'en' as const,
+    title: 'Contact Nehemiah Autism Center',
+    content:
+      'Send our team a message about services, family support, partnerships, or visiting the center. We will respond using only the contact information you provide.',
+    metadata: {
+      mapEmbedUrl: 'https://www.google.com/maps?q=Addis+Ababa,+Ethiopia&output=embed',
+    },
+    seoTitle: 'Contact Nehemiah Autism Center',
+    seoDescription: 'Contact Nehemiah Autism Center in Addis Ababa, Ethiopia.',
+  },
+  {
+    slug: 'contact',
+    languageCode: 'am' as const,
+    title: 'ነህምያ ኦቲዝም ማዕከልን ያነጋግሩ',
+    content: 'ስለ አገልግሎቶች፣ የቤተሰብ ድጋፍ፣ አጋርነት ወይም ማዕከሉን ስለመጎብኘት ለቡድናችን መልእክት ይላኩ።',
+    metadata: {
+      mapEmbedUrl: 'https://www.google.com/maps?q=Addis+Ababa,+Ethiopia&output=embed',
+    },
+    seoTitle: 'ነህምያ ኦቲዝም ማዕከልን ያነጋግሩ',
+    seoDescription: 'በአዲስ አበባ ያለውን ነህምያ ኦቲዝም ማዕከል ያነጋግሩ።',
+  },
+  {
+    slug: 'volunteer',
+    languageCode: 'en' as const,
+    title: 'Volunteer with Nehemiah Autism Center',
+    content:
+      'Volunteers can support inclusive events, family activities, administration, and community awareness. Tell us about your interests and availability so the team can consider suitable opportunities.',
+    metadata: {},
+    seoTitle: 'Volunteer | Nehemiah Autism Center',
+    seoDescription: 'Register your interest in volunteering with Nehemiah Autism Center.',
+  },
+  {
+    slug: 'volunteer',
+    languageCode: 'am' as const,
+    title: 'ከነህምያ ኦቲዝም ማዕከል ጋር በበጎ ፈቃድ ይስሩ',
+    content: 'በጎ ፈቃደኞች አካታች ዝግጅቶችን፣ የቤተሰብ እንቅስቃሴዎችንና የማህበረሰብ ግንዛቤን መደገፍ ይችላሉ። ስለ ፍላጎትዎና ጊዜዎ ይንገሩን።',
+    metadata: {},
+    seoTitle: 'በጎ ፈቃደኝነት | ነህምያ ኦቲዝም ማዕከል',
+    seoDescription: 'ከነህምያ ኦቲዝም ማዕከል ጋር በበጎ ፈቃድ ለመስራት ፍላጎትዎን ይግለጹ።',
+  },
+] as const;
+
+const demoTestimonials = [
+  {
+    translationKey: '00000000-0000-4000-8000-000000000801',
+    languageCode: 'en' as const,
+    name: 'A parent from Addis Ababa',
+    text: 'The center listened to our family and helped us understand practical next steps with respect and patience.',
+  },
+  {
+    translationKey: '00000000-0000-4000-8000-000000000801',
+    languageCode: 'am' as const,
+    name: 'ከአዲስ አበባ የመጣ ወላጅ',
+    text: 'ማዕከሉ ቤተሰባችንን አዳመጠን በአክብሮትና በትዕግሥት ተግባራዊ ቀጣይ እርምጃዎችን እንድንረዳ ረዳን።',
+  },
+  {
+    translationKey: '00000000-0000-4000-8000-000000000802',
+    languageCode: 'en' as const,
+    name: 'Community volunteer',
+    text: 'Volunteering here showed me how thoughtful planning can make community activities welcoming for more families.',
+  },
+  {
+    translationKey: '00000000-0000-4000-8000-000000000802',
+    languageCode: 'am' as const,
+    name: 'የማህበረሰብ በጎ ፈቃደኛ',
+    text: 'እዚህ በበጎ ፈቃድ መስራቴ የታሰበበት ዝግጅት ለብዙ ቤተሰቦች ተቀባይ እንቅስቃሴ እንደሚፈጥር አሳየኝ።',
   },
 ] as const;
 
@@ -337,5 +406,18 @@ export async function seedDemoContent(database: NodePgDatabase<typeof schema>): 
         })),
       )
       .onConflictDoNothing({ target: [events.slug, events.languageCode] });
+
+    await transaction
+      .insert(testimonials)
+      .values(
+        demoTestimonials.map((testimonial) => ({
+          ...testimonial,
+          status: 'PUBLISHED' as const,
+          createdBy: DEMO_SEED_AUTHOR_ID,
+        })),
+      )
+      .onConflictDoNothing({
+        target: [testimonials.translationKey, testimonials.languageCode],
+      });
   });
 }

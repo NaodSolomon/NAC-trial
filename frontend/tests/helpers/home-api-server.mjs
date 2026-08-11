@@ -22,6 +22,36 @@ createServer(async (request, response) => {
   if (url.pathname.startsWith('/downloads/')) return downloadAsset(response);
 
   const language = url.searchParams.get('languageCode') === 'am' ? 'am' : 'en';
+  if (url.pathname === '/api/v1/public/contact') {
+    if (request.method === 'GET') return envelope(response, contactPage(language));
+    if (request.method === 'POST') {
+      const body = await readJson(request);
+      const error = submissionError(body.email);
+      if (error) return json(response, error.payload, error.status);
+      await delay(120);
+      return envelope(response, { status: 'submitted' }, 201);
+    }
+  }
+  if (url.pathname === '/api/v1/public/volunteer') {
+    return envelope(response, volunteerPage(language));
+  }
+  if (url.pathname === '/api/v1/public/volunteer/apply' && request.method === 'POST') {
+    const body = await readJson(request);
+    const error = submissionError(body.email);
+    if (error) return json(response, error.payload, error.status);
+    await delay(120);
+    return envelope(response, { status: 'submitted' }, 201);
+  }
+  if (url.pathname === '/api/v1/public/testimonials') {
+    return envelope(response, paginated(testimonials(language), url));
+  }
+  if (url.pathname === '/api/v1/public/newsletter' && request.method === 'POST') {
+    const body = await readJson(request);
+    const error = submissionError(body.email);
+    if (error) return json(response, error.payload, error.status);
+    await delay(120);
+    return envelope(response, { status: 'subscribed' }, 201);
+  }
   if (url.pathname === '/api/v1/public/content/homepage') {
     return envelope(response, homepage(language));
   }
@@ -350,6 +380,81 @@ function gallery(language) {
     updatedAt: new Date(Date.UTC(2026, 7, number)).toISOString(),
   }));
   return [...videos, ...images];
+}
+
+function contactPage(language) {
+  return {
+    title: language === 'am' ? 'ነህምያ ኦቲዝም ማዕከልን ያነጋግሩ' : 'Contact Nehemiah Autism Center',
+    description:
+      language === 'am'
+        ? 'ስለ አገልግሎቶች፣ የቤተሰብ ድጋፍ ወይም ማዕከሉን ስለመጎብኘት መልእክት ይላኩ።'
+        : 'Send our team a message about services, family support, or visiting the center.',
+    email: 'support@nehemiah.org',
+    phone: '+251 11 000 0000',
+    address: language === 'am' ? 'አዲስ አበባ፣ ኢትዮጵያ' : 'Addis Ababa, Ethiopia',
+    mapEmbedUrl: 'https://www.google.com/maps?q=Addis+Ababa,+Ethiopia&output=embed',
+    languageCode: language,
+  };
+}
+
+function volunteerPage(language) {
+  return {
+    title:
+      language === 'am'
+        ? 'ከነህምያ ኦቲዝም ማዕከል ጋር በበጎ ፈቃድ ይስሩ'
+        : 'Volunteer with Nehemiah Autism Center',
+    description:
+      language === 'am'
+        ? 'በጎ ፈቃደኞች አካታች ዝግጅቶችን፣ የቤተሰብ እንቅስቃሴዎችንና የማህበረሰብ ግንዛቤን መደገፍ ይችላሉ።'
+        : 'Volunteers can support inclusive events, family activities, administration, and community awareness.',
+    languageCode: language,
+  };
+}
+
+function testimonials(language) {
+  const amharic = language === 'am';
+  return [
+    {
+      id: amharic ? '00000000-0000-4000-8000-000000000812' : '00000000-0000-4000-8000-000000000811',
+      name: amharic ? 'ከአዲስ አበባ የመጣ ወላጅ' : 'A parent from Addis Ababa',
+      text: amharic
+        ? 'ማዕከሉ ቤተሰባችንን አዳመጠን በአክብሮትና በትዕግሥት ረዳን።'
+        : 'The center listened to our family and helped us with respect and patience.',
+      languageCode: language,
+      status: 'PUBLISHED',
+      createdBy: 'private-administrator-id',
+    },
+    {
+      id: amharic ? '00000000-0000-4000-8000-000000000814' : '00000000-0000-4000-8000-000000000813',
+      name: amharic ? 'የማህበረሰብ በጎ ፈቃደኛ' : 'Community volunteer',
+      text: amharic
+        ? 'በበጎ ፈቃድ መስራቴ አካታች እንቅስቃሴዎችን እንድረዳ አስችሎኛል።'
+        : 'Volunteering helped me understand how thoughtful activities welcome more families.',
+      languageCode: language,
+      status: 'PUBLISHED',
+      createdBy: 'private-administrator-id',
+    },
+  ];
+}
+
+function submissionError(email) {
+  if (email === 'rate-limit@example.org') {
+    return {
+      status: 429,
+      payload: { success: false, statusCode: 429, message: 'Too many requests' },
+    };
+  }
+  if (email === 'unavailable@example.org') {
+    return {
+      status: 503,
+      payload: { success: false, statusCode: 503, message: 'Unavailable' },
+    };
+  }
+  return null;
+}
+
+function delay(milliseconds) {
+  return new Promise((resolveDelay) => setTimeout(resolveDelay, milliseconds));
 }
 
 function about(language) {

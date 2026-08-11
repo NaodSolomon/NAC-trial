@@ -329,6 +329,15 @@ signup returns the same success response, preventing account enumeration.
 | GET    | `/api/v1/admin/newsletter`        | `SUPER_ADMIN`                 | List subscribers               |
 | DELETE | `/api/v1/admin/newsletter/:email` | `SUPER_ADMIN`                 | Remove a subscriber            |
 
+The Step 37 frontend connects `/contact` and `/volunteer` to these public APIs. Contact and
+volunteer CMS content is server-rendered, testimonials are validated as published before
+display, and the Google map is loaded only after explicit user activation. Contact,
+volunteer, and newsletter forms use duplicate-submission guards and controlled validation,
+rate-limit, and availability messages. Submitted personal information remains only in form
+memory until it is posted in the request body; it is never placed in URLs, browser storage,
+analytics events, or client logs. `db:seed:demo` includes bilingual contact and volunteer
+pages plus published trial testimonials for local end-to-end demonstrations.
+
 Testimonials start as drafts unless explicitly published. Public queries cannot request draft
 status, and repository filtering independently enforces `PUBLISHED`. Audit metadata for
 application and subscriber deletion excludes names, email addresses, phone numbers, and
