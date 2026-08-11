@@ -24,7 +24,7 @@ export default function HomePage({ data }: { data: HomePageData }) {
       {data.galleryItems && (
         <HomeGalleryTeasers items={data.galleryItems} language={data.language} />
       )}
-      <NewsletterSection />
+      <NewsletterSection language={data.language} />
     </>
   );
 }

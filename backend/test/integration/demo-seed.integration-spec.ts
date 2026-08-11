@@ -1,5 +1,5 @@
 import { and, eq, inArray } from 'drizzle-orm';
-import { admins, blogPosts, cmsPages, events } from '../../src/database/schema';
+import { admins, blogPosts, cmsPages, events, testimonials } from '../../src/database/schema';
 import { DEMO_SEED_AUTHOR_ID, seedDemoContent } from '../../src/database/seeds/demo-content.seed';
 import { cleanTestDatabase } from '../helpers/database-cleaner.helper';
 import { connectTestPostgres, PostgresTestContext } from '../helpers/postgres-test.helper';
@@ -21,7 +21,7 @@ describeWithPostgres('Trial demonstration seed (PostgreSQL)', () => {
     await context?.pool.end();
   });
 
-  it('publishes bilingual homepage, about, and FAQ data and remains idempotent', async () => {
+  it('publishes bilingual demonstration content and remains idempotent', async () => {
     await seedDemoContent(context.db);
     await seedDemoContent(context.db);
 
@@ -29,13 +29,19 @@ describeWithPostgres('Trial demonstration seed (PostgreSQL)', () => {
       .select()
       .from(cmsPages)
       .where(
-        and(eq(cmsPages.languageCode, 'en'), inArray(cmsPages.slug, ['home', 'about', 'faq'])),
+        and(
+          eq(cmsPages.languageCode, 'en'),
+          inArray(cmsPages.slug, ['home', 'about', 'faq', 'contact', 'volunteer']),
+        ),
       );
     const amharicPages = await context.db
       .select()
       .from(cmsPages)
       .where(
-        and(eq(cmsPages.languageCode, 'am'), inArray(cmsPages.slug, ['home', 'about', 'faq'])),
+        and(
+          eq(cmsPages.languageCode, 'am'),
+          inArray(cmsPages.slug, ['home', 'about', 'faq', 'contact', 'volunteer']),
+        ),
       );
     const authors = await context.db
       .select()
@@ -43,9 +49,10 @@ describeWithPostgres('Trial demonstration seed (PostgreSQL)', () => {
       .where(eq(admins.id, DEMO_SEED_AUTHOR_ID));
     const seededBlogs = await context.db.select().from(blogPosts);
     const seededEvents = await context.db.select().from(events);
+    const seededTestimonials = await context.db.select().from(testimonials);
 
-    expect(englishPages).toHaveLength(3);
-    expect(amharicPages).toHaveLength(3);
+    expect(englishPages).toHaveLength(5);
+    expect(amharicPages).toHaveLength(5);
     expect(
       englishPages.every((page) => page.status === 'PUBLISHED' && page.publishedAt !== null),
     ).toBe(true);
@@ -58,6 +65,9 @@ describeWithPostgres('Trial demonstration seed (PostgreSQL)', () => {
       Array,
     );
     expect(amharicPages.find((page) => page.slug === 'faq')?.metadata.items).toHaveLength(2);
+    expect(englishPages.find((page) => page.slug === 'contact')?.metadata.mapEmbedUrl).toMatch(
+      /^https:\/\/www\.google\.com\/maps/,
+    );
     expect(authors).toHaveLength(1);
     expect(authors[0]).toMatchObject({ isActive: false, role: 'CONTENT_EDITOR' });
     expect(seededBlogs).toHaveLength(4);
@@ -73,6 +83,13 @@ describeWithPostgres('Trial demonstration seed (PostgreSQL)', () => {
         (event) => event.slug === 'family-support-day' && event.languageCode === 'en',
       )?.rsvpEnabled,
     ).toBe(true);
+    expect(seededTestimonials).toHaveLength(4);
+    expect(seededTestimonials.every((testimonial) => testimonial.status === 'PUBLISHED')).toBe(
+      true,
+    );
+    expect(
+      seededTestimonials.filter((testimonial) => testimonial.languageCode === 'en'),
+    ).toHaveLength(2);
   });
 
   it('does not overwrite an existing CMS page', async () => {

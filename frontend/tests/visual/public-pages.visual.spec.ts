@@ -17,6 +17,7 @@ const publicScreens = [
   { name: 'faq', path: '/faq' },
   { name: 'resources', path: '/resources' },
   { name: 'contact', path: '/contact' },
+  { name: 'volunteer', path: '/volunteer' },
   { name: 'donate', path: '/donate' },
   { name: 'coming-soon', path: '/coming-soon' },
 ] as const;
