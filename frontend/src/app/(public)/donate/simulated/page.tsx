@@ -1,119 +1,71 @@
-'use client';
+import type { Metadata } from 'next';
+import PageBanner from '@/components/common/PageBanner';
+import { TrialModeBanner } from '@/components/shared/TrialModeBanner';
+import { DonationCheckout } from '@/features/donations/components/DonationCheckout';
+import { DonationUnavailable } from '@/features/donations/components/DonationUnavailable';
+import { loadDonationCapabilities, loadPublicDonation } from '@/features/donations/donation.server';
+import { localizedHref } from '@/lib/i18n';
+import { resolveRequestLanguage } from '@/lib/i18n/server';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { browserApiClient } from '@/lib/api/browser-client';
-import { getApiErrorMessage } from '@/lib/api/errors';
-
-type DonationStatus = {
-  id: string;
-  amount: string;
-  currency: string;
-  status: string;
+export const metadata: Metadata = {
+  title: 'Donation simulation | Nehemiah',
+  robots: { index: false, follow: false },
 };
 
-export default function SimulatedCheckoutPage() {
-  const id = useSearchParams().get('donation');
-  const [donation, setDonation] = useState<DonationStatus | null>(null);
-  const [receiptUrl, setReceiptUrl] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-  useEffect(() => {
-    if (!id) return;
-
-    let ignore = false;
-    void getDonation(id)
-      .then((nextDonation) => {
-        if (!ignore) setDonation(nextDonation);
-      })
-      .catch((error: unknown) => {
-        if (!ignore) setErrorMessage(getApiErrorMessage(error));
-      });
-
-    return () => {
-      ignore = true;
-    };
-  }, [id]);
-
-  async function simulate(action: 'confirm' | 'fail' | 'cancel') {
-    if (!id) return;
-    setBusy(true);
-    setErrorMessage('');
-    try {
-      if (action === 'cancel') {
-        await browserApiClient.post(`/public/donations/${id}/cancel`);
-      } else {
-        const response = await browserApiClient.post<{ receiptUrl?: string }>(
-          `/test/payments/${id}/${action}`,
-        );
-        setReceiptUrl(response.receiptUrl ?? '');
-      }
-      setDonation(await getDonation(id));
-    } catch (error) {
-      setErrorMessage(getApiErrorMessage(error));
-    } finally {
-      setBusy(false);
-    }
-  }
+export default async function SimulatedCheckoutPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ donation?: string; lang?: string }>;
+}) {
+  const query = await searchParams;
+  const language = await resolveRequestLanguage(query.lang);
+  const donationId = query.donation?.trim() ?? '';
+  const capabilities = await loadDonationCapabilities().catch(() => null);
+  const donation = uuidPattern.test(donationId)
+    ? await loadPublicDonation(donationId).catch(() => null)
+    : null;
 
   return (
-    <main className="mx-auto min-h-screen max-w-xl px-6 py-16">
-      <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-950">
-        <strong>Fake checkout.</strong> These buttons only change local test data. Do not enter
-        payment credentials anywhere in this trial.
+    <>
+      {capabilities?.trialMode && <TrialModeBanner language={language} />}
+      <PageBanner
+        title={language === 'am' ? 'የልገሳ ሙከራ' : 'Donation Simulation'}
+        breadcrumbs={[
+          { label: language === 'am' ? 'መነሻ' : 'Home', href: localizedHref('/', language) },
+          {
+            label: language === 'am' ? 'ይለግሱ' : 'Donate',
+            href: localizedHref('/donate', language),
+          },
+          { label: language === 'am' ? 'ሙከራ' : 'Simulation' },
+        ]}
+      />
+      <div className="mx-auto max-w-3xl px-4 py-16">
+        {!capabilities ? (
+          <DonationUnavailable language={language} />
+        ) : !donation ? (
+          <section
+            role="alert"
+            className="rounded-xl border border-red-300 bg-red-50 p-8 text-red-900"
+          >
+            <h1 className="font-serif text-2xl font-semibold">
+              {language === 'am' ? 'ልገሳው አልተገኘም' : 'Donation not found'}
+            </h1>
+            <p className="mt-3">
+              {language === 'am'
+                ? 'የልገሳ አድራሻው የተሳሳተ ወይም ጊዜው ያለፈበት ሊሆን ይችላል።'
+                : 'The donation link is invalid, unavailable, or no longer exists.'}
+            </p>
+          </section>
+        ) : (
+          <DonationCheckout
+            capabilities={capabilities}
+            initialDonation={donation}
+            language={language}
+          />
+        )}
       </div>
-      <h1 className="mt-8 text-3xl font-bold">Donation simulation</h1>
-      {!id && <p className="mt-5 text-red-700">No donation ID was supplied.</p>}
-      {errorMessage && (
-        <p role="alert" className="mt-5 rounded border border-red-300 bg-red-50 p-3 text-red-800">
-          {errorMessage}
-        </p>
-      )}
-      {donation && (
-        <section className="mt-6 rounded-lg border p-6">
-          <p className="text-2xl font-semibold">
-            {donation.amount} {donation.currency}
-          </p>
-          <p className="mt-2">
-            Status: <strong>{donation.status}</strong>
-          </p>
-          {['INITIATED', 'PENDING'].includes(donation.status) && (
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <button
-                disabled={busy}
-                onClick={() => void simulate('confirm')}
-                className="rounded bg-green-700 p-3 text-white"
-              >
-                Confirm
-              </button>
-              <button
-                disabled={busy}
-                onClick={() => void simulate('fail')}
-                className="rounded bg-red-700 p-3 text-white"
-              >
-                Fail
-              </button>
-              <button
-                disabled={busy}
-                onClick={() => void simulate('cancel')}
-                className="rounded border p-3"
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-          {receiptUrl && (
-            <a className="mt-6 block text-blue-700 underline" href={receiptUrl}>
-              Open test receipt
-            </a>
-          )}
-        </section>
-      )}
-    </main>
+    </>
   );
-}
-
-async function getDonation(id: string) {
-  return browserApiClient.get<DonationStatus>(`/public/donations/${id}`);
 }
