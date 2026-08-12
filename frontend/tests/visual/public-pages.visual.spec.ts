@@ -3,8 +3,6 @@ import { expect, test } from '@playwright/test';
 const publicScreens = [
   { name: 'home', path: '/' },
   { name: 'about', path: '/about' },
-  { name: 'team', path: '/team' },
-  { name: 'team-detail', path: '/team/melissa-munoz' },
   { name: 'events', path: '/events' },
   { name: 'events-calendar', path: '/events?view=calendar' },
   { name: 'event-detail', path: '/events/family-support-day' },

@@ -21,8 +21,6 @@ const routes = [
   ...localizedRoutes.flatMap((route) =>
     (['en', 'am'] as const).map((language) => appendLanguage(route, language)),
   ),
-  '/team',
-  '/team/melissa-munoz',
   '/coming-soon',
   '/admin/login',
   '/admin/forgot-password',

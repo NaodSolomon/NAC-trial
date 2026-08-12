@@ -13,7 +13,6 @@ const staticRoutes = [
   '/contact',
   '/volunteer',
   '/donate',
-  '/team',
 ] as const;
 
 export async function buildSitemapXml(): Promise<string> {

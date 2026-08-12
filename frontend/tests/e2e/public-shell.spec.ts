@@ -25,6 +25,11 @@ test('public shell supports keyboard navigation and the skip link', async ({ pag
   await expect(page.locator('#main-content')).toBeFocused();
 
   await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
+  await expect(page.locator('[data-public-header]')).toContainText('NAC');
+  await expect(page.locator('[data-public-header]')).toContainText('Nehemiah Autism Center');
+  await expect(page.locator('[data-public-header]')).not.toContainText('Generosity');
+  await expect(page.locator('[data-public-header] img[src="/images/logo.png"]')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Our Team' })).toHaveCount(0);
 });
 
 test('language remains selected across public routes and reloads', async ({ page }) => {
@@ -84,9 +89,10 @@ async function mockPublicShellApi(page: Page) {
                 { id: 'home-am', label: 'መነሻ', url: '/' },
                 { id: 'about-am', label: 'ስለ እኛ', url: '/about' },
               ]
-            : [
+              : [
                 { id: 'home-en', label: 'Home', url: '/' },
                 { id: 'about-en', label: 'About us', url: '/about' },
+                { id: 'team-en', label: 'Our Team', url: '/team' },
               ],
       }),
     });

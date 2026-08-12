@@ -8,7 +8,7 @@ import { LanguageProvider } from '@/lib/i18n/language-context';
 import { languageCookieName, normalizeLanguage } from '@/lib/i18n';
 import { PublicRouteAnalytics } from '@/features/analytics/PublicRouteAnalytics';
 import { serializeJsonLd } from '@/lib/seo/json-ld';
-import { absoluteUrl, getSiteUrl, siteName } from '@/lib/seo/site';
+import { getSiteUrl, siteName } from '@/lib/seo/site';
 import { PublicSeoLinkTags } from '@/components/public/PublicSeoLinkTags';
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -20,7 +20,6 @@ export default async function PublicLayout({ children }: { children: React.React
     '@id': new URL('/#organization', getSiteUrl()).toString(),
     name: siteName,
     url: getSiteUrl().toString(),
-    logo: absoluteUrl('/images/logo.png'),
     address: { '@type': 'PostalAddress', addressLocality: 'Addis Ababa', addressCountry: 'ET' },
   };
 

@@ -2,6 +2,7 @@
 
 import { type FormEvent } from 'react';
 import Image from 'next/image';
+import { BrandMark } from '@/components/public/BrandMark';
 import Link from 'next/link';
 import Countdown from 'react-countdown';
 
@@ -56,7 +57,9 @@ export default function ComingSoonPage() {
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center px-4">
-        <Image src="/images/logo.png" alt="Nehemiah" width={180} height={50} />
+        <span className="rounded bg-white px-4 py-3">
+          <BrandMark siteName="Nehemiah Autism Center" />
+        </span>
 
         <h1 className="mt-8 font-serif text-5xl font-bold text-white md:text-7xl">Coming Soon</h1>
         <p className="mt-4 max-w-lg text-lg text-white/80">
