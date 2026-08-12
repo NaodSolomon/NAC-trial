@@ -57,7 +57,13 @@ test('search uses a shareable URL and groups safe published results', async ({ p
   await expect(page.getByRole('heading', { level: 2, name: 'Blog posts' })).toBeVisible();
   await expect(page.getByText('draft-secret')).toHaveCount(0);
   await expect(page.getByText('Private draft article')).toHaveCount(0);
-  await expect(page.getByRole('status')).toContainText('3 results for');
+  await expect(page.getByRole('status')).toContainText('4 results for');
+
+  await page.getByRole('link', { name: /Family support services/ }).click();
+  await expect(page).toHaveURL(/\/services\?lang=en$/);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Family Support Services' }),
+  ).toBeVisible();
 });
 
 test('search reports missing and invalid URL queries without requesting results', async ({

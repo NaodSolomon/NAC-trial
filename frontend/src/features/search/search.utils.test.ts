@@ -23,6 +23,21 @@ describe('public search presentation', () => {
         'am',
       ),
     ).toBe('/blog/family-support?lang=am');
+
+    expect(
+      searchResultHref(
+        {
+          type: 'page',
+          slug: 'services',
+          title: 'Services',
+          summary: null,
+          languageCode: 'en',
+          date: null,
+          url: '/pages/services',
+        },
+        'en',
+      ),
+    ).toBe('/services?lang=en');
   });
 
   it('distinguishes missing, invalid, and valid URL queries', () => {

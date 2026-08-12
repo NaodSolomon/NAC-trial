@@ -225,7 +225,11 @@ editing, immediate publishing, and future scheduling. Schedule inputs use the ad
 local date and time and are converted to ISO timestamps before the API request. Published-page
 edits visibly return the content to draft, matching the backend transaction rule. Homepage and FAQ
 metadata use structured editors, while generic preview content passes through the existing
-text-only sanitization policy. The separate SEO workspace applies the backend limits of 70 title
+text-only sanitization policy. Published generic CMS slugs are rendered at `/:slug`; this route
+uses only the published-page API, applies the same text-only sanitization, respects the language
+query, and returns the public not-found page for drafts or missing content. Dedicated application
+routes such as `/blog`, `/events`, and `/admin` retain precedence. The separate SEO workspace
+applies the backend limits of 70 title
 characters, 160 description characters, ten normalized keywords of at most 40 characters, and a
 2,048-character HTTPS or approved-local-MinIO image URL. Failed mutations do not reset editor
 state, so unsaved CMS and SEO input remains available for correction or retry.

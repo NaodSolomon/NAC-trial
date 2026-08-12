@@ -218,8 +218,26 @@ createServer(async (request, response) => {
     );
     return envelope(response, paginated(filtered, url));
   }
-  if (url.pathname === '/api/v1/public/pages/about') {
-    return envelope(response, about(language));
+  const cmsPage = url.pathname.match(/^\/api\/v1\/public\/pages\/([^/]+)$/);
+  if (cmsPage) {
+    const page = publishedCmsPage(decodeURIComponent(cmsPage[1]), language);
+    return page
+      ? envelope(response, page)
+      : json(response, { success: false, statusCode: 404, message: 'Not found' }, 404);
+  }
+  const publicSeo = url.pathname.match(/^\/api\/v1\/public\/seo\/([^/]+)$/);
+  if (publicSeo) {
+    const page = publishedCmsPage(decodeURIComponent(publicSeo[1]), language);
+    return page
+      ? envelope(response, {
+          slug: page.slug,
+          languageCode: page.languageCode,
+          title: page.seoTitle ?? page.title,
+          description: page.seoDescription,
+          keywords: page.slug === 'services' ? ['autism support', 'ethiopia'] : [],
+          imageUrl: page.seoImageUrl,
+        })
+      : json(response, { success: false, statusCode: 404, message: 'Not found' }, 404);
   }
   if (url.pathname === '/api/v1/public/content/faqs') {
     return envelope(response, faqs(language));
@@ -365,6 +383,15 @@ function searchResults(query, language) {
         languageCode: language,
         date: null,
         url: '/pages/about',
+      },
+      {
+        type: 'page',
+        slug: 'services',
+        title: language === 'am' ? 'የቤተሰብ ድጋፍ አገልግሎቶች' : 'Family support services',
+        summary: 'Published services and practical support for families.',
+        languageCode: language,
+        date: null,
+        url: '/pages/services',
       },
       {
         type: 'event',
@@ -558,6 +585,29 @@ function about(language) {
     status: 'PUBLISHED',
     seoTitle: amharic ? 'ስለ ነህምያ ኦቲዝም ማዕከል' : 'About Nehemiah Autism Center',
     seoDescription: amharic ? 'ስለ ማዕከላችን ይወቁ።' : 'Learn about our family-centered work.',
+    seoImageUrl: null,
+  };
+}
+
+function publishedCmsPage(slug, language) {
+  if (slug === 'about') return about(language);
+  if (slug !== 'services') return null;
+  const amharic = language === 'am';
+  return {
+    id: amharic
+      ? '00000000-0000-4000-8000-000000000112'
+      : '00000000-0000-4000-8000-000000000111',
+    slug,
+    languageCode: language,
+    title: amharic ? 'የቤተሰብ ድጋፍ አገልግሎቶች' : 'Family Support Services',
+    content: amharic
+      ? 'ለኦቲዝም ላለባቸው ህጻናትና ለቤተሰቦቻቸው ተግባራዊ ድጋፍ እንሰጣለን።'
+      : '<h2>Practical support for every family</h2><p>Our published services help children and caregivers.</p><script>private-draft-note</script>',
+    status: 'PUBLISHED',
+    seoTitle: amharic ? 'የቤተሰብ ድጋፍ | ነህምያ' : 'Autism Family Support Services',
+    seoDescription: amharic
+      ? 'በኢትዮጵያ ለቤተሰቦች የሚሰጥ ተግባራዊ ድጋፍ።'
+      : 'Published autism support services for children and families in Ethiopia.',
     seoImageUrl: null,
   };
 }
