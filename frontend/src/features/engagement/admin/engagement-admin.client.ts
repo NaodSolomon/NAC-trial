@@ -31,33 +31,33 @@ function listQuery(criteria: ListCriteria) {
 
 export async function listContactSubmissions(criteria: ListCriteria) {
   return contactListSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/contact?${listQuery(criteria)}`, {
+    await browserApiClient.get(`/admin/contact?${listQuery(criteria)}`, {
       signal: criteria.signal,
     }),
   );
 }
 
 export function deleteContactSubmission(id: string) {
-  return browserApiClient.delete<{ message: string }>(`/admin/contact/${encodeURIComponent(id)}`);
+  return browserApiClient.delete(`/admin/contact/${encodeURIComponent(id)}`);
 }
 
 export async function listVolunteerApplications(criteria: ListCriteria) {
   return volunteerListSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/volunteers?${listQuery(criteria)}`, {
+    await browserApiClient.get(`/admin/volunteers?${listQuery(criteria)}`, {
       signal: criteria.signal,
     }),
   );
 }
 
 export function deleteVolunteerApplication(id: string) {
-  return browserApiClient.delete<{ message: string }>(
+  return browserApiClient.delete(
     `/admin/volunteers/${encodeURIComponent(id)}`,
   );
 }
 
 export async function listAdminTestimonials(criteria: ListCriteria) {
   return testimonialListSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/testimonials?${listQuery(criteria)}`, {
+    await browserApiClient.get(`/admin/testimonials?${listQuery(criteria)}`, {
       signal: criteria.signal,
     }),
   );
@@ -65,13 +65,13 @@ export async function listAdminTestimonials(criteria: ListCriteria) {
 
 export async function createTestimonial(values: TestimonialEditorValues) {
   return testimonialSchema.parse(
-    await browserApiClient.post<unknown>('/admin/testimonials', values),
+    await browserApiClient.post('/admin/testimonials', values),
   );
 }
 
 export async function updateTestimonial(id: string, values: TestimonialEditorValues) {
   return testimonialSchema.parse(
-    await browserApiClient.patch<unknown>(`/admin/testimonials/${encodeURIComponent(id)}`, {
+    await browserApiClient.patch(`/admin/testimonials/${encodeURIComponent(id)}`, {
       name: values.name,
       text: values.text,
       status: values.status,
@@ -80,14 +80,14 @@ export async function updateTestimonial(id: string, values: TestimonialEditorVal
 }
 
 export function deleteTestimonial(id: string) {
-  return browserApiClient.delete<{ message: string }>(
+  return browserApiClient.delete(
     `/admin/testimonials/${encodeURIComponent(id)}`,
   );
 }
 
 export async function listNewsletterSubscribers(criteria: ListCriteria) {
   return newsletterListSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/newsletter?${listQuery(criteria)}`, {
+    await browserApiClient.get(`/admin/newsletter?${listQuery(criteria)}`, {
       signal: criteria.signal,
     }),
   );
@@ -96,7 +96,7 @@ export async function listNewsletterSubscribers(criteria: ListCriteria) {
 export function deleteNewsletterSubscriber(email: string) {
   // The backend contract currently identifies subscribers by email. Keep this value out of
   // query keys, feedback messages, analytics and logs; it exists only for this authenticated call.
-  return browserApiClient.delete<{ message: string }>(
+  return browserApiClient.delete(
     `/admin/newsletter/${encodeURIComponent(email)}`,
   );
 }

@@ -34,14 +34,14 @@ export async function loadHomePageData(language: Language): Promise<HomePageData
 }
 
 export async function loadComposition(language: Language) {
-  const value = await client.get<unknown>(`/public/content/homepage?languageCode=${language}`, {
+  const value = await client.get(`/public/content/homepage?languageCode=${language}`, {
     ...homeCache(120, [`homepage:${language}`]),
   });
   return homeCompositionSchema.parse(value);
 }
 
 async function loadBlogPosts(language: Language) {
-  const value = await client.get<unknown>(`/public/blog?languageCode=${language}&page=1&limit=3`, {
+  const value = await client.get(`/public/blog?languageCode=${language}&page=1&limit=3`, {
     ...homeCache(120, [`blog:${language}`]),
   });
   return blogListSchema.parse(value).data.map((post, index) => ({
@@ -55,7 +55,7 @@ async function loadBlogPosts(language: Language) {
 }
 
 async function loadEvents(language: Language) {
-  const value = await client.get<unknown>(
+  const value = await client.get(
     `/public/events?languageCode=${language}&timeframe=upcoming&sortOrder=asc&page=1&limit=3`,
     homeCache(60, [`events:${language}`]),
   );
@@ -71,7 +71,7 @@ async function loadEvents(language: Language) {
 }
 
 async function loadGallery(language: Language) {
-  const value = await client.get<unknown>(
+  const value = await client.get(
     `/public/gallery?languageCode=${language}&type=IMAGE&sortOrder=desc&page=1&limit=8`,
     homeCache(120, [`gallery:${language}`]),
   );

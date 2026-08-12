@@ -10,7 +10,7 @@ import {
 export async function listNavigation(languageCode: NavigationLanguage, signal?: AbortSignal) {
   const query = new URLSearchParams({ languageCode, page: '1', limit: '100' });
   return navigationListSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/navigation?${query}`, { signal }),
+    await browserApiClient.get(`/admin/navigation?${query}`, { signal }),
   );
 }
 
@@ -20,7 +20,7 @@ export async function createNavigationItem(
   order: number,
 ) {
   return navigationItemSchema.parse(
-    await browserApiClient.post<unknown>('/admin/navigation', {
+    await browserApiClient.post('/admin/navigation', {
       ...values,
       languageCode,
       order,
@@ -33,7 +33,7 @@ export async function updateNavigationItem(
   values: Partial<Pick<NavigationItem, 'label' | 'url' | 'order' | 'isVisible'>>,
 ) {
   return navigationItemSchema.parse(
-    await browserApiClient.patch<unknown>(`/admin/navigation/${encodeURIComponent(id)}`, values),
+    await browserApiClient.patch(`/admin/navigation/${encodeURIComponent(id)}`, values),
   );
 }
 
@@ -45,7 +45,7 @@ export async function reorderNavigationItems(first: NavigationItem, second: Navi
 }
 
 export function deleteNavigationItem(id: string) {
-  return browserApiClient.delete<{ message: string }>(
+  return browserApiClient.delete(
     `/admin/navigation/${encodeURIComponent(id)}`,
   );
 }

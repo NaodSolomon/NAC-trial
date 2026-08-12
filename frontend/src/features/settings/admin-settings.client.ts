@@ -3,13 +3,13 @@ import { siteSettingsSchema, type SettingsEditorValues } from './admin-settings.
 
 export async function getAdminSettings(signal?: AbortSignal) {
   return siteSettingsSchema.parse(
-    await browserApiClient.get<unknown>('/admin/settings', { signal }),
+    await browserApiClient.get('/admin/settings', { signal }),
   );
 }
 
 export async function updateAdminSettings(values: SettingsEditorValues) {
   return siteSettingsSchema.parse(
-    await browserApiClient.patch<unknown>('/admin/settings', {
+    await browserApiClient.patch('/admin/settings', {
       ...values,
       contactEmail: values.contactEmail,
       socialLinks: Object.fromEntries(

@@ -2,6 +2,7 @@
 
 import { API_URL } from '@/lib/constants';
 import { getAccessToken, refreshAccessToken } from '@/lib/auth';
+import type { ContractRequestPath } from './contract-client';
 import { ApiRequestError, apiErrorFromResponse } from './errors';
 
 interface SuccessEnvelope<T> {
@@ -9,8 +10,11 @@ interface SuccessEnvelope<T> {
   data: T;
 }
 
-export async function uploadFormData<T>(
-  path: string,
+export async function uploadFormData<
+  T,
+  Path extends ContractRequestPath<'post'> = ContractRequestPath<'post'>,
+>(
+  path: Path,
   formData: FormData,
   options: {
     onProgress?: (percent: number) => void;

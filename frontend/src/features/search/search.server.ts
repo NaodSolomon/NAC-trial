@@ -7,8 +7,8 @@ import { publicSearchSchema } from './search.schemas';
 const client = createServerApiClient();
 
 export async function loadPublicSearch(term: string, language: Language) {
-  const value = await client.get<unknown>(
-    '/public/search?q=' + encodeURIComponent(term) + '&languageCode=' + language,
+  const value = await client.get(
+    `/public/search?q=${encodeURIComponent(term)}&languageCode=${language}`,
     { cache: 'no-store' },
   );
   return publicSearchSchema.parse(value);

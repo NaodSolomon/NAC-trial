@@ -16,7 +16,7 @@ export async function listMedia(criteria: {
   if (criteria.type) query.set('type', criteria.type);
   if (criteria.search) query.set('search', criteria.search);
   return mediaListSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/media?${query}`, { signal: criteria.signal }),
+    await browserApiClient.get(`/admin/media?${query}`, { signal: criteria.signal }),
   );
 }
 
@@ -27,5 +27,5 @@ export async function uploadMedia(form: FormData, onProgress: (percent: number) 
 }
 
 export function deleteMedia(id: string) {
-  return browserApiClient.delete<{ message: string }>(`/admin/media/${encodeURIComponent(id)}`);
+  return browserApiClient.delete(`/admin/media/${encodeURIComponent(id)}`);
 }

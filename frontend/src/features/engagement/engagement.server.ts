@@ -11,7 +11,7 @@ import {
 const client = createServerApiClient();
 
 export async function loadPublicContact(language: Language) {
-  const value = await client.get<unknown>(
+  const value = await client.get(
     `/public/contact?languageCode=${language}`,
     engagementCache(120, [`contact:${language}`]),
   );
@@ -19,7 +19,7 @@ export async function loadPublicContact(language: Language) {
 }
 
 export async function loadPublicVolunteer(language: Language) {
-  const value = await client.get<unknown>(
+  const value = await client.get(
     `/public/volunteer?languageCode=${language}`,
     engagementCache(120, [`volunteer:${language}`]),
   );
@@ -27,7 +27,7 @@ export async function loadPublicVolunteer(language: Language) {
 }
 
 export async function loadPublishedTestimonials(language: Language) {
-  const value = await client.get<unknown>(
+  const value = await client.get(
     `/public/testimonials?languageCode=${language}&page=1&limit=6&sortOrder=desc`,
     engagementCache(120, [`testimonials:${language}`]),
   );

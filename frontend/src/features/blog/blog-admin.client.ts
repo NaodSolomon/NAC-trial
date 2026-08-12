@@ -13,7 +13,7 @@ export async function listAdminBlog(criteria: {
   const query = new URLSearchParams({ page: String(criteria.page), limit: '12' });
   if (criteria.languageCode) query.set('languageCode', criteria.languageCode);
   return adminBlogListSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/blog?${query}`, { signal: criteria.signal }),
+    await browserApiClient.get(`/admin/blog?${query}`, { signal: criteria.signal }),
   );
 }
 function payload(values: BlogEditorValues, includeLanguage: boolean) {
@@ -30,12 +30,12 @@ function payload(values: BlogEditorValues, includeLanguage: boolean) {
 }
 export async function createBlog(values: BlogEditorValues) {
   return adminBlogPostSchema.parse(
-    await browserApiClient.post<unknown>('/admin/blog', payload(values, true)),
+    await browserApiClient.post('/admin/blog', payload(values, true)),
   );
 }
 export async function updateBlog(id: string, values: BlogEditorValues) {
   return adminBlogPostSchema.parse(
-    await browserApiClient.patch<unknown>(
+    await browserApiClient.patch(
       `/admin/blog/${encodeURIComponent(id)}`,
       payload(values, false),
     ),
@@ -43,9 +43,9 @@ export async function updateBlog(id: string, values: BlogEditorValues) {
 }
 export async function publishBlog(id: string) {
   return adminBlogPostSchema.parse(
-    await browserApiClient.post<unknown>(`/admin/blog/${encodeURIComponent(id)}/publish`),
+    await browserApiClient.post(`/admin/blog/${encodeURIComponent(id)}/publish`),
   );
 }
 export function deleteBlog(id: string) {
-  return browserApiClient.delete<{ deleted: true }>(`/admin/blog/${encodeURIComponent(id)}`);
+  return browserApiClient.delete(`/admin/blog/${encodeURIComponent(id)}`);
 }

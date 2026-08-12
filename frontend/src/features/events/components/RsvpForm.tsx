@@ -39,7 +39,7 @@ export function RsvpForm({ eventId, language }: { eventId: string; language: Lan
     setPending(true);
     setFieldErrors({});
     try {
-      const result = await browserApiClient.post<unknown>(
+      const result = await browserApiClient.post(
         `/public/events/${eventId}/rsvp`,
         parsed.data,
       );

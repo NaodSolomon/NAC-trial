@@ -9,7 +9,7 @@ const client = createServerApiClient();
 
 export async function loadPublicSeo(slug: string, language: Language) {
   try {
-    const value = await client.get<unknown>(
+    const value = await client.get(
       `/public/seo/${encodeURIComponent(slug)}?languageCode=${language}`,
       process.env.NODE_ENV === 'development'
         ? { cache: 'no-store' }

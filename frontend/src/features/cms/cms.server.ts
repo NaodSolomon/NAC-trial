@@ -7,7 +7,7 @@ import { faqCompositionSchema, publishedCmsPageSchema } from './cms.schemas';
 const client = createServerApiClient();
 
 export async function loadPublishedPage(slug: string, language: Language) {
-  const value = await client.get<unknown>(
+  const value = await client.get(
     `/public/pages/${encodeURIComponent(slug)}?languageCode=${language}`,
     contentCache(120, [`cms:${slug}:${language}`]),
   );
@@ -15,7 +15,7 @@ export async function loadPublishedPage(slug: string, language: Language) {
 }
 
 export async function loadFaqs(language: Language) {
-  const value = await client.get<unknown>(
+  const value = await client.get(
     `/public/content/faqs?languageCode=${language}`,
     contentCache(120, [`cms:faq:${language}`]),
   );

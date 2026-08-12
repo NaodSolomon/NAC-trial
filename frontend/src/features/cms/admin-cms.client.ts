@@ -24,32 +24,32 @@ export async function listAdminCmsPages(criteria: {
     query.set('languageCode', criteria.languageCode);
   if (criteria.status && criteria.status !== 'all') query.set('status', criteria.status);
   return adminCmsPageListSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/cms/pages?${query}`, { signal: criteria.signal }),
+    await browserApiClient.get(`/admin/cms/pages?${query}`, { signal: criteria.signal }),
   );
 }
 
 export async function getAdminCmsPage(id: string, signal?: AbortSignal) {
   return adminCmsPageSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/cms/pages/${encodeURIComponent(id)}`, { signal }),
+    await browserApiClient.get(`/admin/cms/pages/${encodeURIComponent(id)}`, { signal }),
   );
 }
 
 export async function checkCmsSlug(slug: string, languageCode: 'en' | 'am') {
   const query = new URLSearchParams({ slug, languageCode });
   return slugAvailabilitySchema.parse(
-    await browserApiClient.get<unknown>(`/admin/slugs/check?${query}`, { cache: 'no-store' }),
+    await browserApiClient.get(`/admin/slugs/check?${query}`, { cache: 'no-store' }),
   );
 }
 
 export async function createCmsPage(values: CmsEditorValues) {
   return adminCmsPageSchema.parse(
-    await browserApiClient.post<unknown>('/admin/cms/pages', editorPayload(values, true)),
+    await browserApiClient.post('/admin/cms/pages', editorPayload(values, true)),
   );
 }
 
 export async function updateCmsPage(id: string, values: CmsEditorValues) {
   return adminCmsPageSchema.parse(
-    await browserApiClient.patch<unknown>(
+    await browserApiClient.patch(
       `/admin/cms/pages/${encodeURIComponent(id)}`,
       editorPayload(values, false),
     ),
@@ -58,20 +58,20 @@ export async function updateCmsPage(id: string, values: CmsEditorValues) {
 
 export async function publishCmsPage(id: string) {
   return adminCmsPageSchema.parse(
-    await browserApiClient.post<unknown>(`/admin/cms/pages/${encodeURIComponent(id)}/publish`),
+    await browserApiClient.post(`/admin/cms/pages/${encodeURIComponent(id)}/publish`),
   );
 }
 
 export async function scheduleCmsPage(id: string, localDateTime: string) {
   return adminCmsPageSchema.parse(
-    await browserApiClient.post<unknown>(`/admin/cms/pages/${encodeURIComponent(id)}/schedule`, {
+    await browserApiClient.post(`/admin/cms/pages/${encodeURIComponent(id)}/schedule`, {
       scheduledAt: localDateTimeToIso(localDateTime),
     }),
   );
 }
 
 export async function deleteCmsPage(id: string) {
-  return browserApiClient.delete<{ message: string }>(`/admin/cms/pages/${encodeURIComponent(id)}`);
+  return browserApiClient.delete(`/admin/cms/pages/${encodeURIComponent(id)}`);
 }
 
 export function localDateTimeToIso(value: string): string {

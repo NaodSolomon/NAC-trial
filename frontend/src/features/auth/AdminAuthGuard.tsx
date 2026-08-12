@@ -9,7 +9,6 @@ import {
   authenticationExpiredEvent,
   isAdminPrincipal,
   refreshSession,
-  type AdminPrincipal,
 } from '@/lib/auth';
 import { useAuthStore } from '@/store/auth.store';
 
@@ -42,7 +41,7 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
           setAnonymous();
           return;
         }
-        const principal = await browserApiClient.get<AdminPrincipal>('/auth/me');
+        const principal = await browserApiClient.get('/auth/me');
         if (!isAdminPrincipal(principal)) throw new Error('Invalid administrator response');
         setAuthenticated(principal);
       } catch {

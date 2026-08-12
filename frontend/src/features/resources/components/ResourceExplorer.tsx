@@ -52,7 +52,7 @@ export function ResourceExplorer({
     setPendingIds((current) => new Set(current).add(resource.id));
     setError(null);
     try {
-      const response = await browserApiClient.get<unknown>(
+      const response = await browserApiClient.get(
         `/public/resources/${resource.id}/download`,
       );
       const result = resourceDownloadSchema.parse(response);

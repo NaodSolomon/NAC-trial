@@ -22,10 +22,10 @@ export async function loadDashboardMetrics(
 
   const [analytics, donations] = await Promise.all([
     browserApiClient
-      .get<unknown>('/admin/analytics/summary', { signal })
+      .get('/admin/analytics/summary', { signal })
       .then(analyticsSummarySchema.parse),
     browserApiClient
-      .get<unknown>('/admin/donations/stats', { signal })
+      .get('/admin/donations/stats', { signal })
       .then(donationStatsSchema.parse),
   ]);
   return [
@@ -48,10 +48,10 @@ export async function loadDashboardMetrics(
 async function contentMetrics(signal?: AbortSignal): Promise<DashboardMetric[]> {
   const [contacts, events] = await Promise.all([
     browserApiClient
-      .get<unknown>('/admin/contact?page=1&limit=1', { signal })
+      .get('/admin/contact?page=1&limit=1', { signal })
       .then(paginatedCountSchema.parse),
     browserApiClient
-      .get<unknown>('/admin/events?page=1&limit=1', { signal })
+      .get('/admin/events?page=1&limit=1', { signal })
       .then(paginatedCountSchema.parse),
   ]);
   return [
@@ -72,7 +72,7 @@ async function contentMetrics(signal?: AbortSignal): Promise<DashboardMetric[]> 
 
 async function donationMetrics(signal?: AbortSignal): Promise<DashboardMetric[]> {
   const donations = donationStatsSchema.parse(
-    await browserApiClient.get<unknown>('/admin/donations/stats', { signal }),
+    await browserApiClient.get('/admin/donations/stats', { signal }),
   );
   return formatDonationMetrics(donations);
 }

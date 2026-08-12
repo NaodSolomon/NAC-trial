@@ -8,16 +8,16 @@ const client = createServerApiClient();
 export const blogPageSize = 6;
 
 export async function loadPublishedBlogs(language: Language, page: number) {
-  const value = await client.get<unknown>(
-    '/public/blog?languageCode=' + language + '&page=' + page + '&limit=' + blogPageSize,
+  const value = await client.get(
+    `/public/blog?languageCode=${language}&page=${page}&limit=${blogPageSize}`,
     blogCache(120, ['blog:' + language]),
   );
   return blogPageSchema.parse(value);
 }
 
 export async function loadPublishedBlog(slug: string, language: Language) {
-  const value = await client.get<unknown>(
-    '/public/blog/' + encodeURIComponent(slug) + '?languageCode=' + language,
+  const value = await client.get(
+    `/public/blog/${encodeURIComponent(slug)}?languageCode=${language}`,
     blogCache(300, ['blog:' + language + ':' + slug]),
   );
   return publishedBlogPostSchema.parse(value);
@@ -28,7 +28,7 @@ export async function loadAllPublishedBlogs(language: Language) {
   let page = 1;
   let totalPages = 1;
   do {
-    const value = await client.get<unknown>(
+    const value = await client.get(
       `/public/blog?languageCode=${language}&page=${page}&limit=100`,
       blogCache(600, [`sitemap:blog:${language}`]),
     );

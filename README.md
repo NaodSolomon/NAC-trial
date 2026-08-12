@@ -122,6 +122,14 @@ nehemiah/
 | `pnpm test:e2e` | Run E2E tests (Playwright) |
 | `pnpm lint`     | Lint with ESLint           |
 | `pnpm format`   | Format with Prettier       |
+| `pnpm api:generate` | Regenerate the OpenAPI snapshot and TypeScript contract |
+| `pnpm api:check` | Fail when generated API artifacts are stale |
+
+Browser and server feature requests use a contract-aware client derived from the generated
+OpenAPI `paths` type. Unknown endpoint or HTTP-method combinations therefore fail TypeScript
+compilation. Feature Zod schemas remain the runtime trust boundary because generated types cannot
+validate network JSON. Trial-only payment simulation paths are the sole bounded exception because
+the backend intentionally omits those development-only controllers from production OpenAPI.
 
 ### Backend (`cd backend`)
 

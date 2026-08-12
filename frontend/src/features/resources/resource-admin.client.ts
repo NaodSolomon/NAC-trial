@@ -12,19 +12,19 @@ export async function listAdminResources(criteria: {
   const query = new URLSearchParams({ page: String(criteria.page), limit: '12' });
   if (criteria.languageCode) query.set('languageCode', criteria.languageCode);
   return adminResourceListSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/resources?${query}`, { signal: criteria.signal }),
+    await browserApiClient.get(`/admin/resources?${query}`, { signal: criteria.signal }),
   );
 }
 export async function createResource(values: ResourceEditorValues) {
   return adminResourceSchema.parse(
-    await browserApiClient.post<unknown>('/admin/resources', values),
+    await browserApiClient.post('/admin/resources', values),
   );
 }
 export async function publishResource(id: string) {
   return adminResourceSchema.parse(
-    await browserApiClient.post<unknown>(`/admin/resources/${encodeURIComponent(id)}/publish`),
+    await browserApiClient.post(`/admin/resources/${encodeURIComponent(id)}/publish`),
   );
 }
 export function deleteResource(id: string) {
-  return browserApiClient.delete<{ deleted: true }>(`/admin/resources/${encodeURIComponent(id)}`);
+  return browserApiClient.delete(`/admin/resources/${encodeURIComponent(id)}`);
 }
