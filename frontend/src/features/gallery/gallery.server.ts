@@ -14,7 +14,7 @@ export async function loadPublicGallery(
   filter: GalleryFilter,
 ): Promise<PublicGalleryPage> {
   const type = filter === 'all' ? '' : `&type=${filter.toUpperCase()}`;
-  const value = await client.get<unknown>(
+  const value = await client.get(
     `/public/gallery?languageCode=${language}&sortOrder=desc&page=${page}&limit=${galleryPageSize}${type}`,
     galleryCache(120, [`gallery:${language}:${filter}:${page}`]),
   );

@@ -3,7 +3,7 @@ import { seoResponseSchema, normalizeSeoKeywords, type SeoEditorValues } from '.
 
 export async function updateSeoMetadata(slug: string, values: SeoEditorValues) {
   return seoResponseSchema.parse(
-    await browserApiClient.patch<unknown>(`/admin/seo/${encodeURIComponent(slug)}`, {
+    await browserApiClient.patch(`/admin/seo/${encodeURIComponent(slug)}`, {
       languageCode: values.languageCode,
       title: values.title || null,
       description: values.description || null,

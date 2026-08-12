@@ -32,7 +32,7 @@ function donationQuery(criteria: DonationListCriteria) {
 
 export async function listAdminDonations(criteria: DonationListCriteria) {
   return adminDonationListSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/donations?${donationQuery(criteria)}`, {
+    await browserApiClient.get(`/admin/donations?${donationQuery(criteria)}`, {
       signal: criteria.signal,
     }),
   );
@@ -40,31 +40,31 @@ export async function listAdminDonations(criteria: DonationListCriteria) {
 
 export async function getDonationStats(signal?: AbortSignal) {
   return donationStatsSchema.parse(
-    await browserApiClient.get<unknown>('/admin/donations/stats', { signal }),
+    await browserApiClient.get('/admin/donations/stats', { signal }),
   );
 }
 
 export async function getAdminDonation(id: string, signal?: AbortSignal) {
   return adminDonationSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/donations/${encodeURIComponent(id)}`, { signal }),
+    await browserApiClient.get(`/admin/donations/${encodeURIComponent(id)}`, { signal }),
   );
 }
 
 export async function getDonationRuntime(signal?: AbortSignal) {
   return runtimeInformationSchema.parse(
-    await browserApiClient.get<unknown>('/system/version', { signal }),
+    await browserApiClient.get('/system/version', { signal }),
   );
 }
 
 export async function getDonationReceipt(id: string) {
   return receiptSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/donations/${encodeURIComponent(id)}/receipt`),
+    await browserApiClient.get(`/admin/donations/${encodeURIComponent(id)}/receipt`),
   );
 }
 
 export async function resendDonationReceipt(id: string) {
   return resendReceiptSchema.parse(
-    await browserApiClient.post<unknown>(
+    await browserApiClient.post(
       `/admin/donations/${encodeURIComponent(id)}/resend-receipt`,
     ),
   );
@@ -72,7 +72,7 @@ export async function resendDonationReceipt(id: string) {
 
 export async function verifyDonation(id: string) {
   return verifyDonationSchema.parse(
-    await browserApiClient.post<unknown>(`/admin/donations/${encodeURIComponent(id)}/verify`),
+    await browserApiClient.post(`/admin/donations/${encodeURIComponent(id)}/verify`),
   );
 }
 

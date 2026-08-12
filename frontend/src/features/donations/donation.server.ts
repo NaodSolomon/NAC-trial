@@ -12,8 +12,8 @@ const client = createServerApiClient();
 
 export async function loadDonationCapabilities() {
   const [runtimeValue, gatewayValue] = await Promise.all([
-    client.get<unknown>('/system/version', donationRuntimeCache()),
-    client.get<unknown>('/public/donations/gateways', donationRuntimeCache()),
+    client.get('/system/version', donationRuntimeCache()),
+    client.get('/public/donations/gateways', donationRuntimeCache()),
   ]);
   return deriveDonationCapabilities(
     runtimeInformationSchema.parse(runtimeValue),
@@ -22,7 +22,7 @@ export async function loadDonationCapabilities() {
 }
 
 export async function loadPublicDonation(id: string) {
-  const value = await client.get<unknown>(`/public/donations/${encodeURIComponent(id)}`, {
+  const value = await client.get(`/public/donations/${encodeURIComponent(id)}`, {
     cache: 'no-store',
   });
   return publicDonationSchema.parse(value);

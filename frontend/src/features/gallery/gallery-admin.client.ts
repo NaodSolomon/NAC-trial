@@ -16,7 +16,7 @@ export async function listAdminGallery(criteria: {
   });
   if (criteria.type) query.set('type', criteria.type);
   return publicGalleryPageSchema.parse(
-    await browserApiClient.get<unknown>(`/public/gallery?${query}`, { signal: criteria.signal }),
+    await browserApiClient.get(`/public/gallery?${query}`, { signal: criteria.signal }),
   );
 }
 export async function uploadGallery(form: FormData, onProgress: (percent: number) => void) {
@@ -26,9 +26,9 @@ export async function uploadGallery(form: FormData, onProgress: (percent: number
 }
 export async function updateGallery(id: string, values: { title: string; altText: string }) {
   return publicGalleryItemSchema.parse(
-    await browserApiClient.patch<unknown>(`/admin/gallery/${encodeURIComponent(id)}`, values),
+    await browserApiClient.patch(`/admin/gallery/${encodeURIComponent(id)}`, values),
   );
 }
 export function deleteGallery(id: string) {
-  return browserApiClient.delete<{ deleted: true }>(`/admin/gallery/${encodeURIComponent(id)}`);
+  return browserApiClient.delete(`/admin/gallery/${encodeURIComponent(id)}`);
 }

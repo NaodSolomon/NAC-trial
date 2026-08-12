@@ -9,7 +9,7 @@ const client = createServerApiClient();
 
 export async function loadPublicEvents(language: Language, timeframe: EventTimeframe) {
   const sortOrder = timeframe === 'past' ? 'desc' : 'asc';
-  const value = await client.get<unknown>(
+  const value = await client.get(
     `/public/events?languageCode=${language}&timeframe=${timeframe}&sortOrder=${sortOrder}&page=1&limit=100`,
     eventCache(120, [`events:${language}:${timeframe}`]),
   );
@@ -17,7 +17,7 @@ export async function loadPublicEvents(language: Language, timeframe: EventTimef
 }
 
 export async function loadPublicEvent(slug: string, language: Language) {
-  const value = await client.get<unknown>(
+  const value = await client.get(
     `/public/events/${encodeURIComponent(slug)}?languageCode=${language}`,
     eventCache(300, [`events:${language}:${slug}`]),
   );
@@ -25,7 +25,7 @@ export async function loadPublicEvent(slug: string, language: Language) {
 }
 
 export async function loadAllPublishedEvents(language: Language) {
-  const value = await client.get<unknown>(
+  const value = await client.get(
     `/public/events?languageCode=${language}&timeframe=all&sortOrder=desc&page=1&limit=100`,
     eventCache(600, [`sitemap:events:${language}`]),
   );

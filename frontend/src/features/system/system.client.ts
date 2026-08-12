@@ -36,15 +36,15 @@ export async function listAdministrators(
   if (criteria.role) query.set('role', criteria.role);
   if (criteria.isActive) query.set('isActive', criteria.isActive);
   return administratorListSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/users?${query}`, { signal: criteria.signal }),
+    await browserApiClient.get(`/admin/users?${query}`, { signal: criteria.signal }),
   );
 }
 export async function createAdministrator(values: AdministratorEditor) {
-  return administratorSchema.parse(await browserApiClient.post<unknown>('/admin/users', values));
+  return administratorSchema.parse(await browserApiClient.post('/admin/users', values));
 }
 export async function updateAdministrator(id: string, values: AdministratorUpdate) {
   return administratorSchema.parse(
-    await browserApiClient.patch<unknown>(`/admin/users/${encodeURIComponent(id)}`, {
+    await browserApiClient.patch(`/admin/users/${encodeURIComponent(id)}`, {
       name: values.name,
       role: values.role,
       isActive: values.isActive,
@@ -53,7 +53,7 @@ export async function updateAdministrator(id: string, values: AdministratorUpdat
   );
 }
 export function deleteAdministrator(id: string) {
-  return browserApiClient.delete<{ message: string }>(`/admin/users/${encodeURIComponent(id)}`);
+  return browserApiClient.delete(`/admin/users/${encodeURIComponent(id)}`);
 }
 
 export async function listAuditLogs(
@@ -72,7 +72,7 @@ export async function listAuditLogs(
   if (criteria.from) query.set('from', criteria.from);
   if (criteria.to) query.set('to', criteria.to);
   return auditLogListSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/audit-logs?${query}`, { signal: criteria.signal }),
+    await browserApiClient.get(`/admin/audit-logs?${query}`, { signal: criteria.signal }),
   );
 }
 
@@ -83,26 +83,26 @@ export async function listAdminSessions(
   if (criteria.adminId) query.set('adminId', criteria.adminId);
   if (criteria.status) query.set('status', criteria.status);
   return adminSessionListSchema.parse(
-    await browserApiClient.get<unknown>(`/admin/system/sessions?${query}`, {
+    await browserApiClient.get(`/admin/system/sessions?${query}`, {
       signal: criteria.signal,
     }),
   );
 }
 export async function revokeSession(target: { sessionId: string } | { adminId: string }) {
   return revokeSessionSchema.parse(
-    await browserApiClient.post<unknown>('/admin/system/sessions/revoke', target),
+    await browserApiClient.post('/admin/system/sessions/revoke', target),
   );
 }
 
 export async function clearCache() {
-  return cacheClearSchema.parse(await browserApiClient.post<unknown>('/admin/cache/clear'));
+  return cacheClearSchema.parse(await browserApiClient.post('/admin/cache/clear'));
 }
 export async function warmCache() {
-  return cacheWarmSchema.parse(await browserApiClient.post<unknown>('/admin/cache/warm'));
+  return cacheWarmSchema.parse(await browserApiClient.post('/admin/cache/warm'));
 }
 export async function reindexSearch() {
   return searchReindexSchema.parse(
-    await browserApiClient.post<unknown>('/admin/system/search/reindex', undefined, {
+    await browserApiClient.post('/admin/system/search/reindex', undefined, {
       timeoutMs: 120_000,
     }),
   );

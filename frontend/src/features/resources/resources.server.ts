@@ -11,7 +11,7 @@ export async function loadPublicResources(language: Language) {
     process.env.NODE_ENV === 'development'
       ? { cache: 'no-store' as const }
       : { next: { revalidate: 120, tags: [`resources:${language}`] } };
-  const value = await client.get<unknown>(
+  const value = await client.get(
     `/public/resources?languageCode=${language}&page=1&limit=100`,
     options,
   );

@@ -16,7 +16,7 @@ export function usePublicShellData(language: Language) {
   const navigation = useQuery({
     queryKey: [...queryKeys.navigation.public(), language],
     queryFn: async ({ signal }) => {
-      const response = await browserApiClient.get<unknown>(`/navigation?languageCode=${language}`, {
+      const response = await browserApiClient.get(`/navigation?languageCode=${language}`, {
         signal,
       });
       return normalizeNavigation(response, fallbackNavigation);
@@ -28,7 +28,7 @@ export function usePublicShellData(language: Language) {
   const settings = useQuery({
     queryKey: queryKeys.settings.public(),
     queryFn: async ({ signal }) => {
-      const response = await browserApiClient.get<unknown>('/settings', { signal });
+      const response = await browserApiClient.get('/settings', { signal });
       return normalizeSettings(response, fallbackSettings);
     },
     placeholderData: fallbackSettings,
