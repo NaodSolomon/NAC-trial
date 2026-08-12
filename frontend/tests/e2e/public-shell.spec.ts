@@ -4,6 +4,14 @@ test.beforeEach(async ({ page }) => {
   await mockPublicShellApi(page);
 });
 
+test('initial response declares the requested language before hydration', async ({ page }) => {
+  const amharicResponse = await page.goto('/about?lang=am');
+  expect(await amharicResponse?.text()).toContain('<html lang="am"');
+
+  const adminResponse = await page.goto('/admin/login?lang=am');
+  expect(await adminResponse?.text()).toContain('<html lang="en"');
+});
+
 test('public shell supports keyboard navigation and the skip link', async ({ page }) => {
   await page.goto('/');
 

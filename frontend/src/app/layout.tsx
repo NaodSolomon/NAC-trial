@@ -1,8 +1,14 @@
 import type { Metadata } from 'next';
 import { Open_Sans, Trirong } from 'next/font/google';
+import { headers } from 'next/headers';
 import './globals.css';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { ThemeProvider } from '@/providers/ThemeProvider';
+import {
+  defaultLanguage,
+  documentLanguageHeaderName,
+  normalizeLanguage,
+} from '@/lib/i18n';
 import { defaultDescription, getSiteUrl, siteName } from '@/lib/seo/site';
 
 const openSans = Open_Sans({
@@ -27,9 +33,13 @@ export const metadata: Metadata = {
   authors: [{ name: siteName }],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const requestHeaders = await headers();
+  const documentLanguage =
+    normalizeLanguage(requestHeaders.get(documentLanguageHeaderName)) ?? defaultLanguage;
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={documentLanguage} suppressHydrationWarning>
       <body className={`${openSans.variable} ${trirong.variable} ${openSans.className}`}>
         <ThemeProvider>
           <QueryProvider>{children}</QueryProvider>

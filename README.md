@@ -131,6 +131,12 @@ compilation. Feature Zod schemas remain the runtime trust boundary because gener
 validate network JSON. Trial-only payment simulation paths are the sole bounded exception because
 the backend intentionally omits those development-only controllers from production OpenAPI.
 
+Public requests resolve the document language from a valid `lang` query first and the persisted
+language cookie second. Middleware passes that normalized value into the server-rendered root
+layout, so initial HTML, no-JavaScript clients, crawlers, and assistive technology receive the
+correct `html[lang]` before hydration. English-only administrator and coming-soon routes always
+declare English.
+
 ### Backend (`cd backend`)
 
 | Command             | Description                         |
