@@ -1,0 +1,186 @@
+name: nac-trial-e2e
+
+services:
+  postgres-e2e:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: nehemiah_e2e
+      POSTGRES_PASSWORD: nehemiah_e2e
+      POSTGRES_DB: nehemiah_e2e
+    tmpfs:
+      - /var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nehemiah_e2e -d nehemiah_e2e"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis-e2e:
+    image: redis:7-alpine
+    command: redis-server --save "" --appendonly no
+    tmpfs:
+      - /data
+    ports:
+      - "127.0.0.1:6381:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  minio-e2e:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: e2e-minio
+      MINIO_ROOT_PASSWORD: e2e-minio-password
+    tmpfs:
+      - /data
+    ports:
+      - "127.0.0.1:9100:9000"
+      - "127.0.0.1:9101:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  minio-init-e2e:
+    image: minio/mc:latest
+    depends_on:
+      minio-e2e:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >
+        mc alias set e2e http://minio-e2e:9000 e2e-minio e2e-minio-password &&
+        mc mb --ignore-existing e2e/nehemiah-e2e-media &&
+        printf 'Nehemiah Autism Center E2E family support guide.\n' > /tmp/family-support-guide.txt &&
+        mc cp /tmp/family-support-guide.txt e2e/nehemiah-e2e-media/family-support-guide.txt &&
+        mc anonymous set download e2e/nehemiah-e2e-media
+    restart: "no"
+
+  mailpit-e2e:
+    image: axllent/mailpit:latest
+    environment:
+      MP_MAX_MESSAGES: 200
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    restart: "no"
+    ports:
+      - "127.0.0.1:1027:1025"
+      - "127.0.0.1:8027:8025"
+
+  backend-e2e:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: deps
+    command: >
+      sh -c "pnpm db:migrate:local && pnpm db:seed:e2e && pnpm dev"
+    environment:
+      NODE_ENV: test
+      PORT: 8000
+      DATABASE_URL: postgresql://nehemiah_e2e:nehemiah_e2e@postgres-e2e:5432/nehemiah_e2e
+      FRONTEND_URL: ${E2E_FRONTEND_URL:-http://frontend-e2e:3000},http://127.0.0.1:3100,http://localhost:3100
+      JWT_ACCESS_SECRET: e2e-access-secret-with-at-least-32-characters
+      JWT_REFRESH_SECRET: e2e-refresh-secret-with-at-least-32-characters
+      IP_HASH_SECRET: e2e-ip-hash-secret-with-at-least-32-characters
+      INTERNAL_API_KEY: e2e-internal-key-with-at-least-32-characters
+      STORAGE_DRIVER: minio
+      STORAGE_ENDPOINT: http://minio-e2e:9000
+      STORAGE_PUBLIC_URL: http://minio-e2e:9000/nehemiah-e2e-media
+      STORAGE_BUCKET: nehemiah-e2e-media
+      STORAGE_ACCESS_KEY_ID: e2e-minio
+      STORAGE_SECRET_ACCESS_KEY: e2e-minio-password
+      STORAGE_REGION: us-east-1
+      MAIL_DRIVER: mailpit
+      MAIL_HOST: mailpit-e2e
+      MAIL_PORT: 1025
+      MAIL_FROM: e2e@nehemiah.test
+      PASSWORD_RESET_URL: http://frontend-e2e:3000/admin/reset-password
+      CACHE_DRIVER: redis
+      REDIS_HOST: redis-e2e
+      REDIS_PORT: 6379
+      PAYMENT_DRIVER: fake
+      PAYMENTS_ENABLED: "false"
+      TRIAL_MODE: "true"
+    volumes:
+      - ./backend:/app
+      - e2e_backend_node_modules:/app/node_modules
+    ports:
+      - "127.0.0.1:8100:8000"
+    depends_on:
+      postgres-e2e:
+        condition: service_healthy
+      redis-e2e:
+        condition: service_healthy
+      minio-init-e2e:
+        condition: service_completed_successfully
+      mailpit-e2e:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/api/v1/system/health/ready"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+      start_period: 20s
+
+  frontend-e2e:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: deps
+    command: pnpm dev --hostname 0.0.0.0 --port 3000
+    environment:
+      API_URL: http://backend-e2e:8000/api/v1
+      # Containerized Playwright uses service DNS; host diagnostics can override this origin.
+      NEXT_PUBLIC_API_URL: ${E2E_BROWSER_API_URL:-http://backend-e2e:8000/api/v1}
+      NEXT_PUBLIC_SITE_URL: http://frontend-e2e:3000
+      NEXT_PUBLIC_STORAGE_ORIGIN: http://minio-e2e:9000
+      MEDIA_IMAGE_ORIGIN: http://minio-e2e:9000
+      NODE_ENV: development
+    volumes:
+      - ./frontend:/app
+      - e2e_frontend_node_modules:/app/node_modules
+    ports:
+      - "127.0.0.1:3100:3000"
+    depends_on:
+      backend-e2e:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/?lang=en"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+      start_period: 20s
+
+  playwright-e2e:
+    image: mcr.microsoft.com/playwright:v1.58.2-noble
+    working_dir: /work/frontend
+    command: >
+      sh -c "corepack enable && corepack prepare pnpm@10.30.3 --activate &&
+      pnpm install --frozen-lockfile &&
+      pnpm exec playwright test --config playwright.fullstack.config.ts"
+    environment:
+      CI: "true"
+      E2E_BASE_URL: http://frontend-e2e:3000
+      E2E_API_URL: http://backend-e2e:8000/api/v1
+      E2E_MAILPIT_URL: http://mailpit-e2e:8025
+      E2E_MINIO_URL: http://minio-e2e:9000
+    volumes:
+      - ./:/work:ro
+      - e2e_runner_node_modules:/work/frontend/node_modules
+      - e2e_test_results:/work/frontend/test-results
+    depends_on:
+      frontend-e2e:
+        condition: service_healthy
+
+volumes:
+  e2e_backend_node_modules:
+  e2e_frontend_node_modules:
+  e2e_runner_node_modules:
+  e2e_test_results:

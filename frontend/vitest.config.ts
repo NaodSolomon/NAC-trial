@@ -8,8 +8,19 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
     globals: true,
-    exclude: ['tests/e2e/**', 'tests/visual/**', 'node_modules/**'],
+    exclude: ['tests/e2e/**', 'tests/fullstack/**', 'tests/visual/**', 'node_modules/**'],
     passWithNoTests: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json-summary', 'lcov'],
+      reportsDirectory: './coverage',
+      thresholds: {
+        statements: 55,
+        branches: 45,
+        functions: 50,
+        lines: 55,
+      },
+    },
   },
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },

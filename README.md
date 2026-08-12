@@ -299,6 +299,49 @@ Lighthouse resource budgets and assertions require at least 0.90 for performance
 best practices, and SEO; retain the reports when preparing a release because scores depend on the
 deployment hardware and network.
 
+Step 47 adds a final, isolated full-stack quality gate. The existing Vitest/Testing Library and
+mock Playwright suites remain fast feedback; MSW now verifies loading, availability, duplicate
+submission, and forbidden-role behavior at the network boundary, while Axe scans implemented
+public/authentication pages for serious or critical accessibility regressions. Unit coverage is
+reported as text, JSON, and LCOV and enforced in CI alongside dependency audit, API-contract
+drift, lint, type checking, production build, bundle budgets, and the complete mock browser suite.
+
+`docker-compose.e2e.yml` is deliberately separate from development Compose. It uses an in-memory
+PostgreSQL database named exactly `nehemiah_e2e`, non-persistent Redis and MinIO data, Mailpit,
+trial payments, and three deterministic test-only roles. The E2E seed refuses to run against any
+other database name. The stack never reads development volumes, never enables real payments, and
+is removed with its named dependency/test volumes after CI.
+
+Run the complete free local stack and its real Playwright journeys with one command from the
+repository root:
+
+```bash
+docker compose -f docker-compose.e2e.yml up --build \
+  --abort-on-container-exit --exit-code-from playwright-e2e playwright-e2e
+```
+
+Always remove its disposable containers and volumes afterward (the database name and Compose
+project guard make this command specific to E2E data):
+
+```bash
+docker compose -f docker-compose.e2e.yml down --volumes --remove-orphans
+```
+
+For interactive inspection, start through `frontend-e2e` in detached mode and open
+`http://localhost:3100`; the E2E API, Mailpit, and MinIO consoles are bound to loopback ports
+8100, 8027, and 9101. The disposable logins all use `E2eStrongPassword123!`:
+
+- `e2e-super@nehemiah.test`
+- `e2e-editor@nehemiah.test`
+- `e2e-finance@nehemiah.test`
+
+The browser coverage matrix is layered intentionally: every implemented public/admin page has
+mocked success plus relevant loading, empty, validation, unavailable, forbidden, or destructive
+states in `frontend/tests/e2e` and approved desktop/mobile snapshots in
+`frontend/tests/visual`; `frontend/tests/fullstack` then verifies representative bilingual,
+search/download, RSVP, engagement, simulated-donation, role, and system-health journeys against
+real PostgreSQL, Redis, MinIO, and Mailpit adapters.
+
 ## Authorization and Audit
 
 Private administration endpoints require both a valid access JWT and an explicitly allowed database-backed role. Administrator account management and audit-log access are restricted to `SUPER_ADMIN`.
