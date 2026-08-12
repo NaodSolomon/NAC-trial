@@ -313,9 +313,10 @@ cache, and the two bundled Google font families include only their used Latin su
 After `pnpm build`, run `pnpm performance:check` from `frontend/` to enforce optimized chunk
 budgets in CI. With the local Docker services and production frontend server already running, run
 `pnpm lighthouse:ci` for three audits of the home, About, Blog, and Events routes. The committed
-Lighthouse resource budgets and assertions require at least 0.90 for performance, accessibility,
-best practices, and SEO; retain the reports when preparing a release because scores depend on the
-deployment hardware and network.
+CI runs Lighthouse against the production build and requires at least 0.90 for performance,
+accessibility, best practices, and SEO. Its reports are retained as build artifacts. Resource and
+responsive-image budgets are enforced during the same measured run rather than inferred from the
+configuration file.
 
 Step 47 adds a final, isolated full-stack quality gate. The existing Vitest/Testing Library and
 mock Playwright suites remain fast feedback; MSW now verifies loading, availability, duplicate
@@ -323,6 +324,10 @@ submission, and forbidden-role behavior at the network boundary, while Axe scans
 public/authentication pages for serious or critical accessibility regressions. Unit coverage is
 reported as text, JSON, and LCOV and enforced in CI alongside dependency audit, API-contract
 drift, lint, type checking, production build, bundle budgets, and the complete mock browser suite.
+The dedicated Axe project scans English and Amharic public journeys plus authentication routes and
+fails on every moderate, serious, or critical violation. Windows CI also compares the approved
+desktop and mobile screenshots because the checked-in baselines were produced on Windows and font
+rasterization is platform-specific.
 
 `docker-compose.e2e.yml` is deliberately separate from development Compose. It uses an in-memory
 PostgreSQL database named exactly `nehemiah_e2e`, non-persistent Redis and MinIO data, Mailpit,
@@ -358,7 +363,10 @@ mocked success plus relevant loading, empty, validation, unavailable, forbidden,
 states in `frontend/tests/e2e` and approved desktop/mobile snapshots in
 `frontend/tests/visual`; `frontend/tests/fullstack` then verifies representative bilingual,
 search/download, RSVP, engagement, simulated-donation, role, and system-health journeys against
-real PostgreSQL, Redis, MinIO, and Mailpit adapters.
+real PostgreSQL, Redis, MinIO, and Mailpit adapters. The real-service role suite additionally
+creates and publishes CMS content as an editor and updates settings and warms cache as a super
+administrator, proving that representative protected mutations work rather than checking route
+visibility alone.
 
 ## Authorization and Audit
 

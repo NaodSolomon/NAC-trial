@@ -12,7 +12,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test --project=chromium",
     "test:e2e:fullstack": "playwright test --config playwright.fullstack.config.ts",
-    "test:a11y": "playwright test tests/e2e/accessibility.spec.ts --project=chromium",
+    "test:a11y": "playwright test --project=accessibility",
     "test:visual": "playwright test --project=visual-desktop --project=visual-mobile",
     "test:visual:update": "playwright test --project=visual-desktop --project=visual-mobile --update-snapshots",
     "test:coverage": "vitest run --coverage",

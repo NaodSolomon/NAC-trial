@@ -11,7 +11,7 @@ export function HomeHero({ section, language }: { section: HomeHeroSection; lang
         alt=""
         fill
         priority
-        sizes="100vw"
+        sizes="(min-width: 1280px) 1200px, 100vw"
         className="object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/20" />

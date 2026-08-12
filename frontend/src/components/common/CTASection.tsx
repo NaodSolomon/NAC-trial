@@ -32,7 +32,7 @@ export default function CTASection({
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border-2 border-white">
           <Play className="h-6 w-6 text-white" />
         </div>
-        <h2 className="mb-8 font-serif text-3xl font-bold md:text-4xl">{title}</h2>
+        <h2 className="mb-8 font-serif text-3xl font-bold !text-white md:text-4xl">{title}</h2>
         <Link
           href={buttonHref}
           className="inline-block rounded bg-white px-8 py-3 text-sm font-semibold uppercase text-primary transition hover:bg-gray-100"

@@ -6,7 +6,7 @@ export default function NewsletterSection({ language }: { language: Language }) 
     <section className="bg-primary py-14 text-white">
       <div className="mx-auto flex max-w-7xl flex-col justify-between gap-7 px-4 lg:flex-row lg:items-center">
         <div>
-          <h2 className="font-serif text-3xl font-semibold">
+          <h2 className="font-serif text-3xl font-semibold !text-white">
             {language === 'am' ? 'የዜና መልእክታችንን ይቀበሉ' : 'Subscribe to our newsletter'}
           </h2>
           <p className="mt-2 text-white/85">

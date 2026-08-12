@@ -30,7 +30,8 @@ for (const screen of publicScreens) {
   test(`${screen.name} matches the frozen UI`, async ({ page }) => {
     test.setTimeout(60_000);
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto(screen.path, { waitUntil: 'networkidle' });
+    await page.goto(screen.path, { waitUntil: 'domcontentloaded' });
+    await page.locator('main').waitFor({ state: 'visible' });
     await page.evaluate(() => document.fonts.ready);
     await revealLazyContent(page);
     await expect(page).toHaveScreenshot(`${screen.name}.png`, {

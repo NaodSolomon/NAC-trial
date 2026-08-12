@@ -26,6 +26,7 @@ export default function TeamCard({ image, name, role, slug, social }: TeamCardPr
             {social?.facebook && (
               <a
                 href={social.facebook}
+                aria-label={`${name} on Facebook`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/40"
@@ -36,6 +37,7 @@ export default function TeamCard({ image, name, role, slug, social }: TeamCardPr
             {social?.twitter && (
               <a
                 href={social.twitter}
+                aria-label={`${name} on Twitter`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/40"
@@ -46,6 +48,7 @@ export default function TeamCard({ image, name, role, slug, social }: TeamCardPr
             {social?.linkedin && (
               <a
                 href={social.linkedin}
+                aria-label={`${name} on LinkedIn`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/40"

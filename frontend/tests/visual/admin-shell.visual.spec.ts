@@ -469,7 +469,7 @@ test.beforeEach(async ({ context, page }) => {
 
 test('administrator shell matches the responsive workspace baseline', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/admin', { waitUntil: 'networkidle' });
+  await page.goto('/admin', { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('Page views')).toBeVisible();
   await expect(page).toHaveScreenshot('admin-dashboard.png', {
     fullPage: true,
@@ -501,7 +501,8 @@ for (const screen of [
 ] as const) {
   test(`${screen.name} matches the responsive workspace baseline`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto(screen.path, { waitUntil: 'networkidle' });
+    await page.goto(screen.path, { waitUntil: 'domcontentloaded' });
+    await page.locator('main').waitFor({ state: 'visible' });
     await expect(page.getByRole('heading', { name: screen.ready })).toBeVisible();
     await expect(page).toHaveScreenshot(`${screen.name}.png`, {
       fullPage: true,
