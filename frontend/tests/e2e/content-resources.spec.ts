@@ -12,6 +12,35 @@ test('about renders only the published, sanitized CMS response', async ({ page }
   await expect(page.getByText('draft-secret')).toHaveCount(0);
 });
 
+test('a published generic CMS slug renders sanitized localized content and SEO', async ({ page }) => {
+  await page.goto('/services?lang=en');
+
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Family Support Services' }),
+  ).toBeVisible();
+  await expect(page.getByText(/Practical support for every family/)).toBeVisible();
+  await expect(page.getByText('private-draft-note')).toHaveCount(0);
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    'content',
+    'Autism Family Support Services',
+  );
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    /\/services\?lang=en$/,
+  );
+
+  await page.goto('/services?lang=am');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'am');
+  await expect(page.getByRole('heading', { level: 1, name: 'የቤተሰብ ድጋፍ አገልግሎቶች' })).toBeVisible();
+});
+
+test('an unpublished or unknown generic CMS slug returns not found', async ({ page }) => {
+  await page.goto('/draft-program?lang=en');
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
+  await expect(page.getByText('private-draft-note')).toHaveCount(0);
+});
+
 test('FAQ accordion exposes keyboard-operable expanded state', async ({ page }) => {
   await page.goto('/faq?lang=en');
   const question = page.getByRole('button', { name: 'What does the center do?' });
