@@ -54,9 +54,8 @@ function createFallbackNavigation(language: Language): PublicNavigationItem[] {
       url: '/about',
       children: [
         { id: 'fallback-about-page', label: label('aboutUs'), url: '/about' },
-        { id: 'fallback-team', label: label('team'), url: '/team' },
         { id: 'fallback-gallery', label: label('gallery'), url: '/gallery' },
-        { id: 'fallback-volunteers', label: label('volunteers'), url: '/team' },
+        { id: 'fallback-volunteers', label: label('volunteers'), url: '/volunteer' },
         { id: 'fallback-faq', label: label('faq'), url: '/faq' },
       ],
     },
@@ -138,6 +137,7 @@ function normalizeSocialLinks(value: unknown): PublicSiteSettings['socialLinks']
 function isSafeNavigationUrl(value: unknown): value is string {
   return (
     typeof value === 'string' &&
+    !/^\/team(?:\/|$)/i.test(value) &&
     ((value.startsWith('/') && !value.startsWith('//')) || /^https:\/\//i.test(value))
   );
 }

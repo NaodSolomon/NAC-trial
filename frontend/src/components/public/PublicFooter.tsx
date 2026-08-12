@@ -25,7 +25,6 @@ export function PublicFooter() {
     { label: t('events'), url: '/events' },
   ];
   const discoveryLinks = [
-    { label: t('team'), url: '/team' },
     { label: t('gallery'), url: '/gallery' },
     { label: t('blog'), url: '/blog' },
     { label: t('donate'), url: '/donate' },

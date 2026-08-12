@@ -8,8 +8,6 @@ inside presentational components.
 | --- | --- | --- | --- |
 | Homepage | `/` | `features/home` | Homepage CMS, events, testimonials, gallery |
 | About | `/about` | `features/about` | Published CMS page |
-| Team | `/team` | `features/team` | Administrator-managed content/volunteers |
-| Team member | `/team/[slug]` | `features/team` | Administrator-managed content/volunteers |
 | Events | `/events` | `features/events` | Published events |
 | Event detail | `/events/[slug]` | `features/events` | Event detail, RSVP, iCal |
 | Blog | `/blog` | `features/blog` | Published blog posts |
@@ -26,3 +24,7 @@ inside presentational components.
 
 Public registration is intentionally absent. Administrator accounts are created and managed only by
 authorized administrators, in agreement with the backend security model.
+
+The imported template's team routes remain intentionally withheld until the Center supplies
+authoritative bilingual profiles, approved photographs, and verified biographies. They are absent
+from public navigation, search-engine discovery, and visual baselines.

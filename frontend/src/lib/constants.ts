@@ -16,7 +16,6 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/about',
     children: [
       { label: 'About Us', href: '/about' },
-      { label: 'Our Team', href: '/team' },
       { label: 'Gallery', href: '/gallery' },
       { label: 'Volunteers', href: '/volunteer' },
       { label: 'FAQ', href: '/about#faq' },
@@ -61,7 +60,6 @@ export const SITE_CONFIG = {
       { label: 'Resources', href: '/resources' },
     ],
     discover: [
-      { label: 'Our Team', href: '/team' },
       { label: 'Gallery', href: '/gallery' },
       { label: 'Latest Stories', href: '/blog' },
       { label: 'Make a Donation', href: '/donate' },

@@ -54,6 +54,7 @@ test('sitemap contains published API content and robots exclude private routes',
   expect(sitemap).toContain('/blog/how-your-donations-change-lives?lang=en');
   expect(sitemap).toContain('/events/family-support-day?lang=am');
   expect(sitemap).not.toContain('/admin');
+  expect(sitemap).not.toContain('/team');
   expect(sitemap).not.toContain('DRAFT');
 
   const robotsResponse = await request.get('/robots.txt');
@@ -61,4 +62,14 @@ test('sitemap contains published API content and robots exclude private routes',
   const robots = await robotsResponse.text();
   expect(robots).toContain('Disallow: /admin/');
   expect(robots).toContain('Sitemap: http://localhost:3000/sitemap.xml');
+});
+
+test('withheld team routes do not expose imported template profiles', async ({ request }) => {
+  const listing = await request.get('/team');
+  const detail = await request.get('/team/melissa-munoz');
+
+  expect(listing.status()).toBe(404);
+  expect(detail.status()).toBe(404);
+  expect(listing.headers()['x-robots-tag']).toBe('noindex, nofollow');
+  expect(await listing.text()).not.toContain('Melissa Munoz');
 });

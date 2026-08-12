@@ -15,6 +15,15 @@ const publicAdminRoutes = new Set([
 
 export function middleware(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;
+  if (pathname === '/team' || pathname.startsWith('/team/')) {
+    return new NextResponse('Not Found', {
+      status: 404,
+      headers: {
+        'content-type': 'text/plain; charset=utf-8',
+        'x-robots-tag': 'noindex, nofollow',
+      },
+    });
+  }
   const queryLanguage = normalizeLanguage(request.nextUrl.searchParams.get('lang'));
   const documentLanguage = resolveDocumentLanguage(
     pathname,

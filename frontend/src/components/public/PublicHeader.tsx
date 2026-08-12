@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronDown, Clock, Contrast, Mail, MapPin, Menu, Phone } from 'lucide-react';
 import { useLanguage } from '@/hooks/use-language';
@@ -9,6 +8,7 @@ import { usePublicShellData } from '@/hooks/use-public-shell-data';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { BrandMark } from './BrandMark';
 import type { PublicNavigationItem } from './public-shell.types';
 
 export function PublicHeader() {
@@ -76,14 +76,7 @@ export function PublicHeader() {
             className="shrink-0"
             aria-label={`${settings.siteName} — ${t('home')}`}
           >
-            <Image
-              src="/images/logo.png"
-              alt={settings.siteName}
-              width={180}
-              height={50}
-              priority
-              sizes="180px"
-            />
+            <BrandMark siteName={settings.siteName} />
           </Link>
           <div className="flex min-w-0 items-center justify-end gap-5 lg:gap-8">
             <InfoBox icon={<Phone />} heading={t('getInTouch')} content={settings.phone} />
@@ -113,14 +106,7 @@ export function PublicHeader() {
               className="shrink-0"
               aria-label={`${settings.siteName} — ${t('home')}`}
             >
-              <Image
-                src="/images/logo.png"
-                alt={settings.siteName}
-                width={120}
-                height={34}
-                priority
-                sizes="120px"
-              />
+              <BrandMark siteName={settings.siteName} compact />
             </Link>
             <div className="flex items-center gap-1">
               <LanguageSwitcher supported={settings.supportedLanguages} />
