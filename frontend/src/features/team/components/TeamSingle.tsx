@@ -48,6 +48,7 @@ export default function TeamSingle({ member }: TeamSingleProps) {
             {member.social?.facebook && (
               <a
                 href={member.social.facebook}
+                aria-label={`${member.name} on Facebook`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary transition hover:bg-primary hover:text-white"
@@ -58,6 +59,7 @@ export default function TeamSingle({ member }: TeamSingleProps) {
             {member.social?.twitter && (
               <a
                 href={member.social.twitter}
+                aria-label={`${member.name} on Twitter`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary transition hover:bg-primary hover:text-white"
@@ -68,6 +70,7 @@ export default function TeamSingle({ member }: TeamSingleProps) {
             {member.social?.linkedin && (
               <a
                 href={member.social.linkedin}
+                aria-label={`${member.name} on LinkedIn`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary transition hover:bg-primary hover:text-white"
@@ -89,7 +92,7 @@ export default function TeamSingle({ member }: TeamSingleProps) {
                 <span className="font-semibold text-heading">{skill.name}</span>
                 <span className="text-primary">{skill.value}%</span>
               </div>
-              <Progress value={skill.value} />
+              <Progress value={skill.value} aria-label={`${skill.name}: ${skill.value}%`} />
             </div>
           ))}
         </div>

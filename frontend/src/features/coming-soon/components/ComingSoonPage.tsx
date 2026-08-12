@@ -43,7 +43,7 @@ export default function ComingSoonPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center text-center text-white">
+    <main className="relative flex min-h-screen flex-col items-center justify-center text-center text-white">
       {/* Background */}
       <Image
         src="/images/home_1_slider_1.jpg"
@@ -58,7 +58,7 @@ export default function ComingSoonPage() {
       <div className="relative z-10 flex flex-col items-center px-4">
         <Image src="/images/logo.png" alt="Nehemiah" width={180} height={50} />
 
-        <h1 className="mt-8 font-serif text-5xl font-bold md:text-7xl">Coming Soon</h1>
+        <h1 className="mt-8 font-serif text-5xl font-bold text-white md:text-7xl">Coming Soon</h1>
         <p className="mt-4 max-w-lg text-lg text-white/80">
           We are working hard to bring you something amazing. Stay tuned for updates and be the
           first to know when we launch.
@@ -81,6 +81,7 @@ export default function ComingSoonPage() {
         <form onSubmit={handleSubmit} className="mt-10 flex w-full max-w-md">
           <input
             type="email"
+            aria-label="Email address"
             placeholder="Enter your email"
             required
             className="flex-1 rounded-l px-4 py-3 text-text-dark outline-none"
@@ -101,6 +102,6 @@ export default function ComingSoonPage() {
           &larr; Back to Home
         </Link>
       </div>
-    </div>
+    </main>
   );
 }

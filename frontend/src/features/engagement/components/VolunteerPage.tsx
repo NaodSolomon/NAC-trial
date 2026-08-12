@@ -63,7 +63,7 @@ export async function VolunteerPage({ language }: { language: Language }) {
       <section className="bg-primary py-14 text-white">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-7 px-4 lg:flex-row lg:items-center">
           <div>
-            <h2 className="font-serif text-3xl">
+            <h2 className="font-serif text-3xl !text-white">
               {language === 'am' ? 'የማዕከሉን ዜና ይቀበሉ' : 'Stay connected'}
             </h2>
             <p className="mt-2 text-white/85">

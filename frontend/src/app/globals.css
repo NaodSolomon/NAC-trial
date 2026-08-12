@@ -36,10 +36,10 @@
 }
 
 :root {
-  /* Primary - Charity Green #80B53F */
-  --primary: 93 50% 48%;
-  --primary-hover: 93 42% 38%;
-  --primary-dark: 93 35% 28%;
+  /* Accessible charity green; supports white text and text on white at WCAG AA. */
+  --primary: 93 50% 29%;
+  --primary-hover: 93 50% 24%;
+  --primary-dark: 93 50% 19%;
   --primary-light: 93 48% 68%;
   --primary-foreground: 0 0% 100%;
 
@@ -50,10 +50,10 @@
   --topbar-bg: 0 0% 20%;
 
   /* Text */
-  --foreground: 0 0% 47%;
+  --foreground: 0 0% 40%;
   --heading: 0 0% 33%;
   --text-dark: 0 0% 20%;
-  --text-medium: 0 0% 53%;
+  --text-medium: 0 0% 40%;
   --footer-text: 0 0% 76%;
 
   /* Card */
@@ -70,20 +70,20 @@
 
   /* Muted */
   --muted: 0 0% 96%;
-  --muted-foreground: 0 0% 47%;
+  --muted-foreground: 0 0% 40%;
 
   /* Accent */
   --accent: 0 0% 96%;
   --accent-foreground: 0 0% 20%;
 
   /* Destructive */
-  --destructive: 0 84% 60%;
+  --destructive: 0 72% 40%;
   --destructive-foreground: 0 0% 100%;
 
   /* Border & Input */
   --border: 0 0% 87%;
   --input: 0 0% 87%;
-  --ring: 93 50% 48%;
+  --ring: 93 50% 29%;
 
   --radius: 0.5rem;
 }
@@ -124,15 +124,17 @@ video {
   color: white;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-serif);
-  font-weight: 500;
-  color: hsl(var(--heading));
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    color: hsl(var(--heading));
+  }
 }
 
 html[data-contrast='more'] {

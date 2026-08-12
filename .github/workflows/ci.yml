@@ -74,6 +74,10 @@ jobs:
     defaults:
       run:
         working-directory: frontend
+    env:
+      API_URL: http://127.0.0.1:4010/api/v1
+      NEXT_PUBLIC_API_URL: http://127.0.0.1:4010/api/v1
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -99,6 +103,47 @@ jobs:
       - run: pnpm performance:check
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
+      - run: pnpm test:a11y
+      - run: pnpm lighthouse:ci
+      - name: Publish Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: frontend/.lighthouseci
+          if-no-files-found: warn
+
+  visual-regression:
+    needs: frontend
+    runs-on: windows-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [visual-desktop, visual-mobile]
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install chromium
+      - run: pnpm exec playwright test --project=${{ matrix.project }}
+      - name: Publish visual differences
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-differences-${{ matrix.project }}
+          path: frontend/test-results
+          if-no-files-found: warn
 
   full-stack-e2e:
     needs: [backend, frontend]

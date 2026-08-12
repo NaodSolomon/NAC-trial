@@ -1,6 +1,9 @@
 {
   "ci": {
     "collect": {
+      "startServerCommand": "node scripts/start-lighthouse-environment.mjs",
+      "startServerReadyPattern": "LIGHTHOUSE_ENVIRONMENT_READY",
+      "startServerReadyTimeout": 120000,
       "url": [
         "http://localhost:3000/?lang=en",
         "http://localhost:3000/about?lang=en",
@@ -10,7 +13,8 @@
       "numberOfRuns": 3,
       "settings": {
         "budgetsPath": "./lighthouse-budget.json",
-        "preset": "desktop"
+        "preset": "desktop",
+        "chromeFlags": "--no-sandbox --disable-dev-shm-usage"
       }
     },
     "assert": {

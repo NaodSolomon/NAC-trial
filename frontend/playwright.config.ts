@@ -11,7 +11,17 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'chromium', testMatch: /e2e\/.*\.spec\.ts/, use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      testMatch: /e2e\/.*\.spec\.ts/,
+      testIgnore: /accessibility\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'accessibility',
+      testMatch: /e2e\/accessibility\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
     {
       name: 'visual-desktop',
       testMatch: /visual\/.*\.spec\.ts/,

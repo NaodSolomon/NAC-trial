@@ -10,7 +10,7 @@ interface PageBannerProps {
 
 export default function PageBanner({ title, breadcrumbs, backgroundImage }: PageBannerProps) {
   return (
-    <section className="relative flex min-h-[300px] items-center justify-center py-24">
+    <section className="bg-primary-dark relative flex min-h-[300px] items-center justify-center py-24">
       {backgroundImage && (
         <div className="absolute inset-0">
           <Image src={backgroundImage} alt={title} fill className="object-cover" priority />
@@ -28,7 +28,7 @@ export default function PageBanner({ title, breadcrumbs, backgroundImage }: Page
             <span key={index} className="flex items-center gap-1">
               {index > 0 && <ChevronRight className="h-4 w-4 text-white/60" />}
               {crumb.href ? (
-                <Link href={crumb.href} className="text-white/80 transition hover:text-white">
+                <Link href={crumb.href} className="text-white transition hover:underline">
                   {crumb.label}
                 </Link>
               ) : (
