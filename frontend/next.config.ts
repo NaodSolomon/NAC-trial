@@ -1,8 +1,13 @@
 import type { NextConfig } from 'next';
 
 function mediaRemotePatterns(): URL[] {
+  const storageOrigin = process.env.NEXT_PUBLIC_STORAGE_ORIGIN;
+  if (process.env.NODE_ENV === 'production' && !storageOrigin) {
+    throw new Error('NEXT_PUBLIC_STORAGE_ORIGIN is required for a production build');
+  }
+
   const origins = [
-    process.env.NEXT_PUBLIC_STORAGE_ORIGIN ?? 'http://localhost:9000',
+    storageOrigin ?? 'http://localhost:9000',
     process.env.MEDIA_IMAGE_ORIGIN,
     ...(process.env.NEXT_PUBLIC_MEDIA_HOSTS ?? '').split(','),
   ];

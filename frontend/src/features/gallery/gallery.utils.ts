@@ -1,8 +1,13 @@
 import type { GalleryFilter, GalleryLayout } from './gallery.types';
 
 export function approvedMediaOrigins(): string[] {
+  const storageOrigin = process.env.NEXT_PUBLIC_STORAGE_ORIGIN;
+  if (!storageOrigin && process.env.NODE_ENV === 'production') {
+    throw new Error('NEXT_PUBLIC_STORAGE_ORIGIN is required in production');
+  }
+
   const values = [
-    process.env.NEXT_PUBLIC_STORAGE_ORIGIN ?? 'http://localhost:9000',
+    storageOrigin ?? 'http://localhost:9000',
     ...(process.env.NEXT_PUBLIC_MEDIA_HOSTS ?? '').split(','),
   ];
   return [

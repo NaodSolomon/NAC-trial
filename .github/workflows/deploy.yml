@@ -29,6 +29,12 @@ jobs:
           context: frontend
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/nehemiah-frontend:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.PROD_API_URL }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.PROD_SITE_URL }}
+            NEXT_PUBLIC_STORAGE_ORIGIN=${{ vars.PROD_MEDIA_ORIGIN }}
+            NEXT_PUBLIC_MEDIA_HOSTS=${{ vars.PROD_MEDIA_HOSTS }}
+            MEDIA_IMAGE_ORIGIN=${{ vars.PROD_MEDIA_ORIGIN }}
       - uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.PROD_HOST }}

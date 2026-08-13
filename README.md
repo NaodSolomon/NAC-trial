@@ -665,7 +665,11 @@ PostgreSQL database. The image-level gate verifies that the packaged migration j
 SQL migration are present, that the complete chain applies successfully, and that rerunning it is
 idempotent. CI then verifies the frontend. Production deployment is manual,
 restricted to `main`, and protected by the GitHub `production` environment. Configure
-`PROD_HOST`, `PROD_USER`, `PROD_SSH_KEY`, and `PROD_APP_PATH` before running it. The workflow
+`PROD_HOST`, `PROD_USER`, `PROD_SSH_KEY`, and `PROD_APP_PATH` before running it. Also configure the
+production environment variables `PROD_API_URL` (including `/api/v1`), `PROD_SITE_URL`,
+`PROD_MEDIA_ORIGIN`, and optional `PROD_MEDIA_HOSTS`. The frontend image validates these as
+non-local HTTPS URLs before `next build`; its browser chunks are then scanned so a localhost API,
+site, or media fallback cannot be published. The workflow
 builds immutable SHA-tagged images, runs migrations as a one-off container, and then performs
 the Compose rollout.
 

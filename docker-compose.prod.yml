@@ -31,6 +31,7 @@ services:
       NEXT_PUBLIC_API_URL: https://${API_DOMAIN:?Set API_DOMAIN in .env.production}/api/v1
       NEXT_PUBLIC_SITE_URL: https://${SITE_DOMAIN:?Set SITE_DOMAIN in .env.production}
       NEXT_PUBLIC_STORAGE_ORIGIN: ${MEDIA_PUBLIC_ORIGIN:?Set MEDIA_PUBLIC_ORIGIN in .env.production}
+      MEDIA_IMAGE_ORIGIN: ${MEDIA_PUBLIC_ORIGIN:?Set MEDIA_PUBLIC_ORIGIN in .env.production}
     labels:
       - traefik.enable=true
       - traefik.http.routers.frontend.rule=Host(`${SITE_DOMAIN:?Set SITE_DOMAIN in .env.production}`)

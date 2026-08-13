@@ -1,4 +1,10 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+if (process.env.NODE_ENV === 'production' && !configuredApiUrl) {
+  throw new Error('NEXT_PUBLIC_API_URL is required in production');
+}
+
+export const API_URL = configuredApiUrl ?? 'http://localhost:8000/api/v1';
 
 export interface NavItem {
   label: string;
