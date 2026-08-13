@@ -58,6 +58,53 @@ jobs:
           path: backend/dist/openapi.json
           if-no-files-found: error
       - run: docker build --target runner -t nehemiah-backend:test .
+      - name: Apply packaged migrations from the runner image
+        run: |
+          docker network create nehemiah-migration-image-test
+          docker run --detach --name nehemiah-migration-postgres \
+            --network nehemiah-migration-image-test \
+            --tmpfs /var/lib/postgresql/data \
+            --env POSTGRES_USER=nehemiah_migration \
+            --env POSTGRES_PASSWORD=nehemiah_migration \
+            --env POSTGRES_DB=nehemiah_migration \
+            postgres:16-alpine
+
+          for attempt in $(seq 1 30); do
+            if docker exec nehemiah-migration-postgres \
+              pg_isready -U nehemiah_migration -d nehemiah_migration; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              docker logs nehemiah-migration-postgres
+              exit 1
+            fi
+            sleep 1
+          done
+
+          docker run --rm --network nehemiah-migration-image-test \
+            --env NODE_ENV=production \
+            --env DATABASE_URL=postgresql://nehemiah_migration:nehemiah_migration@nehemiah-migration-postgres:5432/nehemiah_migration \
+            nehemiah-backend:test node dist/src/database/run-migrations.js
+
+          # A second run proves the packaged migration chain is idempotent.
+          docker run --rm --network nehemiah-migration-image-test \
+            --env NODE_ENV=production \
+            --env DATABASE_URL=postgresql://nehemiah_migration:nehemiah_migration@nehemiah-migration-postgres:5432/nehemiah_migration \
+            nehemiah-backend:test node dist/src/database/run-migrations.js
+
+          expected_migrations=$(node -p "require('./src/database/migrations/meta/_journal.json').entries.length")
+          applied_migrations=$(docker exec nehemiah-migration-postgres \
+            psql -U nehemiah_migration -d nehemiah_migration -Atc \
+            'select count(*) from drizzle.__drizzle_migrations')
+          test "$applied_migrations" = "$expected_migrations"
+          test "$(docker exec nehemiah-migration-postgres \
+            psql -U nehemiah_migration -d nehemiah_migration -Atc \
+            "select to_regclass('public.admins') is not null")" = "t"
+      - name: Remove migration image test database
+        if: always()
+        run: |
+          docker rm --force nehemiah-migration-postgres 2>/dev/null || true
+          docker network rm nehemiah-migration-image-test 2>/dev/null || true
       - name: Build media backup image
         working-directory: .
         run: docker build -f ops/backup/media-backup.Dockerfile -t nehemiah-media-backup:test .

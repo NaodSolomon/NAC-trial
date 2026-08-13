@@ -31,7 +31,13 @@ RUN addgroup --system --gid 1001 nestjs && \
 
 COPY --from=prod-deps --chown=nestjs:nestjs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nestjs /app/dist ./dist
+# Keep migrations as an explicit runner-image contract instead of relying only
+# on Nest CLI asset copying performed during compilation.
+COPY --from=builder --chown=nestjs:nestjs /app/src/database/migrations ./dist/database/migrations
 COPY --chown=nestjs:nestjs package.json ./
+
+RUN test -f ./dist/database/migrations/meta/_journal.json && \
+    test -n "$(find ./dist/database/migrations -maxdepth 1 -name '*.sql' -print -quit)"
 
 USER nestjs
 EXPOSE 8000

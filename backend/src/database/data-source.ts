@@ -4,7 +4,7 @@ import { Pool } from 'pg';
 import { resolveDatabaseConnection } from './database-connection';
 import * as schema from './schema';
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 export const pool = new Pool(resolveDatabaseConnection());
 
