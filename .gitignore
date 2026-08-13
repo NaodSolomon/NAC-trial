@@ -10,6 +10,7 @@ build/
 
 # Environment files
 .env
+.env.production
 .env.local
 .env.*.local
 frontend/.env

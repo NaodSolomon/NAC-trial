@@ -1,6 +1,22 @@
 import { validateEnvironment } from './env.validation';
 
 describe('validateEnvironment', () => {
+  const validProductionEnvironment = {
+    NODE_ENV: 'production',
+    TRIAL_MODE: false,
+    JWT_ACCESS_SECRET: 'a'.repeat(32),
+    JWT_REFRESH_SECRET: 'b'.repeat(32),
+    IP_HASH_SECRET: 'c'.repeat(32),
+    INTERNAL_API_KEY: 'd'.repeat(32),
+    FRONTEND_URL: 'https://www.example.org',
+    STORAGE_ENDPOINT: 'http://minio:9000',
+    STORAGE_BUCKET: 'nehemiah-media',
+    STORAGE_ACCESS_KEY_ID: 'production-access-key',
+    STORAGE_SECRET_ACCESS_KEY: 'production-storage-key',
+    STORAGE_PUBLIC_URL: 'https://media.example.org',
+    PASSWORD_RESET_URL: 'https://www.example.org/admin/reset-password',
+  } as const;
+
   it('applies safe development defaults', () => {
     expect(validateEnvironment({})).toMatchObject({
       NODE_ENV: 'development',
@@ -185,7 +201,7 @@ describe('validateEnvironment', () => {
     );
   });
 
-  it('requires HTTPS frontend origins in production', () => {
+  it('requires non-local HTTPS frontend origins in production', () => {
     expect(() =>
       validateEnvironment({
         NODE_ENV: 'production',
@@ -195,6 +211,42 @@ describe('validateEnvironment', () => {
         INTERNAL_API_KEY: 'd'.repeat(32),
         FRONTEND_URL: 'http://example.org',
       }),
-    ).toThrow('FRONTEND_URL origins must use HTTPS in production');
+    ).toThrow('FRONTEND_URL must use a non-local HTTPS origin in production');
+
+    expect(() =>
+      validateEnvironment({
+        NODE_ENV: 'production',
+        JWT_ACCESS_SECRET: 'a'.repeat(32),
+        JWT_REFRESH_SECRET: 'b'.repeat(32),
+        IP_HASH_SECRET: 'c'.repeat(32),
+        INTERNAL_API_KEY: 'd'.repeat(32),
+        FRONTEND_URL: 'https://localhost',
+      }),
+    ).toThrow('FRONTEND_URL must use a non-local HTTPS origin in production');
+  });
+
+  it('never permits Swagger in production', () => {
+    expect(() =>
+      validateEnvironment({
+        ...validProductionEnvironment,
+        SWAGGER_ENABLED: true,
+      }),
+    ).toThrow('SWAGGER_ENABLED cannot be enabled in production');
+  });
+
+  it('accepts a production-safe configuration with trial routes and Swagger disabled', () => {
+    expect(
+      validateEnvironment({
+        ...validProductionEnvironment,
+        SWAGGER_ENABLED: false,
+        PAYMENTS_ENABLED: false,
+      }),
+    ).toMatchObject({
+      NODE_ENV: 'production',
+      TRIAL_MODE: false,
+      SWAGGER_ENABLED: false,
+      PAYMENTS_ENABLED: false,
+      FRONTEND_URL: 'https://www.example.org',
+    });
   });
 });

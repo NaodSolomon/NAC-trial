@@ -129,6 +129,24 @@ function validateUrl(value: unknown, name: string, fallback: string): string {
   return url;
 }
 
+function requirePublicHttpsUrl(value: string, name: string, environment: Environment): string {
+  if (environment !== 'production') return value;
+
+  const url = new URL(value);
+  const hostname = url.hostname.toLowerCase();
+  const isLocal =
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1' ||
+    hostname.endsWith('.localhost');
+
+  if (url.protocol !== 'https:' || isLocal) {
+    throw new Error(`${name} must use a non-local HTTPS origin in production`);
+  }
+
+  return value;
+}
+
 function requiredInProduction(
   value: unknown,
   name: string,
@@ -243,11 +261,43 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
       'JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, IP_HASH_SECRET, and INTERNAL_API_KEY must be different',
     );
   }
-  if (
-    environment === 'production' &&
-    frontendOrigins.some((origin) => !origin.startsWith('https://'))
-  ) {
-    throw new Error('FRONTEND_URL origins must use HTTPS in production');
+  frontendOrigins.forEach((origin) => requirePublicHttpsUrl(origin, 'FRONTEND_URL', environment));
+  const storageEndpoint = validateUrl(
+    requiredInProduction(
+      raw.STORAGE_ENDPOINT,
+      'STORAGE_ENDPOINT',
+      environment,
+      'http://localhost:9000',
+    ),
+    'STORAGE_ENDPOINT',
+    'http://localhost:9000',
+  );
+  const storagePublicUrl = requirePublicHttpsUrl(
+    validateUrl(
+      requiredInProduction(
+        raw.STORAGE_PUBLIC_URL,
+        'STORAGE_PUBLIC_URL',
+        environment,
+        'http://localhost:9000/nehemiah-media',
+      ),
+      'STORAGE_PUBLIC_URL',
+      'http://localhost:9000/nehemiah-media',
+    ),
+    'STORAGE_PUBLIC_URL',
+    environment,
+  );
+  const passwordResetUrl = requirePublicHttpsUrl(
+    validateUrl(
+      raw.PASSWORD_RESET_URL,
+      'PASSWORD_RESET_URL',
+      'http://localhost:3000/admin/reset-password',
+    ),
+    'PASSWORD_RESET_URL',
+    environment,
+  );
+  const swaggerEnabled = parseBoolean(raw.SWAGGER_ENABLED, environment !== 'production');
+  if (environment === 'production' && swaggerEnabled) {
+    throw new Error('SWAGGER_ENABLED cannot be enabled in production');
   }
 
   return {
@@ -280,16 +330,7 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
       1_000,
       3_600_000,
     ),
-    STORAGE_ENDPOINT: validateUrl(
-      requiredInProduction(
-        raw.STORAGE_ENDPOINT,
-        'STORAGE_ENDPOINT',
-        environment,
-        'http://localhost:9000',
-      ),
-      'STORAGE_ENDPOINT',
-      'http://localhost:9000',
-    ),
+    STORAGE_ENDPOINT: storageEndpoint,
     STORAGE_REGION: String(raw.STORAGE_REGION ?? 'auto'),
     STORAGE_BUCKET: requiredInProduction(
       raw.STORAGE_BUCKET,
@@ -309,16 +350,7 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
       environment,
       'minioadmin',
     ),
-    STORAGE_PUBLIC_URL: validateUrl(
-      requiredInProduction(
-        raw.STORAGE_PUBLIC_URL,
-        'STORAGE_PUBLIC_URL',
-        environment,
-        'http://localhost:9000/nehemiah-media',
-      ),
-      'STORAGE_PUBLIC_URL',
-      'http://localhost:9000/nehemiah-media',
-    ),
+    STORAGE_PUBLIC_URL: storagePublicUrl,
     MEDIA_MAX_FILE_SIZE_BYTES: parsePositiveInteger(
       raw.MEDIA_MAX_FILE_SIZE_BYTES,
       'MEDIA_MAX_FILE_SIZE_BYTES',
@@ -396,11 +428,7 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
       15,
       30,
     ),
-    PASSWORD_RESET_URL: validateUrl(
-      raw.PASSWORD_RESET_URL,
-      'PASSWORD_RESET_URL',
-      'http://localhost:3000/admin/reset-password',
-    ),
+    PASSWORD_RESET_URL: passwordResetUrl,
     REDIS_HOST: String(raw.REDIS_HOST ?? 'redis'),
     REDIS_PORT: parsePort(raw.REDIS_PORT, 'REDIS_PORT', 6379),
     REDIS_CONNECT_TIMEOUT_MS: parseBoundedInteger(
@@ -450,6 +478,6 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
       'PAYPAL_CANCEL_URL',
       'http://localhost:3000/donate/cancel',
     ),
-    SWAGGER_ENABLED: parseBoolean(raw.SWAGGER_ENABLED, environment !== 'production'),
+    SWAGGER_ENABLED: swaggerEnabled,
   };
 }

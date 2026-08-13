@@ -897,26 +897,34 @@ gateway and never request or store card or bank credentials.
 # On your VPS
 git clone <your-repo>
 cd nehemiah
-cp backend/.env.example backend/.env   # fill prod values
-cp frontend/.env.example frontend/.env # fill prod values
+cp .env.production.example .env.production
+cp backend/.env.production.example backend/.env.production
+cp frontend/.env.production.example frontend/.env.production
+# Replace every example domain, credential, and secret before continuing.
 
 # Start with Traefik SSL
-docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml build media-backup media-backup-verify
-docker compose -f docker-compose.prod.yml up -d
+docker compose --env-file .env.production -f docker-compose.prod.yml config --quiet
+docker compose --env-file .env.production -f docker-compose.prod.yml pull
+docker compose --env-file .env.production -f docker-compose.prod.yml build media-backup media-backup-verify
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 ```
 
-Production uses Traefik for automatic SSL via Let's Encrypt. Update `yourdomain.com` and `your@email.com` in `docker-compose.prod.yml`.
+Production uses Traefik for automatic SSL via Let's Encrypt. Domains, the ACME email, image tags,
+and the public media origin come from the ignored root `.env.production` file. Compose forces the
+application containers to use production mode, disables trial-payment routes and Swagger, disables
+real payment collection, and supplies HTTPS public origins. Values in `backend/.env.production` or
+`frontend/.env.production` cannot override those safety controls. Backend startup also rejects production
+trial mode, Swagger, localhost public origins, weak secrets, and insecure public URLs.
 
 The production Traefik dashboard is disabled and no infrastructure dashboard is routed through
 the public reverse proxy. Application logs remain available over SSH with
-`docker compose -f docker-compose.prod.yml logs backend`.
+`docker compose --env-file .env.production -f docker-compose.prod.yml logs backend`.
 
 Dozzle is an optional operations profile. When temporary browser-based log inspection is
 needed, start it on the VPS with:
 
 ```bash
-docker compose -f docker-compose.prod.yml --profile ops up -d dozzle
+docker compose --env-file .env.production -f docker-compose.prod.yml --profile ops up -d dozzle
 ```
 
 Dozzle binds only to the VPS loopback interface. Reach it through an authenticated SSH tunnel,
@@ -928,7 +936,7 @@ ssh -L 8080:127.0.0.1:8080 <user>@<vps-host>
 
 Then open `http://127.0.0.1:8080` locally. When the investigation is complete, stop and remove
 the optional container with
-`docker compose -f docker-compose.prod.yml --profile ops rm --stop --force dozzle`.
+`docker compose --env-file .env.production -f docker-compose.prod.yml --profile ops rm --stop --force dozzle`.
 Never change the binding to `0.0.0.0` or add a public Traefik router without adding strong
 authentication and an IP allowlist or VPN.
 
@@ -954,14 +962,14 @@ Check recent backup activity with:
 
 ```bash
 find "${BACKUP_HOST_PATH:-./backups}" -name .last-success -print
-docker compose -f docker-compose.prod.yml logs postgres-backup media-backup
+docker compose --env-file .env.production -f docker-compose.prod.yml logs postgres-backup media-backup
 ```
 
 At least monthly, verify that the newest backups can be restored:
 
 ```bash
-docker compose -f docker-compose.prod.yml --profile backup-verify run --rm postgres-backup-verify
-docker compose -f docker-compose.prod.yml --profile backup-verify run --rm media-backup-verify
+docker compose --env-file .env.production -f docker-compose.prod.yml --profile backup-verify run --rm postgres-backup-verify
+docker compose --env-file .env.production -f docker-compose.prod.yml --profile backup-verify run --rm media-backup-verify
 ```
 
 PostgreSQL verification restores into a temporary database whose name must end in
