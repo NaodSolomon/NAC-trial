@@ -660,7 +660,10 @@ remains `200` with a `degraded` status when only the optional Redis cache is una
 `/api/v1/system/health` remains a backwards-compatible alias for readiness.
 
 The restored CI workflow runs backend tests with PostgreSQL, validates migrations, builds the
-production backend image, and verifies the frontend. Production deployment is manual,
+production backend image, and then runs that exact image twice against an empty disposable
+PostgreSQL database. The image-level gate verifies that the packaged migration journal and every
+SQL migration are present, that the complete chain applies successfully, and that rerunning it is
+idempotent. CI then verifies the frontend. Production deployment is manual,
 restricted to `main`, and protected by the GitHub `production` environment. Configure
 `PROD_HOST`, `PROD_USER`, `PROD_SSH_KEY`, and `PROD_APP_PATH` before running it. The workflow
 builds immutable SHA-tagged images, runs migrations as a one-off container, and then performs
