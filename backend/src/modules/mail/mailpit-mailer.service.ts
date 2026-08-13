@@ -21,6 +21,7 @@ export class MailpitMailerService implements Mailer {
       to: message.to,
       subject: message.subject,
       text: message.text,
+      messageId: message.messageId,
     });
   }
 }

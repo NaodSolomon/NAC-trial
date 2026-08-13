@@ -74,10 +74,24 @@ export const notificationOutbox = pgTable(
     payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
     status: outboxStatusEnum('status').default('PENDING').notNull(),
     attempts: integer('attempts').default(0).notNull(),
+    nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    lockedAt: timestamp('locked_at', { withTimezone: true, precision: 3 }),
+    lockToken: uuid('lock_token'),
+    lastError: varchar('last_error', { length: 100 }),
     createdAt: timestamp('created_at', { withTimezone: true, precision: 3 }).defaultNow().notNull(),
     processedAt: timestamp('processed_at', { withTimezone: true, precision: 3 }),
   },
-  (table) => [index('notification_outbox_status_created_idx').on(table.status, table.createdAt)],
+  (table) => [
+    index('notification_outbox_status_created_idx').on(table.status, table.createdAt),
+    index('notification_outbox_delivery_idx').on(
+      table.type,
+      table.status,
+      table.nextAttemptAt,
+      table.createdAt,
+    ),
+  ],
 );
 
 export type Donation = typeof donations.$inferSelect;

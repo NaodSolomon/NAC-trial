@@ -898,6 +898,14 @@ authentication implementation, not a second active authentication stack. Real Pa
 Telebirr, and CBE collection also remains disabled; trial donations continue to use the fake
 gateway and never request or store card or bank credentials.
 
+Administrative receipt resends use the PostgreSQL `notification_outbox`. An in-process worker
+claims due rows with `FOR UPDATE SKIP LOCKED`, sends each receipt through the configured SMTP
+adapter, and records `SENT` only after SMTP acceptance. Transient failures return to `PENDING`
+with exponential backoff; exhausted or invalid items become `FAILED`. Stale `PROCESSING` claims
+are recoverable after the configured lock timeout, and deterministic SMTP Message-IDs make
+retries idempotent for receivers that support Message-ID deduplication. Configure the worker with
+`OUTBOX_WORKER_*`; it is enabled by default outside tests.
+
 ## Production Deployment
 
 ```bash

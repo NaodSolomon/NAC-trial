@@ -66,7 +66,23 @@ describe('Drizzle migration chain', () => {
       const migrations = await context.pool.query<{ count: string }>(
         'select count(*) from drizzle.__drizzle_migrations',
       );
-      expect(Number(migrations.rows[0].count)).toBe(13);
+      expect(Number(migrations.rows[0].count)).toBe(14);
+
+      const outboxColumns = await context.pool.query<{ column_name: string }>(
+        `select column_name
+         from information_schema.columns
+         where table_schema = 'public'
+           and table_name = 'notification_outbox'
+           and column_name = any($1::text[])
+         order by column_name`,
+        [['last_error', 'locked_at', 'lock_token', 'next_attempt_at']],
+      );
+      expect(outboxColumns.rows.map((row) => row.column_name)).toEqual([
+        'last_error',
+        'lock_token',
+        'locked_at',
+        'next_attempt_at',
+      ]);
 
       const socialLinksColumn = await context.pool.query<{
         data_type: string;

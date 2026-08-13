@@ -54,6 +54,12 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   MAIL_SOCKET_TIMEOUT_MS: number;
   PASSWORD_RESET_TTL_MINUTES: number;
   PASSWORD_RESET_URL: string;
+  OUTBOX_WORKER_ENABLED: boolean;
+  OUTBOX_WORKER_INTERVAL_MS: number;
+  OUTBOX_WORKER_BATCH_SIZE: number;
+  OUTBOX_WORKER_MAX_ATTEMPTS: number;
+  OUTBOX_WORKER_BACKOFF_MS: number;
+  OUTBOX_WORKER_LOCK_TIMEOUT_MS: number;
   REDIS_HOST: string;
   REDIS_PORT: number;
   REDIS_CONNECT_TIMEOUT_MS: number;
@@ -429,6 +435,42 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
       30,
     ),
     PASSWORD_RESET_URL: passwordResetUrl,
+    OUTBOX_WORKER_ENABLED: parseBoolean(raw.OUTBOX_WORKER_ENABLED, environment !== 'test'),
+    OUTBOX_WORKER_INTERVAL_MS: parseBoundedInteger(
+      raw.OUTBOX_WORKER_INTERVAL_MS,
+      'OUTBOX_WORKER_INTERVAL_MS',
+      5_000,
+      500,
+      300_000,
+    ),
+    OUTBOX_WORKER_BATCH_SIZE: parseBoundedInteger(
+      raw.OUTBOX_WORKER_BATCH_SIZE,
+      'OUTBOX_WORKER_BATCH_SIZE',
+      10,
+      1,
+      100,
+    ),
+    OUTBOX_WORKER_MAX_ATTEMPTS: parseBoundedInteger(
+      raw.OUTBOX_WORKER_MAX_ATTEMPTS,
+      'OUTBOX_WORKER_MAX_ATTEMPTS',
+      5,
+      1,
+      20,
+    ),
+    OUTBOX_WORKER_BACKOFF_MS: parseBoundedInteger(
+      raw.OUTBOX_WORKER_BACKOFF_MS,
+      'OUTBOX_WORKER_BACKOFF_MS',
+      30_000,
+      1_000,
+      3_600_000,
+    ),
+    OUTBOX_WORKER_LOCK_TIMEOUT_MS: parseBoundedInteger(
+      raw.OUTBOX_WORKER_LOCK_TIMEOUT_MS,
+      'OUTBOX_WORKER_LOCK_TIMEOUT_MS',
+      300_000,
+      10_000,
+      3_600_000,
+    ),
     REDIS_HOST: String(raw.REDIS_HOST ?? 'redis'),
     REDIS_PORT: parsePort(raw.REDIS_PORT, 'REDIS_PORT', 6379),
     REDIS_CONNECT_TIMEOUT_MS: parseBoundedInteger(
