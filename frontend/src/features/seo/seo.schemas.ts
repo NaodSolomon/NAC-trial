@@ -61,7 +61,9 @@ export function isApprovedSeoImageUrl(value: string): boolean {
     if (candidate.username || candidate.password) return false;
     if (candidate.protocol === 'https:') return true;
     if (candidate.protocol !== 'http:') return false;
-    const configured = new URL(process.env.NEXT_PUBLIC_STORAGE_ORIGIN ?? 'http://localhost:9000');
+    const storageOrigin = process.env.NEXT_PUBLIC_STORAGE_ORIGIN;
+    if (!storageOrigin && process.env.NODE_ENV === 'production') return false;
+    const configured = new URL(storageOrigin ?? 'http://localhost:9000');
     return (
       ['localhost', '127.0.0.1', 'minio'].includes(candidate.hostname.toLowerCase()) &&
       candidate.origin === configured.origin &&
