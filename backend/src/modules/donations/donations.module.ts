@@ -15,8 +15,11 @@ import { PayPalGateway } from './gateways/paypal.gateway';
 import { FakePaymentGateway } from './gateways/fake-payment.gateway';
 import { ConfigService } from '@nestjs/config';
 import { DONATION_REPOSITORY } from './interfaces/donation-repository.interface';
+import { DONATION_RECEIPT_OUTBOX_REPOSITORY } from './interfaces/donation-receipt-outbox-repository.interface';
 import { PAYMENT_GATEWAY } from './interfaces/payment-gateway.interface';
 import { DrizzleDonationRepository } from './repositories/drizzle-donation.repository';
+import { PostgresDonationReceiptOutboxRepository } from './repositories/postgres-donation-receipt-outbox.repository';
+import { DonationReceiptOutboxService } from './services/donation-receipt-outbox.service';
 import { DonationService } from './services/donation.service';
 
 @Module({
@@ -29,7 +32,12 @@ import { DonationService } from './services/donation.service';
   ],
   providers: [
     DonationService,
+    DonationReceiptOutboxService,
     { provide: DONATION_REPOSITORY, useClass: DrizzleDonationRepository },
+    {
+      provide: DONATION_RECEIPT_OUTBOX_REPOSITORY,
+      useClass: PostgresDonationReceiptOutboxRepository,
+    },
     PayPalGateway,
     FakePaymentGateway,
     {

@@ -43,6 +43,12 @@ describe('validateEnvironment', () => {
       MAIL_CONNECTION_TIMEOUT_MS: 3_000,
       MAIL_GREETING_TIMEOUT_MS: 3_000,
       MAIL_SOCKET_TIMEOUT_MS: 10_000,
+      OUTBOX_WORKER_ENABLED: true,
+      OUTBOX_WORKER_INTERVAL_MS: 5_000,
+      OUTBOX_WORKER_BATCH_SIZE: 10,
+      OUTBOX_WORKER_MAX_ATTEMPTS: 5,
+      OUTBOX_WORKER_BACKOFF_MS: 30_000,
+      OUTBOX_WORKER_LOCK_TIMEOUT_MS: 300_000,
     });
   });
 
@@ -198,6 +204,18 @@ describe('validateEnvironment', () => {
     );
     expect(() => validateEnvironment({ MAIL_SOCKET_TIMEOUT_MS: 120_001 })).toThrow(
       'MAIL_SOCKET_TIMEOUT_MS must be between 100 and 120000',
+    );
+  });
+
+  it('disables the outbox worker in tests and validates retry controls', () => {
+    expect(validateEnvironment({ NODE_ENV: 'test' })).toMatchObject({
+      OUTBOX_WORKER_ENABLED: false,
+    });
+    expect(() => validateEnvironment({ OUTBOX_WORKER_BATCH_SIZE: 101 })).toThrow(
+      'OUTBOX_WORKER_BATCH_SIZE must be between 1 and 100',
+    );
+    expect(() => validateEnvironment({ OUTBOX_WORKER_MAX_ATTEMPTS: 0 })).toThrow(
+      'OUTBOX_WORKER_MAX_ATTEMPTS must be between 1 and 20',
     );
   });
 
