@@ -39,9 +39,9 @@ jobs:
             git pull --ff-only origin main
             BACKEND_IMAGE=ghcr.io/${{ github.repository_owner }}/nehemiah-backend:${{ github.sha }} \
             FRONTEND_IMAGE=ghcr.io/${{ github.repository_owner }}/nehemiah-frontend:${{ github.sha }} \
-            docker compose -f docker-compose.prod.yml up -d postgres redis
+            docker compose --env-file .env.production -f docker-compose.prod.yml up -d postgres redis
             BACKEND_IMAGE=ghcr.io/${{ github.repository_owner }}/nehemiah-backend:${{ github.sha }} \
-            docker compose -f docker-compose.prod.yml run --rm backend node dist/src/database/run-migrations.js
+            docker compose --env-file .env.production -f docker-compose.prod.yml run --rm backend node dist/src/database/run-migrations.js
             BACKEND_IMAGE=ghcr.io/${{ github.repository_owner }}/nehemiah-backend:${{ github.sha }} \
             FRONTEND_IMAGE=ghcr.io/${{ github.repository_owner }}/nehemiah-frontend:${{ github.sha }} \
-            docker compose -f docker-compose.prod.yml up -d --pull always
+            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --pull always
