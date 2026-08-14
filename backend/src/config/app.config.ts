@@ -15,6 +15,14 @@ export default registerAs('app', () => ({
       ? process.env.SCHEDULED_PUBLISHING_ENABLED === 'true'
       : process.env.NODE_ENV !== 'test',
   scheduledPublishingIntervalMs: Number(process.env.SCHEDULED_PUBLISHING_INTERVAL_MS ?? 60_000),
+  resourceDownloadLogCleanupEnabled:
+    process.env.RESOURCE_DOWNLOAD_LOG_CLEANUP_ENABLED !== undefined
+      ? process.env.RESOURCE_DOWNLOAD_LOG_CLEANUP_ENABLED === 'true'
+      : process.env.NODE_ENV !== 'test',
+  resourceDownloadLogRetentionDays: Number(process.env.RESOURCE_DOWNLOAD_LOG_RETENTION_DAYS ?? 365),
+  resourceDownloadLogCleanupIntervalMs: Number(
+    process.env.RESOURCE_DOWNLOAD_LOG_CLEANUP_INTERVAL_MS ?? 86_400_000,
+  ),
   swaggerEnabled:
     process.env.SWAGGER_ENABLED !== undefined
       ? process.env.SWAGGER_ENABLED === 'true'

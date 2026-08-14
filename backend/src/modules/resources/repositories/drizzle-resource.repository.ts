@@ -3,7 +3,7 @@ import { and, count, desc, eq, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DRIZZLE } from '../../../database/drizzle.module';
 import * as schema from '../../../database/schema';
-import { auditLogs, NewResource, resources } from '../../../database/schema';
+import { auditLogs, NewResource, resourceDownloadLogs, resources } from '../../../database/schema';
 import {
   ResourceListCriteria,
   ResourceRepository,
@@ -84,20 +84,33 @@ export class DrizzleResourceRepository implements ResourceRepository {
     });
   }
 
-  async incrementPublishedDownload(id: string) {
-    const [resource] = await this.db
-      .update(resources)
-      .set({ downloadCount: sql`${resources.downloadCount} + 1` })
-      .where(and(eq(resources.id, id), eq(resources.status, 'PUBLISHED')))
-      .returning({
-        id: resources.id,
-        fileUrl: resources.fileUrl,
-        fileName: resources.fileName,
-        mimeType: resources.mimeType,
-        downloadCount: resources.downloadCount,
-      });
+  async recordPublishedDownload(id: string, country: string | null) {
+    return this.db.transaction(async (transaction) => {
+      const [resource] = await transaction
+        .update(resources)
+        .set({ downloadCount: sql`${resources.downloadCount} + 1` })
+        .where(and(eq(resources.id, id), eq(resources.status, 'PUBLISHED')))
+        .returning({
+          id: resources.id,
+          fileUrl: resources.fileUrl,
+          fileName: resources.fileName,
+          mimeType: resources.mimeType,
+          downloadCount: resources.downloadCount,
+        });
+      if (!resource) return null;
 
-    return resource ?? null;
+      await transaction.insert(resourceDownloadLogs).values({
+        resourceId: resource.id,
+        country,
+      });
+      return resource;
+    });
+  }
+
+  async purgeDownloadLogsBefore(cutoff: Date): Promise<void> {
+    await this.db
+      .delete(resourceDownloadLogs)
+      .where(sql`${resourceDownloadLogs.downloadedAt} < ${cutoff}`);
   }
 
   async delete(id: string, actorId: string) {

@@ -1,6 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
-import { auditLogs, blogPosts, cmsPages, events, resources } from '../../src/database/schema';
+import {
+  auditLogs,
+  blogPosts,
+  cmsPages,
+  events,
+  resourceDownloadLogs,
+  resources,
+} from '../../src/database/schema';
 import { DrizzleBlogRepository } from '../../src/modules/blog/repositories/drizzle-blog.repository';
 import { DrizzleResourceRepository } from '../../src/modules/resources/repositories/drizzle-resource.repository';
 import { SearchService } from '../../src/modules/search/search.service';
@@ -123,12 +130,39 @@ describeWithPostgres('Demonstration content features (PostgreSQL)', () => {
     );
     await repository.publish(created.id, ACTOR_ID);
     await Promise.all([
-      repository.incrementPublishedDownload(created.id),
-      repository.incrementPublishedDownload(created.id),
+      repository.recordPublishedDownload(created.id, 'ET'),
+      repository.recordPublishedDownload(created.id, null),
     ]);
     const [stored] = await context.db.select().from(resources);
     expect(stored.downloadCount).toBe(2);
     expect(stored.fileName).toBe('guide.pdf');
+    const downloads = await context.db
+      .select()
+      .from(resourceDownloadLogs)
+      .where(eq(resourceDownloadLogs.resourceId, created.id));
+    expect(downloads).toHaveLength(2);
+    expect(downloads.map((download) => download.country)).toEqual(
+      expect.arrayContaining(['ET', null]),
+    );
+    expect(downloads.every((download) => download.downloadedAt instanceof Date)).toBe(true);
+
+    await expectPostgresError(repository.recordPublishedDownload(created.id, 'E1'), '23514');
+    const [afterRejectedLocation] = await context.db
+      .select()
+      .from(resources)
+      .where(eq(resources.id, created.id));
+    expect(afterRejectedLocation.downloadCount).toBe(2);
+
+    await context.db
+      .update(resourceDownloadLogs)
+      .set({ downloadedAt: new Date('2024-01-01T00:00:00Z') })
+      .where(eq(resourceDownloadLogs.id, downloads[0].id));
+    await repository.purgeDownloadLogsBefore(new Date('2025-01-01T00:00:00Z'));
+    const retainedDownloads = await context.db
+      .select()
+      .from(resourceDownloadLogs)
+      .where(eq(resourceDownloadLogs.resourceId, created.id));
+    expect(retainedDownloads).toHaveLength(1);
 
     await repository.delete(created.id, ACTOR_ID);
     const logs = await context.db

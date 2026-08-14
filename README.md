@@ -811,8 +811,10 @@ the deferred enterprise features:
 - `/api/v1/public/search?q=support` searches published CMS pages, events, and blog posts
   directly in PostgreSQL. No external indexing account is required.
 - `/api/v1/public/resources` lists published downloads. A request to
-  `/api/v1/public/resources/:id/download` atomically increments the persisted counter and
-  returns the local file metadata.
+  `/api/v1/public/resources/:id/download` atomically increments the persisted counter, inserts
+  an append-only download log, and returns the local file metadata. Logs contain only the
+  resource, a validated two-letter country code when supplied by Cloudflare, and the download
+  timestamp; raw IP addresses and detailed location data are never stored.
 - `/api/v1/public/events/:slug/calendar.ics` downloads a standards-compatible calendar
   event for published events.
 
@@ -824,6 +826,14 @@ Migration `0007_add_demo_content_features.sql` adds blog posts, resources, and C
 columns. Earlier migrations and snapshots remain unchanged. External search services, reminder
 emails, recurring donations, MFA/OAuth, and paid monitoring remain
 explicitly deferred.
+
+Migration `0014_add_resource_download_logs.sql` adds the download-log table, country check,
+resource foreign key, and reporting/retention indexes without rewriting prior migrations. Logs
+are retained for 365 days by default and cleaned asynchronously once per day. Configure the
+bounded policy with `RESOURCE_DOWNLOAD_LOG_RETENTION_DAYS`,
+`RESOURCE_DOWNLOAD_LOG_CLEANUP_INTERVAL_MS`, and
+`RESOURCE_DOWNLOAD_LOG_CLEANUP_ENABLED`. Resource deletion cascades its logs, so the configured
+period is a maximum rather than a minimum retention guarantee.
 
 Migration `0008_add_search_trigram_indexes.sql` enables PostgreSQL `pg_trgm` and adds GIN
 indexes for the CMS, event, and blog fields searched by `/api/v1/public/search`. Search remains

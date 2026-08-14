@@ -22,6 +22,9 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   INTERNAL_API_KEY: string;
   SCHEDULED_PUBLISHING_ENABLED: boolean;
   SCHEDULED_PUBLISHING_INTERVAL_MS: number;
+  RESOURCE_DOWNLOAD_LOG_CLEANUP_ENABLED: boolean;
+  RESOURCE_DOWNLOAD_LOG_RETENTION_DAYS: number;
+  RESOURCE_DOWNLOAD_LOG_CLEANUP_INTERVAL_MS: number;
   STORAGE_ENDPOINT: string;
   STORAGE_REGION: string;
   STORAGE_BUCKET: string;
@@ -344,6 +347,24 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
       60_000,
       1_000,
       3_600_000,
+    ),
+    RESOURCE_DOWNLOAD_LOG_CLEANUP_ENABLED: parseBoolean(
+      raw.RESOURCE_DOWNLOAD_LOG_CLEANUP_ENABLED,
+      environment !== 'test',
+    ),
+    RESOURCE_DOWNLOAD_LOG_RETENTION_DAYS: parseBoundedInteger(
+      raw.RESOURCE_DOWNLOAD_LOG_RETENTION_DAYS,
+      'RESOURCE_DOWNLOAD_LOG_RETENTION_DAYS',
+      365,
+      1,
+      3_650,
+    ),
+    RESOURCE_DOWNLOAD_LOG_CLEANUP_INTERVAL_MS: parseBoundedInteger(
+      raw.RESOURCE_DOWNLOAD_LOG_CLEANUP_INTERVAL_MS,
+      'RESOURCE_DOWNLOAD_LOG_CLEANUP_INTERVAL_MS',
+      86_400_000,
+      3_600_000,
+      604_800_000,
     ),
     STORAGE_ENDPOINT: storageEndpoint,
     STORAGE_REGION: String(raw.STORAGE_REGION ?? 'auto'),
