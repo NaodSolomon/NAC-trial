@@ -44,7 +44,7 @@ COPY --from=builder /app/public ./public
 # Next.js standalone output includes only what's needed
 COPY --from=builder --chown=nextjs:nextjs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nextjs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nextjs /app/scripts/check-production-client-artifact.mjs ./scripts/
+COPY --from=builder --chown=nextjs:nextjs /app/scripts/check-production-client-artifact.mjs /app/scripts/check-production-image-runtime.mjs ./scripts/
 
 USER nextjs
 EXPOSE 3000
