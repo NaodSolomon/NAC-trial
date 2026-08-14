@@ -148,12 +148,14 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test:coverage
-      - run: pnpm build
-      - run: pnpm performance:check
       - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm build
+      - name: Verify Lighthouse production build artifact
+        run: node scripts/assert-lighthouse-production-build.mjs
+      - run: pnpm lighthouse:ci
+      - run: pnpm performance:check
       - run: pnpm test:e2e
       - run: pnpm test:a11y
-      - run: pnpm lighthouse:ci
       - name: Build production frontend image with explicit public origins
         run: |
           docker build --target runner -t nehemiah-frontend:production-test \
