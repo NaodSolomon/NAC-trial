@@ -7097,30 +7097,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data",
-                    "statusCode",
-                    "timestamp"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {},
-                    "statusCode": {
-                      "type": "integer",
-                      "example": 200
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AnalyticsSummaryApiResponseDto"
                 }
               }
             }
@@ -7156,51 +7133,43 @@
             }
           }
         },
-        "tags": [
-          "AdminAnalytics"
-        ],
-        "summary": "Get admin/analytics/summary",
         "security": [
           {
             "admin-jwt": []
           }
+        ],
+        "summary": "Get the complete cross-feature analytics summary",
+        "tags": [
+          "Admin Analytics"
         ]
       }
     },
     "/api/v1/admin/analytics/timeline": {
       "get": {
         "operationId": "AdminAnalyticsController_timeline",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "range",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "month",
+              "type": "string",
+              "enum": [
+                "day",
+                "week",
+                "month"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data",
-                    "statusCode",
-                    "timestamp"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {},
-                    "statusCode": {
-                      "type": "integer",
-                      "example": 200
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AnalyticsTimelineApiResponseDto"
                 }
               }
             }
@@ -7236,14 +7205,14 @@
             }
           }
         },
-        "tags": [
-          "AdminAnalytics"
-        ],
-        "summary": "Get admin/analytics/timeline",
         "security": [
           {
             "admin-jwt": []
           }
+        ],
+        "summary": "Get daily page, form, resource, and donation trends",
+        "tags": [
+          "Admin Analytics"
         ]
       }
     },
@@ -8457,6 +8426,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "cf-ipcountry",
+            "required": false,
+            "in": "header",
+            "description": "Optional two-letter country code supplied by the trusted edge proxy",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z]{2}$",
+              "example": "ET"
+            }
           }
         ],
         "responses": {
@@ -9601,6 +9581,352 @@
       "TrackAnalyticsEventDto": {
         "type": "object",
         "properties": {}
+      },
+      "CountryVisitsDto": {
+        "type": "object",
+        "properties": {
+          "country": {
+            "type": "string",
+            "example": "ET"
+          },
+          "visits": {
+            "type": "number",
+            "example": 42
+          }
+        },
+        "required": [
+          "country",
+          "visits"
+        ]
+      },
+      "PageVisitsDto": {
+        "type": "object",
+        "properties": {
+          "route": {
+            "type": "string",
+            "example": "/services"
+          },
+          "visits": {
+            "type": "number",
+            "example": 42
+          }
+        },
+        "required": [
+          "route",
+          "visits"
+        ]
+      },
+      "FormSummaryDto": {
+        "type": "object",
+        "properties": {
+          "totalSubmissions": {
+            "type": "number",
+            "example": 40
+          },
+          "contact": {
+            "type": "number",
+            "example": 10
+          },
+          "volunteer": {
+            "type": "number",
+            "example": 8
+          },
+          "newsletter": {
+            "type": "number",
+            "example": 12
+          },
+          "eventRsvp": {
+            "type": "number",
+            "example": 10
+          }
+        },
+        "required": [
+          "totalSubmissions",
+          "contact",
+          "volunteer",
+          "newsletter",
+          "eventRsvp"
+        ]
+      },
+      "TopResourceDto": {
+        "type": "object",
+        "properties": {
+          "resourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "example": "Family support guide"
+          },
+          "downloads": {
+            "type": "number",
+            "example": 20
+          }
+        },
+        "required": [
+          "resourceId",
+          "title",
+          "downloads"
+        ]
+      },
+      "ResourceCountryDto": {
+        "type": "object",
+        "properties": {
+          "country": {
+            "type": "string",
+            "example": "ET"
+          },
+          "downloads": {
+            "type": "number",
+            "example": 18
+          }
+        },
+        "required": [
+          "country",
+          "downloads"
+        ]
+      },
+      "ResourceAnalyticsDto": {
+        "type": "object",
+        "properties": {
+          "totalDownloads": {
+            "type": "number",
+            "example": 30
+          },
+          "topResources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TopResourceDto"
+            }
+          },
+          "topCountries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResourceCountryDto"
+            }
+          }
+        },
+        "required": [
+          "totalDownloads",
+          "topResources",
+          "topCountries"
+        ]
+      },
+      "DonationStatusCountDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "INITIATED",
+              "PENDING",
+              "CONFIRMED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "count": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": [
+          "status",
+          "count"
+        ]
+      },
+      "DonationValueDto": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "enum": [
+              "USD",
+              "ETB"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "example": "1250.00",
+            "description": "Decimal string to preserve monetary precision"
+          }
+        },
+        "required": [
+          "currency",
+          "amount"
+        ]
+      },
+      "DonationAnalyticsDto": {
+        "type": "object",
+        "properties": {
+          "totalDonations": {
+            "type": "number",
+            "example": 15
+          },
+          "statusCounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DonationStatusCountDto"
+            }
+          },
+          "confirmedValues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DonationValueDto"
+            }
+          }
+        },
+        "required": [
+          "totalDonations",
+          "statusCounts",
+          "confirmedValues"
+        ]
+      },
+      "AnalyticsSummaryDto": {
+        "type": "object",
+        "properties": {
+          "totalVisitors": {
+            "type": "number",
+            "example": 500,
+            "description": "Recorded page-view events, not unique visitors"
+          },
+          "topCountries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CountryVisitsDto"
+            }
+          },
+          "topPages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PageVisitsDto"
+            }
+          },
+          "forms": {
+            "$ref": "#/components/schemas/FormSummaryDto"
+          },
+          "resources": {
+            "$ref": "#/components/schemas/ResourceAnalyticsDto"
+          },
+          "donations": {
+            "$ref": "#/components/schemas/DonationAnalyticsDto"
+          }
+        },
+        "required": [
+          "totalVisitors",
+          "topCountries",
+          "topPages",
+          "forms",
+          "resources",
+          "donations"
+        ]
+      },
+      "AnalyticsSummaryApiResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/AnalyticsSummaryDto"
+          },
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "statusCode",
+          "timestamp"
+        ]
+      },
+      "AnalyticsTimelinePointDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-08-14"
+          },
+          "visitors": {
+            "type": "number",
+            "example": 20
+          },
+          "formSubmissions": {
+            "type": "number",
+            "example": 4
+          },
+          "resourceDownloads": {
+            "type": "number",
+            "example": 6
+          },
+          "donationsCreated": {
+            "type": "number",
+            "example": 3
+          },
+          "donationsConfirmed": {
+            "type": "number",
+            "example": 2
+          },
+          "confirmedUsd": {
+            "type": "string",
+            "example": "25.00"
+          },
+          "confirmedEtb": {
+            "type": "string",
+            "example": "1500.00"
+          }
+        },
+        "required": [
+          "date",
+          "visitors",
+          "formSubmissions",
+          "resourceDownloads",
+          "donationsCreated",
+          "donationsConfirmed",
+          "confirmedUsd",
+          "confirmedEtb"
+        ]
+      },
+      "AnalyticsTimelineApiResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsTimelinePointDto"
+            }
+          },
+          "statusCode": {
+            "type": "number",
+            "example": 200
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "statusCode",
+          "timestamp"
+        ]
       },
       "CreateBlogPostDto": {
         "type": "object",

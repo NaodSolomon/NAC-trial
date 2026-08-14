@@ -114,16 +114,16 @@ nehemiah/
 
 ### Frontend (`cd frontend`)
 
-| Command         | Description                |
-| --------------- | -------------------------- |
-| `pnpm dev`      | Start dev server           |
-| `pnpm build`    | Production build           |
-| `pnpm test`     | Run unit tests (Vitest)    |
-| `pnpm test:e2e` | Run E2E tests (Playwright) |
-| `pnpm lint`     | Lint with ESLint           |
-| `pnpm format`   | Format with Prettier       |
+| Command             | Description                                             |
+| ------------------- | ------------------------------------------------------- |
+| `pnpm dev`          | Start dev server                                        |
+| `pnpm build`        | Production build                                        |
+| `pnpm test`         | Run unit tests (Vitest)                                 |
+| `pnpm test:e2e`     | Run E2E tests (Playwright)                              |
+| `pnpm lint`         | Lint with ESLint                                        |
+| `pnpm format`       | Format with Prettier                                    |
 | `pnpm api:generate` | Regenerate the OpenAPI snapshot and TypeScript contract |
-| `pnpm api:check` | Fail when generated API artifacts are stale |
+| `pnpm api:check`    | Fail when generated API artifacts are stale             |
 
 Browser and server feature requests use a contract-aware client derived from the generated
 OpenAPI `paths` type. Unknown endpoint or HTTP-method combinations therefore fail TypeScript
@@ -281,9 +281,10 @@ income. `SUPER_ADMIN` and `FINANCE_VIEWER` can filter and paginate donation demo
 inspect a record, prepare or resend its test receipt, review confirmed-record statistics, and
 download a filtered CSV. Runtime information places a permanent trial banner above these values
 and labels confirmed amounts as simulations rather than collected funds. Analytics remains
-restricted to `SUPER_ADMIN` and displays the summary, top pages, coarse country dimensions, and
-UTC timeline. Every visual bar includes a numeric label and an accompanying visible data table,
-so meaning never depends on color or graphics alone.
+restricted to `SUPER_ADMIN` and displays page views, form submissions by workflow, resource
+downloads, donation status counts, simulated confirmed values by currency, top dimensions, and
+UTC daily trends. Every visual bar includes a numeric label and an accompanying visible data
+table, so meaning never depends on color or graphics alone.
 
 Step 45 completes the super-administrator security and operations workspace. `/admin/users`
 enforces the backend's self-deletion and final-active-super-administrator protections;
@@ -606,7 +607,15 @@ The ingestion body accepts `eventType` (`page_view`, `click`, or `submit`), a lo
 `deviceType`, and optional `referrer`. Country is accepted only from Cloudflare's
 `CF-IPCountry` request header; clients cannot submit it in the body. In this anonymous model,
 the documented `totalVisitors` and daily `visitors` values represent page-view counts rather
-than uniquely identified people.
+than uniquely identified people. The administrator read model also aggregates authoritative
+records from contact submissions, volunteer applications, newsletter subscriptions, event RSVPs,
+resource download logs, and donations; it does not copy those records into the anonymous event
+stream. Summary responses include form totals by workflow, total and top resource downloads,
+download countries, donation status counts, and confirmed simulated values separated into USD and
+ETB. Timeline responses use UTC day buckets for page views, forms, resource downloads, donation
+creation/confirmation counts, and confirmed simulated values. Decimal money values are returned as
+strings to preserve database precision, and the interface never describes trial values as collected
+funds.
 
 ## Security Hardening
 
