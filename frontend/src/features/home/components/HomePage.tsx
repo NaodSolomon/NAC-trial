@@ -5,6 +5,7 @@ import {
   HomeEventTeasers,
   HomeGalleryTeasers,
   HomeHero,
+  HomeLocation,
   HomeServices,
 } from '@/components/public/home';
 import type { HomePageData, HomeSection } from '../home.types';
@@ -41,6 +42,8 @@ function HomeSectionRenderer({
       return <HomeHero section={section} language={language} />;
     case 'services':
       return <HomeServices section={section} />;
+    case 'location':
+      return <HomeLocation section={section} language={language} />;
     case 'callToAction':
       return <HomeCallToAction section={section} language={language} />;
   }

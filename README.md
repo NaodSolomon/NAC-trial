@@ -139,21 +139,22 @@ declare English.
 
 ### Backend (`cd backend`)
 
-| Command             | Description                         |
-| ------------------- | ----------------------------------- |
-| `pnpm dev`          | Start with watch mode               |
-| `pnpm build`        | Build for production                |
-| `pnpm test`         | Run unit tests (Jest)               |
-| `pnpm test:e2e`     | Run E2E tests                       |
-| `pnpm openapi:lint` | Generate and validate OpenAPI       |
-| `pnpm db:generate`  | Generate migration from schema diff |
-| `pnpm db:migrate`   | Apply pending migrations            |
-| `pnpm db:check`     | Check migration history consistency |
-| `pnpm db:studio`    | Open Drizzle Studio (visual DB)     |
-| `pnpm db:seed`      | Seed the database                   |
-| `pnpm db:seed:demo` | Seed local trial homepage and FAQ   |
-| `pnpm lint`         | Lint with ESLint                    |
-| `pnpm format`       | Format with Prettier                |
+| Command                        | Description                               |
+| ------------------------------ | ----------------------------------------- |
+| `pnpm dev`                     | Start with watch mode                     |
+| `pnpm build`                   | Build for production                      |
+| `pnpm test`                    | Run unit tests (Jest)                     |
+| `pnpm test:e2e`                | Run E2E tests                             |
+| `pnpm openapi:lint`            | Generate and validate OpenAPI             |
+| `pnpm db:generate`             | Generate migration from schema diff       |
+| `pnpm db:migrate`              | Apply pending migrations                  |
+| `pnpm db:check`                | Check migration history consistency       |
+| `pnpm db:studio`               | Open Drizzle Studio (visual DB)           |
+| `pnpm db:seed`                 | Seed the database                         |
+| `pnpm db:seed:demo`            | Seed the complete local trial content set |
+| `pnpm db:check:launch-content` | Verify required bilingual launch content  |
+| `pnpm lint`                    | Lint with ESLint                          |
+| `pnpm format`                  | Format with Prettier                      |
 
 ## Shared Types
 
@@ -218,11 +219,22 @@ The platform has no public user registration. Administrator authentication uses:
 To create the first super administrator, set `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL`, and `SEED_ADMIN_PASSWORD`, then run `pnpm db:seed` from `backend/`. Seed credentials are never given default values, and an existing administrator is never overwritten.
 
 For a local trial environment, run `pnpm db:seed:demo` after migrations and the bootstrap seed.
-This separate, idempotent seed publishes the English `home` and `faq` CMS pages used by the
-homepage and FAQ composition endpoints. It creates an inactive technical content author with
-no usable login credential, never creates a default administrator, and leaves existing pages
-unchanged when the script is run again. Demonstration content is not part of the production
-bootstrap seed.
+This separate, idempotent seed publishes bilingual homepage, about, FAQ, contact, volunteer,
+blog, event, testimonial, resource, media, and gallery demonstration records. The local MinIO
+initializer copies matching trial files into the public bucket, so resource downloads and gallery
+images work without external storage. All sample files and gallery descriptions identify
+themselves as trial content that must be replaced before launch. The seed creates an inactive
+technical content author with no usable login credential, never creates a default administrator,
+and leaves existing records unchanged when run again. Demonstration content is not part of the
+production bootstrap seed.
+
+The seed creates English and Amharic `team` pages as drafts with no people, biographies, or
+unsupported claims. Content editors must enter NAC-approved bilingual team records through the
+typed CMS editor and explicitly publish both pages. Run `pnpm db:check:launch-content` before a
+production release. It fails when either language lacks required published pages, the homepage
+map, mission/history/services composition, volunteer roles, approved team biographies, resources,
+media, or gallery content. This makes missing organizational approval a visible release blocker
+instead of encouraging fictional public content.
 
 The Step 39 frontend provides the shared private administrator workspace under `/admin`.
 Navigation and client-side route gating derive from one permission map for `SUPER_ADMIN`,
@@ -521,8 +533,10 @@ display, and the Google map is loaded only after explicit user activation. Conta
 volunteer, and newsletter forms use duplicate-submission guards and controlled validation,
 rate-limit, and availability messages. Submitted personal information remains only in form
 memory until it is posted in the request body; it is never placed in URLs, browser storage,
-analytics events, or client logs. `db:seed:demo` includes bilingual contact and volunteer
-pages plus published trial testimonials for local end-to-end demonstrations.
+analytics events, or client logs. Volunteer opportunities are stored as bounded structured CMS
+records, displayed as role cards, and offered as explicit choices in the application form.
+`db:seed:demo` includes bilingual contact and volunteer pages, structured trial roles, and
+published trial testimonials for local end-to-end demonstrations.
 
 Testimonials start as drafts unless explicitly published. Public queries cannot request draft
 status, and repository filtering independently enforces `PUBLISHED`. Audit metadata for

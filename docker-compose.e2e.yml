@@ -60,7 +60,16 @@ services:
         mc mb --ignore-existing e2e/nehemiah-e2e-media &&
         printf 'Nehemiah Autism Center E2E family support guide.\n' > /tmp/family-support-guide.txt &&
         mc cp /tmp/family-support-guide.txt e2e/nehemiah-e2e-media/family-support-guide.txt &&
+        mc cp /demo-images/gallery_1.jpg e2e/nehemiah-e2e-media/demo/gallery-family-support-en.jpg &&
+        mc cp /demo-images/gallery_2.jpg e2e/nehemiah-e2e-media/demo/gallery-community-en.jpg &&
+        mc cp /demo-images/gallery_1.jpg e2e/nehemiah-e2e-media/demo/gallery-family-support-am.jpg &&
+        mc cp /demo-images/gallery_2.jpg e2e/nehemiah-e2e-media/demo/gallery-community-am.jpg &&
+        mc cp /demo-resources/trial-family-resource-en.txt e2e/nehemiah-e2e-media/demo/resources/trial-family-resource-en.txt &&
+        mc cp /demo-resources/trial-family-resource-am.txt e2e/nehemiah-e2e-media/demo/resources/trial-family-resource-am.txt &&
         mc anonymous set download e2e/nehemiah-e2e-media
+    volumes:
+      - ./frontend/public/images:/demo-images:ro
+      - ./backend/src/database/seeds/assets:/demo-resources:ro
     restart: "no"
 
   mailpit-e2e:

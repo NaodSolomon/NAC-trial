@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { publishedCmsPageSchema } from './cms.schemas';
+import { publishedCmsPageSchema, teamMetadataSchema } from './cms.schemas';
 import { sanitizeCmsText } from './sanitize-cms';
 
 describe('CMS public rendering boundary', () => {
@@ -20,6 +20,16 @@ describe('CMS public rendering boundary', () => {
         title: 'Private draft',
         content: 'Do not display',
         status: 'DRAFT',
+      }),
+    ).toThrow();
+  });
+
+  it('does not consider an empty or incomplete team page publishable', () => {
+    expect(() => teamMetadataSchema.parse({ contentApproved: true, teamMembers: [] })).toThrow();
+    expect(() =>
+      teamMetadataSchema.parse({
+        contentApproved: true,
+        teamMembers: [{ name: 'Approved name', role: 'Approved role', biography: '' }],
       }),
     ).toThrow();
   });

@@ -47,11 +47,8 @@ export class CmsPagesService {
   }
 
   async findPublicPage(slug: string, languageCode: 'en' | 'am'): Promise<CmsPage> {
-    const page = await this.cache.remember(
-      'cms',
-      `${languageCode}:${slug}`,
-      300,
-      () => this.pages.findPublished(slug, languageCode),
+    const page = await this.cache.remember('cms', `${languageCode}:${slug}`, 300, () =>
+      this.pages.findPublished(slug, languageCode),
     );
 
     if (!page) {
@@ -128,6 +125,7 @@ export class CmsPagesService {
   }
 
   async publish(id: string, actor: AdminPrincipal): Promise<CmsPage> {
+    this.assertLaunchContentApproved(await this.findAdminPage(id));
     const published = await this.pages.publish(id, actor.id);
 
     if (!published) {
@@ -144,6 +142,8 @@ export class CmsPagesService {
     if (scheduledAt <= new Date()) {
       throw new BadRequestException('scheduledAt must be in the future');
     }
+
+    this.assertLaunchContentApproved(await this.findAdminPage(id));
 
     const scheduled = await this.pages.schedule(id, scheduledAt, actor.id);
 
@@ -178,6 +178,21 @@ export class CmsPagesService {
     }
 
     throw error;
+  }
+
+  private assertLaunchContentApproved(page: CmsPage): void {
+    if (!['about', 'team'].includes(page.slug)) return;
+    if (page.metadata.contentApproved !== true) {
+      throw new BadRequestException(
+        `${page.slug} content requires explicit Nehemiah Autism Center approval before publication`,
+      );
+    }
+    if (page.slug === 'team') {
+      const members = page.metadata.teamMembers;
+      if (!Array.isArray(members) || members.length === 0) {
+        throw new BadRequestException('At least one approved team biography is required');
+      }
+    }
   }
 
   private isUniqueViolation(error: unknown): boolean {

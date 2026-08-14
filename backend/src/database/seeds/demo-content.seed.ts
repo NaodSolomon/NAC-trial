@@ -1,6 +1,16 @@
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../schema';
-import { admins, blogPosts, cmsPages, events, testimonials } from '../schema';
+import {
+  admins,
+  blogPosts,
+  cmsPages,
+  events,
+  galleryItems,
+  mediaAssets,
+  mediaTranslations,
+  resources,
+  testimonials,
+} from '../schema';
 
 export const DEMO_SEED_AUTHOR_ID = '00000000-0000-4000-8000-000000000004';
 
@@ -37,6 +47,12 @@ const demoPages = [
               body: 'Education that encourages inclusion, acceptance, and understanding.',
             },
           ],
+        },
+        {
+          type: 'location',
+          heading: 'Find us in Addis Ababa',
+          body: 'The map is loaded only after you choose to connect to Google Maps.',
+          mapEmbedUrl: 'https://www.google.com/maps?q=Addis+Ababa,+Ethiopia&output=embed',
         },
         {
           type: 'callToAction',
@@ -83,6 +99,12 @@ const demoPages = [
           ],
         },
         {
+          type: 'location',
+          heading: 'በአዲስ አበባ ያግኙን',
+          body: 'ካርታው ከGoogle Maps ጋር የሚገናኘው እርስዎ እንዲጫን ከመረጡ በኋላ ብቻ ነው።',
+          mapEmbedUrl: 'https://www.google.com/maps?q=Addis+Ababa,+Ethiopia&output=embed',
+        },
+        {
           type: 'callToAction',
           heading: 'ከቡድናችን ጋር ውይይት ይጀምሩ',
           body: 'ልንሰማዎትና ትክክለኛውን ቀጣይ እርምጃ እንዲያገኙ ለመርዳት ዝግጁ ነን።',
@@ -99,7 +121,30 @@ const demoPages = [
     title: 'About Nehemiah Autism Center',
     content:
       'Nehemiah Autism Center supports autistic children and their families through practical guidance, learning support, advocacy, and inclusive community activities.\n\nOur work is family-centered. We listen to each family, respect every child’s strengths, and help communities build greater understanding and acceptance.',
-    metadata: {},
+    metadata: {
+      contentApproved: false,
+      about: {
+        mission: {
+          heading: 'Our mission',
+          body: 'Increase autism awareness, provide structured information and connect autistic children and their families with respectful support.',
+        },
+        history: {
+          heading: 'Our history',
+          body: "The center's founding history and milestones require final approval from Nehemiah Autism Center before production launch. This trial text must not be treated as an organizational record.",
+        },
+        services: [
+          { title: 'Family guidance', body: 'Practical information for parents and caregivers.' },
+          {
+            title: 'Learning support',
+            body: 'Activities that respect individual strengths and needs.',
+          },
+          {
+            title: 'Community awareness',
+            body: 'Education that promotes understanding and inclusion.',
+          },
+        ],
+      },
+    },
     seoTitle: 'About Nehemiah Autism Center',
     seoDescription:
       'Learn about Nehemiah Autism Center and its family-centered autism support in Ethiopia.',
@@ -110,7 +155,24 @@ const demoPages = [
     title: 'ስለ ነህምያ ኦቲዝም ማዕከል',
     content:
       'ነህምያ ኦቲዝም ማዕከል ኦቲዝም ያለባቸውን ህጻናትና ቤተሰቦቻቸውን በተግባራዊ ምክር፣ በትምህርት ድጋፍ፣ በጥብቅና እና በአካታች የማህበረሰብ እንቅስቃሴዎች ይደግፋል።\n\nሥራችን ቤተሰብን ማዕከል ያደረገ ነው። እያንዳንዱን ቤተሰብ እናዳምጣለን፣ የእያንዳንዱን ህጻን ጥንካሬ እናከብራለን።',
-    metadata: {},
+    metadata: {
+      contentApproved: false,
+      about: {
+        mission: {
+          heading: 'ተልዕኳችን',
+          body: 'ስለ ኦቲዝም ግንዛቤን ማሳደግ፣ የተደራጀ መረጃ ማቅረብ እና ኦቲዝም ያለባቸውን ሕፃናትና ቤተሰቦቻቸውን ከአክብሮት ጋር ከሚሰጥ ድጋፍ ጋር ማገናኘት።',
+        },
+        history: {
+          heading: 'ታሪካችን',
+          body: 'የማዕከሉ የምስረታ ታሪክና ዋና ዋና ክንውኖች ከምርት ስርጭት በፊት በነህምያ ኦቲዝም ማዕከል መጽደቅ አለባቸው። ይህ የሙከራ ጽሑፍ እንደ ድርጅቱ ታሪክ መወሰድ የለበትም።',
+        },
+        services: [
+          { title: 'የቤተሰብ ምክር', body: 'ለወላጆችና ለተንከባካቢዎች ተግባራዊ መረጃ።' },
+          { title: 'የትምህርት ድጋፍ', body: 'የግለሰብን ጥንካሬና ፍላጎት የሚያከብሩ እንቅስቃሴዎች።' },
+          { title: 'የማህበረሰብ ግንዛቤ', body: 'መረዳትንና አካታችነትን የሚያበረታታ ትምህርት።' },
+        ],
+      },
+    },
     seoTitle: 'ስለ ነህምያ ኦቲዝም ማዕከል',
     seoDescription: 'በኢትዮጵያ ስላለው የነህምያ ኦቲዝም ማዕከል የቤተሰብ ድጋፍ ይወቁ።',
   },
@@ -198,7 +260,26 @@ const demoPages = [
     title: 'Volunteer with Nehemiah Autism Center',
     content:
       'Volunteers can support inclusive events, family activities, administration, and community awareness. Tell us about your interests and availability so the team can consider suitable opportunities.',
-    metadata: {},
+    metadata: {
+      volunteerRoles: [
+        {
+          title: 'Inclusive event support',
+          summary: 'Help the team prepare welcoming, organized community and family activities.',
+          commitment: 'Scheduled around individual events',
+        },
+        {
+          title: 'Community awareness support',
+          summary:
+            'Assist with accessible information, outreach materials, and awareness activities.',
+          commitment: 'Flexible project-based support',
+        },
+        {
+          title: 'Administrative support',
+          summary: 'Support non-clinical organization and routine office activities when needed.',
+          commitment: 'Agreed with the center before placement',
+        },
+      ],
+    },
     seoTitle: 'Volunteer | Nehemiah Autism Center',
     seoDescription: 'Register your interest in volunteering with Nehemiah Autism Center.',
   },
@@ -207,9 +288,49 @@ const demoPages = [
     languageCode: 'am' as const,
     title: 'ከነህምያ ኦቲዝም ማዕከል ጋር በበጎ ፈቃድ ይስሩ',
     content: 'በጎ ፈቃደኞች አካታች ዝግጅቶችን፣ የቤተሰብ እንቅስቃሴዎችንና የማህበረሰብ ግንዛቤን መደገፍ ይችላሉ። ስለ ፍላጎትዎና ጊዜዎ ይንገሩን።',
-    metadata: {},
+    metadata: {
+      volunteerRoles: [
+        {
+          title: 'የአካታች ዝግጅት ድጋፍ',
+          summary: 'ቡድኑ ተቀባይና የተደራጀ የማህበረሰብ እና የቤተሰብ እንቅስቃሴ እንዲያዘጋጅ ያግዙ።',
+          commitment: 'በእያንዳንዱ ዝግጅት መርሐ ግብር መሠረት',
+        },
+        {
+          title: 'የማህበረሰብ ግንዛቤ ድጋፍ',
+          summary: 'ተደራሽ መረጃ፣ የማስተዋወቂያ ቁሳቁስና የግንዛቤ እንቅስቃሴዎችን ያግዙ።',
+          commitment: 'በፕሮጀክት ላይ የተመሠረተ ተለዋዋጭ ጊዜ',
+        },
+        {
+          title: 'የአስተዳደር ድጋፍ',
+          summary: 'እንደ አስፈላጊነቱ ክሊኒካዊ ያልሆኑ የማደራጀትና የቢሮ ሥራዎችን ያግዙ።',
+          commitment: 'ቦታ ከመሰጠቱ በፊት ከማዕከሉ ጋር የሚስማማ',
+        },
+      ],
+    },
     seoTitle: 'በጎ ፈቃደኝነት | ነህምያ ኦቲዝም ማዕከል',
     seoDescription: 'ከነህምያ ኦቲዝም ማዕከል ጋር በበጎ ፈቃድ ለመስራት ፍላጎትዎን ይግለጹ።',
+  },
+  {
+    slug: 'team',
+    languageCode: 'en' as const,
+    title: 'Our Team',
+    content:
+      'This draft intentionally contains no names or biographies. Nehemiah Autism Center must approve bilingual team information before this page can be published.',
+    metadata: { contentApproved: false },
+    status: 'DRAFT' as const,
+    seoTitle: 'Our Team | Nehemiah Autism Center',
+    seoDescription: 'Meet the approved Nehemiah Autism Center team.',
+  },
+  {
+    slug: 'team',
+    languageCode: 'am' as const,
+    title: 'ቡድናችን',
+    content:
+      'ይህ ረቂቅ ሆን ተብሎ ስሞችንና የሕይወት ታሪኮችን አልያዘም። ይህ ገጽ ከመታተሙ በፊት ነህምያ ኦቲዝም ማዕከል በሁለቱም ቋንቋዎች የቡድን መረጃውን ማጽደቅ አለበት።',
+    metadata: { contentApproved: false },
+    status: 'DRAFT' as const,
+    seoTitle: 'ቡድናችን | ነህምያ ኦቲዝም ማዕከል',
+    seoDescription: 'የተፈቀደውን የነህምያ ኦቲዝም ማዕከል ቡድን ይወቁ።',
   },
 ] as const;
 
@@ -354,7 +475,73 @@ const demoEvents = [
   },
 ] as const;
 
+const demoMedia = [
+  {
+    id: '00000000-0000-4000-8000-000000000901',
+    objectKey: 'demo/gallery-family-support-en.jpg',
+    originalName: 'gallery-family-support-en.jpg',
+    sizeBytes: 31_944,
+    altText: 'Trial gallery sample; replace with approved Nehemiah Autism Center media.',
+    caption: 'Trial media for local demonstration only.',
+    languageCode: 'en' as const,
+    title: 'Trial gallery sample',
+  },
+  {
+    id: '00000000-0000-4000-8000-000000000902',
+    objectKey: 'demo/gallery-community-en.jpg',
+    originalName: 'gallery-community-en.jpg',
+    sizeBytes: 24_455,
+    altText: 'Second trial gallery sample; replace with approved center media.',
+    caption: 'Trial media for local demonstration only.',
+    languageCode: 'en' as const,
+    title: 'Trial community sample',
+  },
+  {
+    id: '00000000-0000-4000-8000-000000000903',
+    objectKey: 'demo/gallery-family-support-am.jpg',
+    originalName: 'gallery-family-support-am.jpg',
+    sizeBytes: 31_944,
+    altText: 'የሙከራ የምስል ማዕከል ናሙና፤ በተፈቀደ የማዕከሉ ሚዲያ ይተኩ።',
+    caption: 'ለአካባቢ ሙከራ ብቻ የተዘጋጀ ሚዲያ።',
+    languageCode: 'am' as const,
+    title: 'የሙከራ ምስል ናሙና',
+  },
+  {
+    id: '00000000-0000-4000-8000-000000000904',
+    objectKey: 'demo/gallery-community-am.jpg',
+    originalName: 'gallery-community-am.jpg',
+    sizeBytes: 24_455,
+    altText: 'ሁለተኛ የሙከራ ምስል ናሙና፤ በተፈቀደ የማዕከሉ ሚዲያ ይተኩ።',
+    caption: 'ለአካባቢ ሙከራ ብቻ የተዘጋጀ ሚዲያ።',
+    languageCode: 'am' as const,
+    title: 'የሙከራ ማህበረሰብ ናሙና',
+  },
+] as const;
+
+const demoResources = [
+  {
+    id: '00000000-0000-4000-8000-000000000911',
+    title: 'Trial family resource',
+    description:
+      'A local demonstration download. Replace it with an approved Nehemiah Autism Center resource before launch.',
+    objectKey: 'demo/resources/trial-family-resource-en.txt',
+    fileName: 'trial-family-resource-en.txt',
+    languageCode: 'en' as const,
+  },
+  {
+    id: '00000000-0000-4000-8000-000000000912',
+    title: 'የሙከራ የቤተሰብ ግብዓት',
+    description: 'የአካባቢ ማሳያ ውርድ። ከማስጀመር በፊት በተፈቀደ የነህምያ ኦቲዝም ማዕከል ግብዓት ይተኩት።',
+    objectKey: 'demo/resources/trial-family-resource-am.txt',
+    fileName: 'trial-family-resource-am.txt',
+    languageCode: 'am' as const,
+  },
+] as const;
+
 export async function seedDemoContent(database: NodePgDatabase<typeof schema>): Promise<void> {
+  const storagePublicUrl = (
+    process.env.STORAGE_PUBLIC_URL ?? 'http://localhost:9000/nehemiah-media'
+  ).replace(/\/+$/, '');
   await database.transaction(async (transaction) => {
     await transaction
       .insert(admins)
@@ -373,12 +560,15 @@ export async function seedDemoContent(database: NodePgDatabase<typeof schema>): 
     await transaction
       .insert(cmsPages)
       .values(
-        demoPages.map((page) => ({
-          ...page,
-          status: 'PUBLISHED' as const,
-          publishedAt,
-          createdBy: DEMO_SEED_AUTHOR_ID,
-        })),
+        demoPages.map((page) => {
+          const status = 'status' in page ? page.status : ('PUBLISHED' as const);
+          return {
+            ...page,
+            status,
+            publishedAt: status === 'PUBLISHED' ? publishedAt : null,
+            createdBy: DEMO_SEED_AUTHOR_ID,
+          };
+        }),
       )
       .onConflictDoNothing({
         target: [cmsPages.slug, cmsPages.languageCode],
@@ -419,5 +609,65 @@ export async function seedDemoContent(database: NodePgDatabase<typeof schema>): 
       .onConflictDoNothing({
         target: [testimonials.translationKey, testimonials.languageCode],
       });
+
+    await transaction
+      .insert(mediaAssets)
+      .values(
+        demoMedia.map((media) => ({
+          id: media.id,
+          objectKey: media.objectKey,
+          publicUrl: `${storagePublicUrl}/${media.objectKey}`,
+          originalName: media.originalName,
+          mimeType: 'image/jpeg',
+          sizeBytes: media.sizeBytes,
+          type: 'IMAGE' as const,
+          uploadedBy: DEMO_SEED_AUTHOR_ID,
+        })),
+      )
+      .onConflictDoNothing({ target: mediaAssets.id });
+
+    await transaction
+      .insert(mediaTranslations)
+      .values(
+        demoMedia.map((media) => ({
+          mediaId: media.id,
+          languageCode: media.languageCode,
+          altText: media.altText,
+          caption: media.caption,
+        })),
+      )
+      .onConflictDoNothing({
+        target: [mediaTranslations.mediaId, mediaTranslations.languageCode],
+      });
+
+    await transaction
+      .insert(galleryItems)
+      .values(
+        demoMedia.map((media) => ({
+          mediaId: media.id,
+          title: media.title,
+          altText: media.altText,
+          languageCode: media.languageCode,
+          createdBy: DEMO_SEED_AUTHOR_ID,
+        })),
+      )
+      .onConflictDoNothing({ target: galleryItems.mediaId });
+
+    await transaction
+      .insert(resources)
+      .values(
+        demoResources.map((resource) => ({
+          id: resource.id,
+          title: resource.title,
+          description: resource.description,
+          fileUrl: `${storagePublicUrl}/${resource.objectKey}`,
+          fileName: resource.fileName,
+          mimeType: 'text/plain',
+          languageCode: resource.languageCode,
+          status: 'PUBLISHED' as const,
+          createdBy: DEMO_SEED_AUTHOR_ID,
+        })),
+      )
+      .onConflictDoNothing({ target: resources.id });
   });
 }

@@ -32,6 +32,7 @@ export class EngagementService {
       title: page.title,
       description: page.content,
       languageCode: page.languageCode,
+      roles: page.metadata.volunteerRoles ?? [],
     };
   }
 

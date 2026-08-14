@@ -86,9 +86,26 @@ export function editorValuesFromPage(page?: AdminCmsPage): CmsEditorValues {
   const sections = Array.isArray(metadata.sections) ? metadata.sections : [];
   const hero = objectSection(sections, 'hero');
   const services = objectSection(sections, 'services');
+  const location = objectSection(sections, 'location');
   const cta = objectSection(sections, 'callToAction');
   const faqItems = Array.isArray(metadata.items) ? metadata.items : [];
-  const contentType = sections.length ? 'homepage' : faqItems.length ? 'faq' : 'generic';
+  const about = objectValue(metadata.about);
+  const mission = objectValue(about.mission);
+  const history = objectValue(about.history);
+  const aboutServices = arrayValue(about.services);
+  const volunteerRoles = arrayValue(metadata.volunteerRoles);
+  const teamMembers = arrayValue(metadata.teamMembers);
+  const contentType = sections.length
+    ? 'homepage'
+    : faqItems.length
+      ? 'faq'
+      : Object.keys(about).length
+        ? 'about'
+        : volunteerRoles.length
+          ? 'volunteer'
+          : teamMembers.length
+            ? 'team'
+            : 'generic';
   return {
     slug: page?.slug ?? '',
     languageCode: page?.languageCode ?? 'en',
@@ -108,6 +125,9 @@ export function editorValuesFromPage(page?: AdminCmsPage): CmsEditorValues {
             body: stringValue(objectValue(item).body),
           }))
         : [],
+      locationHeading: stringValue(location.heading),
+      locationBody: stringValue(location.body),
+      mapEmbedUrl: stringValue(location.mapEmbedUrl),
       ctaHeading: stringValue(cta.heading),
       ctaBody: stringValue(cta.body),
       ctaLabel: stringValue(objectValue(cta.action).label),
@@ -117,6 +137,28 @@ export function editorValuesFromPage(page?: AdminCmsPage): CmsEditorValues {
       question: stringValue(objectValue(item).question),
       answer: stringValue(objectValue(item).answer),
     })),
+    about: {
+      contentApproved: metadata.contentApproved === true,
+      missionHeading: stringValue(mission.heading),
+      missionBody: stringValue(mission.body),
+      historyHeading: stringValue(history.heading),
+      historyBody: stringValue(history.body),
+      services: aboutServices.map((item) => ({
+        title: stringValue(objectValue(item).title),
+        body: stringValue(objectValue(item).body),
+      })),
+    },
+    volunteerRoles: volunteerRoles.map((item) => ({
+      title: stringValue(objectValue(item).title),
+      summary: stringValue(objectValue(item).summary),
+      commitment: stringValue(objectValue(item).commitment),
+    })),
+    teamMembers: teamMembers.map((item) => ({
+      name: stringValue(objectValue(item).name),
+      role: stringValue(objectValue(item).role),
+      biography: stringValue(objectValue(item).biography),
+    })),
+    teamContentApproved: metadata.contentApproved === true,
   };
 }
 
@@ -150,6 +192,12 @@ function editorPayload(values: CmsEditorValues, includeLanguage: boolean) {
                 items: values.homepage.services,
               },
               {
+                type: 'location',
+                heading: values.homepage.locationHeading,
+                ...(values.homepage.locationBody && { body: values.homepage.locationBody }),
+                mapEmbedUrl: values.homepage.mapEmbedUrl,
+              },
+              {
                 type: 'callToAction',
                 heading: values.homepage.ctaHeading,
                 ...(values.homepage.ctaBody && { body: values.homepage.ctaBody }),
@@ -159,7 +207,35 @@ function editorPayload(values: CmsEditorValues, includeLanguage: boolean) {
           }
         : values.contentType === 'faq'
           ? { items: values.faqs }
-          : {},
+          : values.contentType === 'about'
+            ? {
+                contentApproved: values.about.contentApproved,
+                about: {
+                  mission: {
+                    heading: values.about.missionHeading,
+                    body: values.about.missionBody,
+                  },
+                  history: {
+                    heading: values.about.historyHeading,
+                    body: values.about.historyBody,
+                  },
+                  services: values.about.services,
+                },
+              }
+            : values.contentType === 'volunteer'
+              ? {
+                  volunteerRoles: values.volunteerRoles.map((role) => ({
+                    title: role.title,
+                    summary: role.summary,
+                    ...(role.commitment && { commitment: role.commitment }),
+                  })),
+                }
+              : values.contentType === 'team'
+                ? {
+                    contentApproved: values.teamContentApproved,
+                    teamMembers: values.teamMembers,
+                  }
+                : {},
   };
 }
 
@@ -175,4 +251,8 @@ function objectValue(value: unknown): Record<string, unknown> {
 
 function stringValue(value: unknown): string {
   return typeof value === 'string' ? value : '';
+}
+
+function arrayValue(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
 }

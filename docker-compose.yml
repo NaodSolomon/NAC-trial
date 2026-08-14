@@ -143,10 +143,19 @@ services:
         mc alias set local http://minio:9000
         "$${MINIO_ROOT_USER:-minioadmin}" "$${MINIO_ROOT_PASSWORD:-minioadmin}" &&
         mc mb --ignore-existing local/nehemiah-media &&
-        mc anonymous set download local/nehemiah-media
+        mc anonymous set download local/nehemiah-media &&
+        mc cp /demo-images/gallery_1.jpg local/nehemiah-media/demo/gallery-family-support-en.jpg &&
+        mc cp /demo-images/gallery_2.jpg local/nehemiah-media/demo/gallery-community-en.jpg &&
+        mc cp /demo-images/gallery_1.jpg local/nehemiah-media/demo/gallery-family-support-am.jpg &&
+        mc cp /demo-images/gallery_2.jpg local/nehemiah-media/demo/gallery-community-am.jpg &&
+        mc cp /demo-resources/trial-family-resource-en.txt local/nehemiah-media/demo/resources/trial-family-resource-en.txt &&
+        mc cp /demo-resources/trial-family-resource-am.txt local/nehemiah-media/demo/resources/trial-family-resource-am.txt
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - ./frontend/public/images:/demo-images:ro
+      - ./backend/src/database/seeds/assets:/demo-resources:ro
 
   mailpit:
     image: axllent/mailpit:latest

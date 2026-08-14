@@ -1,0 +1,7 @@
+NEHEMIAH AUTISM CENTER - TRIAL RESOURCE
+
+This file exists only to demonstrate the resource download workflow in the free local trial stack.
+It is not approved clinical, educational, or organizational guidance.
+
+Before production launch, replace this file with bilingual material reviewed and approved by
+Nehemiah Autism Center.

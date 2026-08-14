@@ -29,6 +29,27 @@ export async function VolunteerPage({ language }: { language: Language }) {
             <div className="mt-5">
               <CmsArticle content={content.description} />
             </div>
+            {content.roles.length > 0 && (
+              <section className="mt-8" aria-labelledby="volunteer-roles-heading">
+                <h2 id="volunteer-roles-heading" className="text-heading text-2xl font-semibold">
+                  {language === 'am' ? 'የበጎ ፈቃድ ሚናዎች' : 'Current volunteer roles'}
+                </h2>
+                <div className="mt-4 space-y-4">
+                  {content.roles.map((role) => (
+                    <article key={role.title} className="bg-secondary-bg rounded-xl border p-5">
+                      <h3 className="text-heading text-lg font-semibold">{role.title}</h3>
+                      <p className="text-foreground mt-2 leading-7">{role.summary}</p>
+                      {role.commitment && (
+                        <p className="text-primary mt-3 text-sm font-semibold">
+                          {language === 'am' ? 'የጊዜ ግዴታ፦ ' : 'Commitment: '}
+                          {role.commitment}
+                        </p>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
             <div className="relative mt-8 aspect-[4/3] overflow-hidden rounded-xl">
               <Image
                 src="/images/volunteers.jpg"
@@ -55,7 +76,7 @@ export async function VolunteerPage({ language }: { language: Language }) {
                 ? 'መረጃዎን ይላኩ። ይህ ወዲያውኑ የበጎ ፈቃድ ቦታ እንደሚሰጥ አያረጋግጥም።'
                 : 'Tell us how you would like to help. Submitting this form does not guarantee an immediate placement.'}
             </p>
-            <VolunteerForm language={language} />
+            <VolunteerForm language={language} roles={content.roles} />
           </section>
         </div>
       </section>

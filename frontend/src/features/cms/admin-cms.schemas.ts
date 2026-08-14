@@ -62,7 +62,7 @@ export const cmsEditorSchema = z
     title: z.string().trim().min(1).max(255),
     content: z.string().min(1).max(200_000),
     translationKey: z.string().uuid().or(z.literal('')),
-    contentType: z.enum(['generic', 'homepage', 'faq']),
+    contentType: z.enum(['generic', 'homepage', 'faq', 'about', 'volunteer', 'team']),
     homepage: z.object({
       heroHeading: z.string().trim().max(180),
       heroBody: z.string().trim().max(1_000),
@@ -70,6 +70,9 @@ export const cmsEditorSchema = z
       primaryHref: z.string().trim().max(2_048),
       servicesHeading: z.string().trim().max(180),
       services: z.array(homepageServiceSchema).max(12),
+      locationHeading: z.string().trim().max(180),
+      locationBody: z.string().trim().max(1_000),
+      mapEmbedUrl: z.string().trim().max(2_048),
       ctaHeading: z.string().trim().max(180),
       ctaBody: z.string().trim().max(1_000),
       ctaLabel: z.string().trim().max(80),
@@ -83,6 +86,33 @@ export const cmsEditorSchema = z
         }),
       )
       .max(50),
+    about: z.object({
+      contentApproved: z.boolean(),
+      missionHeading: z.string().trim().max(180),
+      missionBody: z.string().trim().max(5_000),
+      historyHeading: z.string().trim().max(180),
+      historyBody: z.string().trim().max(5_000),
+      services: z.array(homepageServiceSchema).max(12),
+    }),
+    volunteerRoles: z
+      .array(
+        z.object({
+          title: z.string().trim().min(1).max(150),
+          summary: z.string().trim().min(1).max(1_000),
+          commitment: z.string().trim().max(300),
+        }),
+      )
+      .max(20),
+    teamMembers: z
+      .array(
+        z.object({
+          name: z.string().trim().min(1).max(150),
+          role: z.string().trim().min(1).max(150),
+          biography: z.string().trim().min(1).max(2_000),
+        }),
+      )
+      .max(50),
+    teamContentApproved: z.boolean(),
   })
   .superRefine((value, context) => {
     if (value.contentType === 'homepage') {
@@ -93,6 +123,10 @@ export const cmsEditorSchema = z
         issue(context, ['homepage', 'servicesHeading'], 'Services heading is required.');
       if (!homepage.services.length)
         issue(context, ['homepage', 'services'], 'Add at least one service.');
+      if (!homepage.locationHeading)
+        issue(context, ['homepage', 'locationHeading'], 'Location heading is required.');
+      if (!isApprovedMapUrl(homepage.mapEmbedUrl))
+        issue(context, ['homepage', 'mapEmbedUrl'], 'Use an approved HTTPS Google Maps embed URL.');
       if (!homepage.ctaHeading)
         issue(context, ['homepage', 'ctaHeading'], 'Call-to-action heading is required.');
       if (!homepage.ctaLabel)
@@ -103,10 +137,36 @@ export const cmsEditorSchema = z
     if (value.contentType === 'faq' && !value.faqs.length) {
       issue(context, ['faqs'], 'Add at least one FAQ item.');
     }
+    if (value.contentType === 'about') {
+      if (!value.about.missionHeading || !value.about.missionBody)
+        issue(context, ['about', 'missionBody'], 'Mission heading and content are required.');
+      if (!value.about.historyHeading || !value.about.historyBody)
+        issue(context, ['about', 'historyBody'], 'History heading and content are required.');
+      if (!value.about.services.length)
+        issue(context, ['about', 'services'], 'Add at least one service.');
+    }
+    if (value.contentType === 'volunteer' && !value.volunteerRoles.length) {
+      issue(context, ['volunteerRoles'], 'Add at least one structured volunteer role.');
+    }
+    if (value.contentType === 'team' && !value.teamMembers.length) {
+      issue(context, ['teamMembers'], 'Add at least one approved team biography.');
+    }
   });
 
 function issue(context: z.RefinementCtx, path: PropertyKey[], message: string) {
   context.addIssue({ code: 'custom', path, message });
+}
+
+function isApprovedMapUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === 'https:' &&
+      (url.hostname === 'google.com' || url.hostname.endsWith('.google.com'))
+    );
+  } catch {
+    return false;
+  }
 }
 
 export type AdminCmsPage = z.infer<typeof adminCmsPageSchema>;
