@@ -35,11 +35,21 @@ export class ResourcesService {
     await this.cache.invalidate('resources');
     return resource;
   }
-  async download(id: string) {
-    const resource = await this.resources.incrementPublishedDownload(id);
+  async download(id: string, countryHeader?: string) {
+    const resource = await this.resources.recordPublishedDownload(
+      id,
+      this.normalizeCountry(countryHeader),
+    );
     if (!resource) throw new NotFoundException('Published resource was not found');
     await this.cache.invalidate('resources');
     return resource;
+  }
+
+  private normalizeCountry(value?: string): string | null {
+    const country = value?.trim().toUpperCase();
+    return country && /^[A-Z]{2}$/.test(country) && country !== 'XX' && country !== 'T1'
+      ? country
+      : null;
   }
   async delete(id: string, actor: AdminPrincipal) {
     if (!(await this.resources.delete(id, actor.id)))

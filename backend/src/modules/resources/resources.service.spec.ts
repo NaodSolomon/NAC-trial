@@ -9,7 +9,8 @@ describe('ResourcesService', () => {
     list: jest.fn(),
     create: jest.fn(),
     publish: jest.fn(),
-    incrementPublishedDownload: jest.fn(),
+    recordPublishedDownload: jest.fn(),
+    purgeDownloadLogsBefore: jest.fn(),
     delete: jest.fn(),
   };
   const cache = {
@@ -90,7 +91,7 @@ describe('ResourcesService', () => {
   });
 
   it('keeps public download counting separate from administrative auditing', async () => {
-    repository.incrementPublishedDownload.mockResolvedValue({
+    repository.recordPublishedDownload.mockResolvedValue({
       id: 'resource-id',
       fileUrl: 'http://localhost/guide.pdf',
       fileName: 'guide.pdf',
@@ -98,10 +99,28 @@ describe('ResourcesService', () => {
       downloadCount: 1,
     });
 
-    await expect(service.download('resource-id')).resolves.toMatchObject({ downloadCount: 1 });
-    expect(repository.incrementPublishedDownload).toHaveBeenCalledWith('resource-id');
+    await expect(service.download('resource-id', ' et ')).resolves.toMatchObject({
+      downloadCount: 1,
+    });
+    expect(repository.recordPublishedDownload).toHaveBeenCalledWith('resource-id', 'ET');
     expect(cache.invalidate).toHaveBeenCalledWith('resources');
   });
+
+  it.each(['XX', 'T1', 'ethiopia', '1A', ''])(
+    'discards invalid country header %p',
+    async (value) => {
+      repository.recordPublishedDownload.mockResolvedValue({
+        id: 'resource-id',
+        fileUrl: 'http://localhost/guide.pdf',
+        fileName: 'guide.pdf',
+        mimeType: 'application/pdf',
+        downloadCount: 1,
+      });
+
+      await service.download('resource-id', value);
+      expect(repository.recordPublishedDownload).toHaveBeenCalledWith('resource-id', null);
+    },
+  );
 
   it.each([
     ['publish', () => service.publish('missing-id', actor)],
@@ -109,7 +128,7 @@ describe('ResourcesService', () => {
     ['delete', () => service.delete('missing-id', actor)],
   ])('rejects a missing resource during %s', async (_operation, execute) => {
     repository.publish.mockResolvedValue(null);
-    repository.incrementPublishedDownload.mockResolvedValue(null);
+    repository.recordPublishedDownload.mockResolvedValue(null);
     repository.delete.mockResolvedValue(false);
 
     await expect(execute()).rejects.toBeInstanceOf(NotFoundException);

@@ -19,6 +19,7 @@ import {
   galleryItems,
   analyticsEvents,
   analyticsEventTypeEnum,
+  resourceDownloadLogs,
 } from '.';
 
 describe('database schema foundation', () => {
@@ -91,6 +92,19 @@ describe('database schema foundation', () => {
     expect(columns).not.toEqual(
       expect.arrayContaining(['ip_address', 'visitor_id', 'cookie_id', 'user_agent']),
     );
+    expect(config.indexes).toHaveLength(3);
+  });
+
+  it('stores bounded resource download locations without network identifiers', () => {
+    const config = getTableConfig(resourceDownloadLogs);
+    const columns = config.columns.map((column) => column.name);
+
+    expect(columns).toEqual(expect.arrayContaining(['resource_id', 'country', 'downloaded_at']));
+    expect(columns).not.toEqual(
+      expect.arrayContaining(['ip_address', 'user_agent', 'city', 'region']),
+    );
+    expect(config.foreignKeys).toHaveLength(1);
+    expect(config.checks).toHaveLength(1);
     expect(config.indexes).toHaveLength(3);
   });
 });

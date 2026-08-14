@@ -5,12 +5,14 @@ import { AdminResourcesController, PublicResourcesController } from './resources
 import { RESOURCE_REPOSITORY } from './interfaces/resource-repository.interface';
 import { DrizzleResourceRepository } from './repositories/drizzle-resource.repository';
 import { ResourcesService } from './resources.service';
+import { ResourceDownloadLogRetentionService } from './resource-download-log-retention.service';
 
 @Module({
   imports: [AuthModule, CacheModule],
   controllers: [PublicResourcesController, AdminResourcesController],
   providers: [
     ResourcesService,
+    ResourceDownloadLogRetentionService,
     {
       provide: RESOURCE_REPOSITORY,
       useClass: DrizzleResourceRepository,

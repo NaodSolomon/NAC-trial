@@ -39,6 +39,9 @@ describe('validateEnvironment', () => {
       WEB_CONCURRENCY: 1,
       SCHEDULED_PUBLISHING_ENABLED: true,
       SCHEDULED_PUBLISHING_INTERVAL_MS: 60_000,
+      RESOURCE_DOWNLOAD_LOG_CLEANUP_ENABLED: true,
+      RESOURCE_DOWNLOAD_LOG_RETENTION_DAYS: 365,
+      RESOURCE_DOWNLOAD_LOG_CLEANUP_INTERVAL_MS: 86_400_000,
       PASSWORD_RESET_TTL_MINUTES: 20,
       PASSWORD_RESET_URL: 'http://localhost:3000/admin/reset-password',
       MAIL_CONNECTION_TIMEOUT_MS: 3_000,
@@ -52,6 +55,15 @@ describe('validateEnvironment', () => {
       OUTBOX_WORKER_BACKOFF_MS: 30_000,
       OUTBOX_WORKER_LOCK_TIMEOUT_MS: 300_000,
     });
+  });
+
+  it('bounds resource download location-data retention settings', () => {
+    expect(() => validateEnvironment({ RESOURCE_DOWNLOAD_LOG_RETENTION_DAYS: 0 })).toThrow(
+      'RESOURCE_DOWNLOAD_LOG_RETENTION_DAYS must be between 1 and 3650',
+    );
+    expect(() =>
+      validateEnvironment({ RESOURCE_DOWNLOAD_LOG_CLEANUP_INTERVAL_MS: 3_599_999 }),
+    ).toThrow('RESOURCE_DOWNLOAD_LOG_CLEANUP_INTERVAL_MS must be between 3600000 and 604800000');
   });
 
   it('requires a valid contact notification mailbox in production', () => {

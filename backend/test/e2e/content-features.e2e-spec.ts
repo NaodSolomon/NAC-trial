@@ -1,7 +1,7 @@
 import * as request from 'supertest';
 import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
-import { auditLogs } from '../../src/database/schema';
+import { auditLogs, resourceDownloadLogs } from '../../src/database/schema';
 import { authenticatedSession, TestSession } from '../helpers/auth-test.helper';
 import {
   closeE2eTestContext,
@@ -162,8 +162,15 @@ describe('Frontend demonstration content (e2e)', () => {
       );
     await request(context.app.getHttpServer())
       .get(`/api/v1/public/resources/${resource.body.data.id}/download`)
+      .set('cf-ipcountry', 'ET')
       .expect(200)
       .expect(({ body }) => expect(body.data.downloadCount).toBe(1));
+    const [downloadLog] = await context.db
+      .select()
+      .from(resourceDownloadLogs)
+      .where(eq(resourceDownloadLogs.resourceId, resource.body.data.id));
+    expect(downloadLog).toMatchObject({ country: 'ET' });
+    expect(downloadLog.downloadedAt).toBeInstanceOf(Date);
     await request(context.app.getHttpServer())
       .delete(`/api/v1/admin/resources/${resource.body.data.id}`)
       .set('Authorization', admin.authorization)

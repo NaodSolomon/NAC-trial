@@ -3,13 +3,14 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   ParseUUIDPipe,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentAdmin } from '../../common/decorators/current-admin.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -27,8 +28,17 @@ export class PublicResourcesController {
   }
   @Get(':id/download')
   @ApiOperation({ summary: 'Count and return a published resource download' })
-  download(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.resources.download(id);
+  @ApiHeader({
+    name: 'cf-ipcountry',
+    required: false,
+    description: 'Optional two-letter country code supplied by the trusted edge proxy',
+    schema: { type: 'string', pattern: '^[A-Z]{2}$', example: 'ET' },
+  })
+  download(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Headers('cf-ipcountry') country?: string,
+  ) {
+    return this.resources.download(id, country);
   }
 }
 

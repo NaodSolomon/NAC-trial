@@ -23,6 +23,7 @@ export interface ResourceRepository {
   list(criteria: ResourceListCriteria): Promise<PaginatedResult<Resource>>;
   create(data: NewResource, actorId: string): Promise<Resource>;
   publish(id: string, actorId: string): Promise<Resource | null>;
-  incrementPublishedDownload(id: string): Promise<ResourceDownload | null>;
+  recordPublishedDownload(id: string, country: string | null): Promise<ResourceDownload | null>;
+  purgeDownloadLogsBefore(cutoff: Date): Promise<void>;
   delete(id: string, actorId: string): Promise<boolean>;
 }
