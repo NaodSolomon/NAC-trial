@@ -335,6 +335,11 @@ submission, and forbidden-role behavior at the network boundary, while Axe scans
 public/authentication pages for serious or critical accessibility regressions. Unit coverage is
 reported as text, JSON, and LCOV and enforced in CI alongside dependency audit, API-contract
 drift, lint, type checking, production build, bundle budgets, and the complete mock browser suite.
+The frontend production dependency audit fails CI at moderate severity or higher. Patched
+transitive PostCSS, Nanoid, Babel, and Sharp releases are pinned through pnpm overrides until the
+supported Next.js line adopts them directly; there are currently no advisory exceptions. Any
+future temporary exception must identify the advisory, document the exposure and mitigation, name
+an owner, and include an expiry date rather than weakening the global threshold.
 The dedicated Axe project scans English and Amharic public journeys plus authentication routes and
 fails on every moderate, serious, or critical violation. Windows CI also compares the approved
 desktop and mobile screenshots because the checked-in baselines were produced on Windows and font
