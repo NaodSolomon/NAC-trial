@@ -1,7 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { AdminPrincipal } from '../../auth/interfaces/auth.types';
 import { ApplicationCache, CACHE, NOOP_CACHE } from '../../cache/cache.interface';
-import { OBJECT_STORAGE, ObjectStorage } from '../../media/interfaces/object-storage.interface';
 import { MediaService } from '../../media/services/media.service';
 import { GalleryQueryDto, GalleryUploadDto, UpdateGalleryItemDto } from '../dto/gallery.dto';
 import { GALLERY_REPOSITORY, GalleryRepository } from '../interfaces/gallery-repository.interface';
@@ -10,7 +9,6 @@ import { GALLERY_REPOSITORY, GalleryRepository } from '../interfaces/gallery-rep
 export class GalleryService {
   constructor(
     @Inject(GALLERY_REPOSITORY) private readonly gallery: GalleryRepository,
-    @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
     private readonly media: MediaService,
     @Inject(CACHE) private readonly cache: ApplicationCache = NOOP_CACHE,
   ) {}
@@ -82,12 +80,7 @@ export class GalleryService {
   }
 
   async delete(id: string, actor: AdminPrincipal) {
-    const item = await this.gallery.findById(id);
-    if (!item) throw new NotFoundException(`Gallery item ${id} was not found`);
-    const asset = await this.media.findById(item.mediaId);
-    if (!asset) throw new NotFoundException(`Media asset ${item.mediaId} was not found`);
-    await this.storage.delete(asset.objectKey);
-    if (!(await this.gallery.delete(id, actor.id))) {
+    if (!(await this.gallery.deleteAndEnqueueStorageCleanup(id, actor.id))) {
       throw new NotFoundException(`Gallery item ${id} was not found`);
     }
     await this.cache.invalidate('gallery');

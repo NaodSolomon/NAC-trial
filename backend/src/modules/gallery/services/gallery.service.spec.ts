@@ -1,13 +1,11 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { ObjectStorage } from '../../media/interfaces/object-storage.interface';
 import { MediaService } from '../../media/services/media.service';
 import { GalleryRepository } from '../interfaces/gallery-repository.interface';
 import { GalleryService } from './gallery.service';
 
 describe('GalleryService', () => {
   let gallery: jest.Mocked<GalleryRepository>;
-  let media: jest.Mocked<Pick<MediaService, 'upload' | 'delete' | 'findById'>>;
-  let storage: jest.Mocked<ObjectStorage>;
+  let media: jest.Mocked<Pick<MediaService, 'upload' | 'delete'>>;
   let service: GalleryService;
   const actor = {
     id: 'admin-id',
@@ -22,11 +20,10 @@ describe('GalleryService', () => {
       create: jest.fn(),
       findById: jest.fn(),
       update: jest.fn(),
-      delete: jest.fn(),
+      deleteAndEnqueueStorageCleanup: jest.fn(),
     };
-    media = { upload: jest.fn(), delete: jest.fn(), findById: jest.fn() };
-    storage = { put: jest.fn(), delete: jest.fn(), publicUrl: jest.fn() };
-    service = new GalleryService(gallery, storage, media as unknown as MediaService);
+    media = { upload: jest.fn(), delete: jest.fn() };
+    service = new GalleryService(gallery, media as unknown as MediaService);
   });
 
   it('rejects documents before uploading them', async () => {
@@ -51,8 +48,14 @@ describe('GalleryService', () => {
   });
 
   it('does not delete an unknown gallery item', async () => {
-    gallery.findById.mockResolvedValue(null);
+    gallery.deleteAndEnqueueStorageCleanup.mockResolvedValue(false);
     await expect(service.delete('item-id', actor)).rejects.toBeInstanceOf(NotFoundException);
-    expect(storage.delete).not.toHaveBeenCalled();
+  });
+
+  it('delegates deletion and storage cleanup enqueueing to one repository transaction', async () => {
+    gallery.deleteAndEnqueueStorageCleanup.mockResolvedValue(true);
+
+    await expect(service.delete('item-id', actor)).resolves.toEqual({ deleted: true });
+    expect(gallery.deleteAndEnqueueStorageCleanup).toHaveBeenCalledWith('item-id', actor.id);
   });
 });

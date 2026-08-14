@@ -3,7 +3,12 @@ import { and, asc, count, desc, eq, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DRIZZLE } from '../../../database/drizzle.module';
 import * as schema from '../../../database/schema';
-import { auditLogs, galleryItems, mediaAssets } from '../../../database/schema';
+import {
+  auditLogs,
+  galleryItems,
+  mediaAssets,
+  storageDeletionOutbox,
+} from '../../../database/schema';
 import { GalleryCriteria, GalleryRepository } from '../interfaces/gallery-repository.interface';
 
 @Injectable()
@@ -95,11 +100,17 @@ export class DrizzleGalleryRepository implements GalleryRepository {
     });
   }
 
-  async delete(id: string, actorId: string) {
+  async deleteAndEnqueueStorageCleanup(id: string, actorId: string) {
     return this.db.transaction(async (tx) => {
       const [deleted] = await tx.delete(galleryItems).where(eq(galleryItems.id, id)).returning();
       if (!deleted) return false;
-      await tx.delete(mediaAssets).where(eq(mediaAssets.id, deleted.mediaId));
+      const [deletedAsset] = await tx
+        .delete(mediaAssets)
+        .where(eq(mediaAssets.id, deleted.mediaId))
+        .returning({ objectKey: mediaAssets.objectKey });
+      if (!deletedAsset) {
+        throw new Error(`Gallery item ${id} referenced a missing media asset`);
+      }
       await tx.insert(auditLogs).values({
         adminId: actorId,
         action: 'DELETE',
@@ -107,6 +118,7 @@ export class DrizzleGalleryRepository implements GalleryRepository {
         entityId: deleted.id,
         metadata: { mediaId: deleted.mediaId, languageCode: deleted.languageCode },
       });
+      await tx.insert(storageDeletionOutbox).values({ objectKey: deletedAsset.objectKey });
       return true;
     });
   }

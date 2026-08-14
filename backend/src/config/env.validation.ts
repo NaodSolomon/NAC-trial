@@ -32,6 +32,12 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   STORAGE_SECRET_ACCESS_KEY: string;
   STORAGE_PUBLIC_URL: string;
   MEDIA_MAX_FILE_SIZE_BYTES: number;
+  STORAGE_DELETION_WORKER_ENABLED: boolean;
+  STORAGE_DELETION_WORKER_INTERVAL_MS: number;
+  STORAGE_DELETION_WORKER_BATCH_SIZE: number;
+  STORAGE_DELETION_WORKER_MAX_ATTEMPTS: number;
+  STORAGE_DELETION_WORKER_BACKOFF_MS: number;
+  STORAGE_DELETION_WORKER_LOCK_TIMEOUT_MS: number;
   REQUEST_BODY_LIMIT_BYTES: number;
   RATE_LIMIT_TTL_MS: number;
   RATE_LIMIT_REQUESTS: number;
@@ -391,6 +397,45 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
       raw.MEDIA_MAX_FILE_SIZE_BYTES,
       'MEDIA_MAX_FILE_SIZE_BYTES',
       10_485_760,
+    ),
+    STORAGE_DELETION_WORKER_ENABLED: parseBoolean(
+      raw.STORAGE_DELETION_WORKER_ENABLED,
+      environment !== 'test',
+    ),
+    STORAGE_DELETION_WORKER_INTERVAL_MS: parseBoundedInteger(
+      raw.STORAGE_DELETION_WORKER_INTERVAL_MS,
+      'STORAGE_DELETION_WORKER_INTERVAL_MS',
+      5_000,
+      500,
+      300_000,
+    ),
+    STORAGE_DELETION_WORKER_BATCH_SIZE: parseBoundedInteger(
+      raw.STORAGE_DELETION_WORKER_BATCH_SIZE,
+      'STORAGE_DELETION_WORKER_BATCH_SIZE',
+      10,
+      1,
+      100,
+    ),
+    STORAGE_DELETION_WORKER_MAX_ATTEMPTS: parseBoundedInteger(
+      raw.STORAGE_DELETION_WORKER_MAX_ATTEMPTS,
+      'STORAGE_DELETION_WORKER_MAX_ATTEMPTS',
+      5,
+      1,
+      20,
+    ),
+    STORAGE_DELETION_WORKER_BACKOFF_MS: parseBoundedInteger(
+      raw.STORAGE_DELETION_WORKER_BACKOFF_MS,
+      'STORAGE_DELETION_WORKER_BACKOFF_MS',
+      30_000,
+      1_000,
+      3_600_000,
+    ),
+    STORAGE_DELETION_WORKER_LOCK_TIMEOUT_MS: parseBoundedInteger(
+      raw.STORAGE_DELETION_WORKER_LOCK_TIMEOUT_MS,
+      'STORAGE_DELETION_WORKER_LOCK_TIMEOUT_MS',
+      300_000,
+      10_000,
+      3_600_000,
     ),
     REQUEST_BODY_LIMIT_BYTES: parseBoundedInteger(
       raw.REQUEST_BODY_LIMIT_BYTES,

@@ -455,6 +455,14 @@ Uploads use `multipart/form-data` with a required `file` and optional `languageC
 `STORAGE_*` variables for Cloudflare R2 in production; the example values target MinIO during
 local development. Set `STORAGE_PUBLIC_URL` to the public CDN or custom-domain base URL.
 
+Media and gallery deletion never removes an object before its database records. The metadata
+deletion, immutable audit event, and unique `storage_deletion_outbox` job share one PostgreSQL
+transaction. After commit, an asynchronous worker deletes the object idempotently and marks the
+job complete. Temporary MinIO/R2 failures retry with exponential backoff and stale processing
+locks are recoverable. Configure this worker with `STORAGE_DELETION_WORKER_*`; it is enabled by
+default outside tests. Migration `0015_add_storage_deletion_outbox.sql` adds the durable queue
+without modifying earlier migrations or snapshots.
+
 The frontend gallery accepts media only from explicit origins. `NEXT_PUBLIC_STORAGE_ORIGIN`
 is the browser-visible MinIO or storage origin, while optional `NEXT_PUBLIC_MEDIA_HOSTS` is a
 comma-separated allowlist of production CDN origins. In Docker, set `MEDIA_IMAGE_ORIGIN` to

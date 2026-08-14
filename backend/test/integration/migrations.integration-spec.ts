@@ -24,6 +24,7 @@ const expectedTables = [
   'resource_download_logs',
   'resources',
   'site_settings',
+  'storage_deletion_outbox',
   'testimonials',
   'volunteer_applications',
 ];
@@ -67,7 +68,27 @@ describe('Drizzle migration chain', () => {
       const migrations = await context.pool.query<{ count: string }>(
         'select count(*) from drizzle.__drizzle_migrations',
       );
-      expect(Number(migrations.rows[0].count)).toBe(15);
+      expect(Number(migrations.rows[0].count)).toBe(16);
+
+      const storageOutboxColumns = await context.pool.query<{ column_name: string }>(
+        `select column_name
+         from information_schema.columns
+         where table_schema = 'public'
+           and table_name = 'storage_deletion_outbox'
+         order by ordinal_position`,
+      );
+      expect(storageOutboxColumns.rows.map((row) => row.column_name)).toEqual([
+        'id',
+        'object_key',
+        'status',
+        'attempts',
+        'next_attempt_at',
+        'locked_at',
+        'lock_token',
+        'last_error',
+        'created_at',
+        'processed_at',
+      ]);
 
       const downloadLogColumns = await context.pool.query<{ column_name: string }>(
         `select column_name

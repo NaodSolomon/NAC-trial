@@ -101,13 +101,7 @@ export class MediaService {
   }
 
   async delete(id: string, actor: AdminPrincipal): Promise<{ message: string }> {
-    const asset = await this.media.findById(id);
-    if (!asset) {
-      throw new NotFoundException(`Media asset ${id} was not found`);
-    }
-
-    await this.storage.delete(asset.objectKey);
-    if (!(await this.media.delete(id, actor.id))) {
+    if (!(await this.media.deleteAndEnqueueStorageCleanup(id, actor.id))) {
       throw new NotFoundException(`Media asset ${id} was not found`);
     }
 

@@ -1,5 +1,10 @@
 import { eq } from 'drizzle-orm';
-import { galleryItems, mediaAssets, mediaTranslations } from '../../src/database/schema';
+import {
+  galleryItems,
+  mediaAssets,
+  mediaTranslations,
+  storageDeletionOutbox,
+} from '../../src/database/schema';
 import { DrizzleEventRepository } from '../../src/modules/events/repositories/drizzle-event.repository';
 import { DrizzleGalleryRepository } from '../../src/modules/gallery/repositories/drizzle-gallery.repository';
 import { DrizzleMediaRepository } from '../../src/modules/media/repositories/drizzle-media.repository';
@@ -154,6 +159,32 @@ describeWithPostgres('Event, media, and gallery repositories (PostgreSQL)', () =
     );
   });
 
+  it('atomically deletes media metadata, audits, and enqueues object cleanup', async () => {
+    const media = await mediaRepository.create(
+      {
+        objectKey: 'integration/images/delete-me.webp',
+        publicUrl: 'http://minio.test/integration/images/delete-me.webp',
+        originalName: 'delete-me.webp',
+        mimeType: 'image/webp',
+        sizeBytes: 512,
+        type: 'IMAGE',
+        uploadedBy: ACTOR_ID,
+      },
+      null,
+      ACTOR_ID,
+    );
+
+    await expect(mediaRepository.deleteAndEnqueueStorageCleanup(media.id, ACTOR_ID)).resolves.toBe(
+      true,
+    );
+    expect(await context.db.select().from(mediaAssets).where(eq(mediaAssets.id, media.id))).toEqual(
+      [],
+    );
+    expect(await context.db.select().from(storageDeletionOutbox)).toEqual([
+      expect.objectContaining({ objectKey: media.objectKey, status: 'PENDING' }),
+    ]);
+  });
+
   it('joins gallery metadata to media and removes both transactionally', async () => {
     const media = await mediaRepository.create(
       {
@@ -195,9 +226,29 @@ describeWithPostgres('Event, media, and gallery repositories (PostgreSQL)', () =
       '23505',
     );
 
-    await expect(galleryRepository.delete(item.id, ACTOR_ID)).resolves.toBe(true);
+    await expectPostgresError(
+      galleryRepository.deleteAndEnqueueStorageCleanup(
+        item.id,
+        '75dd6b23-5410-4df8-a596-45f6aa1aa111',
+      ),
+      '23503',
+    );
+    expect(
+      await context.db.select().from(galleryItems).where(eq(galleryItems.id, item.id)),
+    ).toHaveLength(1);
+    expect(
+      await context.db.select().from(mediaAssets).where(eq(mediaAssets.id, media.id)),
+    ).toHaveLength(1);
+    expect(await context.db.select().from(storageDeletionOutbox)).toEqual([]);
+
+    await expect(galleryRepository.deleteAndEnqueueStorageCleanup(item.id, ACTOR_ID)).resolves.toBe(
+      true,
+    );
     expect(await context.db.select().from(mediaAssets).where(eq(mediaAssets.id, media.id))).toEqual(
       [],
     );
+    expect(await context.db.select().from(storageDeletionOutbox)).toEqual([
+      expect.objectContaining({ objectKey: media.objectKey, status: 'PENDING', attempts: 0 }),
+    ]);
   });
 });

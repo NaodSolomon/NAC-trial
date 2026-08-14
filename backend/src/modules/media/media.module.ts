@@ -9,6 +9,9 @@ import { MediaService } from './services/media.service';
 import { S3ObjectStorageService } from './storage/s3-object-storage.service';
 import { MinioObjectStorageService } from './storage/minio-object-storage.service';
 import { ConfigService } from '@nestjs/config';
+import { STORAGE_DELETION_OUTBOX_REPOSITORY } from './interfaces/storage-deletion-outbox-repository.interface';
+import { PostgresStorageDeletionOutboxRepository } from './repositories/postgres-storage-deletion-outbox.repository';
+import { StorageDeletionOutboxService } from './services/storage-deletion-outbox.service';
 
 @Module({
   imports: [AuthModule],
@@ -16,9 +19,14 @@ import { ConfigService } from '@nestjs/config';
   providers: [
     MediaService,
     MediaFilePolicyService,
+    StorageDeletionOutboxService,
     {
       provide: MEDIA_REPOSITORY,
       useClass: DrizzleMediaRepository,
+    },
+    {
+      provide: STORAGE_DELETION_OUTBOX_REPOSITORY,
+      useClass: PostgresStorageDeletionOutboxRepository,
     },
     S3ObjectStorageService,
     MinioObjectStorageService,
