@@ -7,6 +7,7 @@ export interface PublishedCmsPage {
   title: string;
   content: string;
   status: 'PUBLISHED';
+  metadata: Record<string, unknown>;
   seoTitle: string | null;
   seoDescription: string | null;
   seoImageUrl: string | null;

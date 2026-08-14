@@ -17,6 +17,15 @@ export const publicVolunteerPageSchema = z.object({
   title: z.string().min(1).max(255),
   description: z.string().max(20_000),
   languageCode,
+  roles: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(150),
+        summary: z.string().min(1).max(1_000),
+        commitment: z.string().max(300).optional(),
+      }),
+    )
+    .max(20),
 });
 
 export const publicTestimonialsSchema = z.object({

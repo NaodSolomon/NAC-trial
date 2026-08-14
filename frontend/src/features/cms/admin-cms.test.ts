@@ -19,6 +19,12 @@ const page: AdminCmsPage = {
     sections: [
       { type: 'hero', heading: 'Welcome', body: 'Support for families.' },
       { type: 'services', heading: 'Services', items: [{ title: 'Therapy', body: 'Care.' }] },
+      {
+        type: 'location',
+        heading: 'Find us',
+        body: 'Addis Ababa',
+        mapEmbedUrl: 'https://www.google.com/maps?q=Addis+Ababa&output=embed',
+      },
       { type: 'callToAction', heading: 'Help', action: { label: 'Donate', href: '/donate' } },
     ],
   },
@@ -41,6 +47,7 @@ describe('CMS administration contracts', () => {
     expect(values.contentType).toBe('homepage');
     expect(values.homepage.heroHeading).toBe('Welcome');
     expect(values.homepage.services[0]).toEqual({ title: 'Therapy', body: 'Care.' });
+    expect(values.homepage.mapEmbedUrl).toContain('google.com/maps');
     expect(values.homepage.ctaHref).toBe('/donate');
   });
 

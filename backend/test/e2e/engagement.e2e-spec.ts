@@ -27,7 +27,14 @@ describe('Volunteers, testimonials, and newsletter (e2e)', () => {
   afterAll(async () => closeE2eTestContext(context));
 
   it('accepts and privately manages volunteer applications', async () => {
-    await request(context.app.getHttpServer()).get('/api/v1/public/volunteer').expect(200);
+    await request(context.app.getHttpServer())
+      .get('/api/v1/public/volunteer')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.data.roles).toEqual(
+          expect.arrayContaining([expect.objectContaining({ title: 'Inclusive event support' })]),
+        );
+      });
     await request(context.app.getHttpServer())
       .post('/api/v1/public/volunteer/apply')
       .send({

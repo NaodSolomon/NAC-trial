@@ -19,6 +19,13 @@ export interface PublicVolunteerPage {
   title: string;
   description: string;
   languageCode: 'en' | 'am';
+  roles: VolunteerRole[];
+}
+
+export interface VolunteerRole {
+  title: string;
+  summary: string;
+  commitment?: string;
 }
 
 export interface PublicTestimonial {

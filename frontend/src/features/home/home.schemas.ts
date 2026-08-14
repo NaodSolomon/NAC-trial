@@ -35,10 +35,28 @@ const callToActionSchema = z.object({
   action: actionSchema,
 });
 
+const locationSchema = z.object({
+  type: z.literal('location'),
+  heading: z.string().min(1).max(200),
+  body: z.string().max(2_000).optional(),
+  mapEmbedUrl: z
+    .string()
+    .url()
+    .refine((value) => {
+      const url = new URL(value);
+      return (
+        url.protocol === 'https:' &&
+        (url.hostname === 'google.com' || url.hostname.endsWith('.google.com'))
+      );
+    }, 'Map URL must use an approved Google HTTPS origin.'),
+});
+
 export const homeCompositionSchema = z.object({
   title: z.string().min(1),
   body: z.string(),
-  sections: z.array(z.discriminatedUnion('type', [heroSchema, servicesSchema, callToActionSchema])),
+  sections: z.array(
+    z.discriminatedUnion('type', [heroSchema, servicesSchema, locationSchema, callToActionSchema]),
+  ),
   seo: z.object({
     title: z.string().min(1),
     description: z.string().nullable().catch(null),

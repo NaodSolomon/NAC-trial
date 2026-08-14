@@ -7,6 +7,7 @@ export const publishedCmsPageSchema = z.object({
   title: z.string().min(1).max(255),
   content: z.string(),
   status: z.literal('PUBLISHED'),
+  metadata: z.record(z.string(), z.unknown()).default({}),
   seoTitle: z
     .string()
     .nullable()
@@ -37,3 +38,38 @@ export const faqCompositionSchema = z.object({
 });
 
 export type FaqComposition = z.infer<typeof faqCompositionSchema>;
+
+const contentSectionSchema = z.object({
+  heading: z.string().min(1).max(180),
+  body: z.string().min(1).max(5_000),
+});
+
+export const aboutMetadataSchema = z.object({
+  about: z.object({
+    mission: contentSectionSchema,
+    history: contentSectionSchema,
+    services: z
+      .array(
+        z.object({
+          title: z.string().min(1).max(120),
+          body: z.string().min(1).max(500),
+        }),
+      )
+      .min(1)
+      .max(12),
+  }),
+});
+
+export const teamMetadataSchema = z.object({
+  contentApproved: z.literal(true),
+  teamMembers: z
+    .array(
+      z.object({
+        name: z.string().min(1).max(150),
+        role: z.string().min(1).max(150),
+        biography: z.string().min(1).max(2_000),
+      }),
+    )
+    .min(1)
+    .max(50),
+});

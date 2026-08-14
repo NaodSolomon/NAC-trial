@@ -30,6 +30,13 @@ export function CmsContentPreview({ values }: { values: CmsEditorValues }) {
               ))}
             </div>
           </section>
+          <section className="rounded-lg border p-5">
+            <h3 className="text-heading text-xl font-semibold">
+              {values.homepage.locationHeading}
+            </h3>
+            <p className="text-foreground mt-2">{values.homepage.locationBody}</p>
+            <p className="text-foreground mt-2 text-sm break-all">{values.homepage.mapEmbedUrl}</p>
+          </section>
           <section className="bg-primary/10 rounded-lg p-5">
             <h3 className="text-heading text-xl font-semibold">{values.homepage.ctaHeading}</h3>
             <p className="text-foreground mt-2">{values.homepage.ctaBody}</p>

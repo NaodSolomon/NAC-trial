@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import PageBanner from '@/components/common/PageBanner';
-import { CmsArticle, type PublishedCmsPage } from '@/features/cms';
+import { aboutMetadataSchema, CmsArticle, type PublishedCmsPage } from '@/features/cms';
 import { localizedHref, type Language } from '@/lib/i18n';
 
 export default function AboutPage({
@@ -11,6 +11,7 @@ export default function AboutPage({
   page: PublishedCmsPage;
   language: Language;
 }) {
+  const composition = aboutMetadataSchema.safeParse(page.metadata);
   return (
     <>
       <PageBanner
@@ -45,6 +46,38 @@ export default function AboutPage({
           />
         </div>
       </section>
+      {composition.success && (
+        <section className="bg-secondary-bg py-16 sm:py-20" aria-label={page.title}>
+          <div className="mx-auto max-w-6xl space-y-12 px-4">
+            <div className="grid gap-6 lg:grid-cols-2">
+              {[composition.data.about.mission, composition.data.about.history].map((section) => (
+                <article key={section.heading} className="bg-card rounded-xl border p-7 shadow-sm">
+                  <h2 className="text-heading font-serif text-3xl">{section.heading}</h2>
+                  <p className="text-foreground mt-4 leading-7 whitespace-pre-line">
+                    {section.body}
+                  </p>
+                </article>
+              ))}
+            </div>
+            <section aria-labelledby="about-services-heading">
+              <h2
+                id="about-services-heading"
+                className="text-heading text-center font-serif text-3xl"
+              >
+                {language === 'am' ? 'አገልግሎቶች' : 'Services overview'}
+              </h2>
+              <div className="mt-7 grid gap-5 md:grid-cols-3">
+                {composition.data.about.services.map((service) => (
+                  <article key={service.title} className="bg-card rounded-xl border p-6 shadow-sm">
+                    <h3 className="text-heading text-xl font-semibold">{service.title}</h3>
+                    <p className="text-foreground mt-3 leading-7">{service.body}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </div>
+        </section>
+      )}
     </>
   );
 }

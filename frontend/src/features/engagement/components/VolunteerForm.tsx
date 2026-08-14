@@ -6,10 +6,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { Language } from '@/lib/i18n';
 import { publicFormError, submitVolunteer } from '../engagement.client';
 import { volunteerFormSchema } from '../engagement.schemas';
-import type { VolunteerFormValues } from '../engagement.types';
+import type { VolunteerFormValues, VolunteerRole } from '../engagement.types';
 import { PublicFormField, PublicFormStatus, PublicFormTextarea } from './PublicFormField';
 
-export function VolunteerForm({ language }: { language: Language }) {
+export function VolunteerForm({ language, roles }: { language: Language; roles: VolunteerRole[] }) {
   const schema = useMemo(() => volunteerFormSchema(language), [language]);
   const inFlight = useRef(false);
   const request = useRef<AbortController | null>(null);
@@ -72,14 +72,39 @@ export function VolunteerForm({ language }: { language: Language }) {
         error={errors.phone?.message}
         {...register('phone')}
       />
-      <PublicFormField
-        label={language === 'am' ? 'የፍላጎት ዘርፍ' : 'Area of interest'}
-        hint={
-          language === 'am' ? 'ለምሳሌ፦ ዝግጅቶች ወይም የቤተሰብ ድጋፍ' : 'For example: events or family support'
-        }
-        error={errors.roleInterest?.message}
-        {...register('roleInterest')}
-      />
+      {roles.length ? (
+        <label className="block">
+          <span className="text-heading mb-2 block font-semibold">
+            {language === 'am' ? 'የፍላጎት ሚና' : 'Role of interest'}
+          </span>
+          <select
+            {...register('roleInterest')}
+            defaultValue=""
+            aria-invalid={Boolean(errors.roleInterest)}
+            className="border-input min-h-12 w-full rounded-lg border bg-white px-4"
+          >
+            <option value="" disabled>
+              {language === 'am' ? 'ሚና ይምረጡ' : 'Choose a role'}
+            </option>
+            {roles.map((role) => (
+              <option key={role.title} value={role.title}>
+                {role.title}
+              </option>
+            ))}
+          </select>
+          {errors.roleInterest?.message && (
+            <span role="alert" className="text-destructive mt-2 block text-sm">
+              {errors.roleInterest.message}
+            </span>
+          )}
+        </label>
+      ) : (
+        <PublicFormField
+          label={language === 'am' ? 'የፍላጎት ዘርፍ' : 'Area of interest'}
+          error={errors.roleInterest?.message}
+          {...register('roleInterest')}
+        />
+      )}
       <div className="sm:col-span-2">
         <PublicFormTextarea
           label={

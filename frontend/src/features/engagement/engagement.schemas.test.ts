@@ -3,6 +3,7 @@ import {
   contactFormSchema,
   isApprovedMapUrl,
   publicContactPageSchema,
+  publicVolunteerPageSchema,
   publicTestimonialsSchema,
   volunteerFormSchema,
 } from './engagement.schemas';
@@ -49,6 +50,22 @@ describe('public engagement contracts', () => {
         meta: { total: 1, page: 1, limit: 6, totalPages: 1 },
       }),
     ).toThrow();
+  });
+
+  it('requires bounded structured volunteer roles', () => {
+    const page = publicVolunteerPageSchema.parse({
+      title: 'Volunteer',
+      description: 'Help with current opportunities.',
+      languageCode: 'en',
+      roles: [
+        {
+          title: 'Event support',
+          summary: 'Help prepare inclusive activities.',
+          commitment: 'Per event',
+        },
+      ],
+    });
+    expect(page.roles[0]?.title).toBe('Event support');
   });
 });
 

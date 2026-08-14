@@ -20,7 +20,13 @@ import {
 import { cmsEditorSchema, type AdminCmsPage, type CmsEditorValues } from '../admin-cms.schemas';
 import { CmsContentPreview } from './CmsContentPreview';
 import { CmsStatusBadge } from './CmsStatusBadge';
-import { FaqEditor, HomepageEditor } from './StructuredContentEditors';
+import {
+  AboutEditor,
+  FaqEditor,
+  HomepageEditor,
+  TeamMembersEditor,
+  VolunteerRolesEditor,
+} from './StructuredContentEditors';
 
 export function CmsPageEditor({ pageId }: { pageId?: string }) {
   const router = useRouter();
@@ -279,6 +285,9 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
               <option value="generic">Generic page</option>
               <option value="homepage">Homepage composition</option>
               <option value="faq">FAQ collection</option>
+              <option value="about">About: mission, history and services</option>
+              <option value="volunteer">Volunteer role listings</option>
+              <option value="team">Approved team biographies</option>
             </select>
           </label>
           <label className="block">
@@ -302,6 +311,28 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
           )}
           {values.contentType === 'faq' && (
             <FaqEditor value={values.faqs} onChange={(faqs) => setValues({ ...values, faqs })} />
+          )}
+          {values.contentType === 'about' && (
+            <AboutEditor
+              value={values.about}
+              onChange={(about) => setValues({ ...values, about })}
+            />
+          )}
+          {values.contentType === 'volunteer' && (
+            <VolunteerRolesEditor
+              value={values.volunteerRoles}
+              onChange={(volunteerRoles) => setValues({ ...values, volunteerRoles })}
+            />
+          )}
+          {values.contentType === 'team' && (
+            <TeamMembersEditor
+              value={values.teamMembers}
+              onChange={(teamMembers) => setValues({ ...values, teamMembers })}
+              approved={values.teamContentApproved}
+              onApprovalChange={(teamContentApproved) =>
+                setValues({ ...values, teamContentApproved })
+              }
+            />
           )}
           <Button type="submit" disabled={busy} className="min-h-11">
             <Save aria-hidden="true" /> {busy ? 'Saving…' : page ? 'Save changes' : 'Create draft'}

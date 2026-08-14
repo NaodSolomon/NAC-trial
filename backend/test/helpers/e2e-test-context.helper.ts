@@ -106,6 +106,15 @@ async function createBaseE2eTestContext(mailer?: jest.Mocked<Mailer>): Promise<B
       languageCode: 'en',
       title: 'Volunteer',
       content: 'Join the Nehemiah Autism Center volunteer community.',
+      metadata: {
+        volunteerRoles: [
+          {
+            title: 'Inclusive event support',
+            summary: 'Help prepare accessible family and community activities.',
+            commitment: 'Scheduled around individual events',
+          },
+        ],
+      },
       status: 'PUBLISHED',
       publishedAt: new Date(),
       createdBy: actors.superAdmin.id,

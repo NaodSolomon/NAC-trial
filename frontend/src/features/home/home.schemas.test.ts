@@ -22,13 +22,19 @@ const validComposition = {
       body: 'We are ready to listen.',
       action: { label: 'Contact us', href: '/contact' },
     },
+    {
+      type: 'location',
+      heading: 'Find us',
+      body: 'Load the map when needed.',
+      mapEmbedUrl: 'https://www.google.com/maps?q=Addis+Ababa&output=embed',
+    },
   ],
   seo: { title: 'Autism support in Ethiopia', description: null, imageUrl: null },
 };
 
 describe('homeCompositionSchema', () => {
   it('accepts the typed homepage section contract', () => {
-    expect(homeCompositionSchema.parse(validComposition).sections).toHaveLength(3);
+    expect(homeCompositionSchema.parse(validComposition).sections).toHaveLength(4);
   });
 
   it.each(['javascript:alert(1)', '//untrusted.example/path', 'http://untrusted.example'])(
@@ -43,4 +49,12 @@ describe('homeCompositionSchema', () => {
       expect(() => homeCompositionSchema.parse(input)).toThrow();
     },
   );
+
+  it('rejects a non-Google or non-HTTPS homepage map', () => {
+    const input = structuredClone(validComposition);
+    const location = input.sections.find((section) => section.type === 'location');
+    if (!location || location.type !== 'location') throw new Error('Location fixture is missing.');
+    location.mapEmbedUrl = 'https://attacker.test/map';
+    expect(() => homeCompositionSchema.parse(input)).toThrow();
+  });
 });

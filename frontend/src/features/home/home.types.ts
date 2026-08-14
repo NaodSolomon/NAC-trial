@@ -27,7 +27,18 @@ export interface HomeCallToActionSection {
   action: HomeAction;
 }
 
-export type HomeSection = HomeHeroSection | HomeServicesSection | HomeCallToActionSection;
+export interface HomeLocationSection {
+  type: 'location';
+  heading: string;
+  body?: string;
+  mapEmbedUrl: string;
+}
+
+export type HomeSection =
+  | HomeHeroSection
+  | HomeServicesSection
+  | HomeLocationSection
+  | HomeCallToActionSection;
 
 export interface HomeComposition {
   title: string;

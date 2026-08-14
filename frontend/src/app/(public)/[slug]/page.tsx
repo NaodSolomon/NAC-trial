@@ -13,7 +13,6 @@ interface GenericCmsRouteProps {
 }
 
 const cmsSlugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const withheldSlugs = new Set(['team']);
 
 export async function generateMetadata({
   params,
@@ -45,7 +44,7 @@ export default async function GenericCmsRoute({ params, searchParams }: GenericC
 }
 
 function validatedSlug(value: string): string {
-  if (!cmsSlugPattern.test(value) || value.length > 180 || withheldSlugs.has(value)) notFound();
+  if (!cmsSlugPattern.test(value) || value.length > 180) notFound();
   return value;
 }
 
