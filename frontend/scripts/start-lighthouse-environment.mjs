@@ -1,5 +1,8 @@
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { assertLighthouseProductionBuild } from './assert-lighthouse-production-build.mjs';
+
+await assertLighthouseProductionBuild();
 
 const children = [];
 let stopping = false;

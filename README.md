@@ -311,9 +311,12 @@ split into route-specific chunks. Next Image serves AVIF/WebP with responsive si
 cache, and the two bundled Google font families include only their used Latin subset and weights.
 
 After `pnpm build`, run `pnpm performance:check` from `frontend/` to enforce optimized chunk
-budgets in CI. With the local Docker services and production frontend server already running, run
-`pnpm lighthouse:ci` for three audits of the home, About, Blog, and Events routes. The committed
-CI runs Lighthouse against the production build and requires at least 0.90 for performance,
+budgets in CI. Then run `pnpm lighthouse:ci`; its launcher starts the mock API and production
+frontend server and performs three audits of the home, About, Blog, and Events routes. CI runs these
+audits immediately after `pnpm build`, before any Playwright development server can replace the
+`.next` directory. The Lighthouse launcher also refuses to start unless `BUILD_ID` and the
+production server manifests exist, turning an invalid build into an immediate actionable failure
+instead of a server-start timeout. CI requires at least 0.90 for performance,
 accessibility, best practices, and SEO. Its reports are retained as build artifacts. Resource and
 responsive-image budgets are enforced during the same measured run rather than inferred from the
 configuration file.
