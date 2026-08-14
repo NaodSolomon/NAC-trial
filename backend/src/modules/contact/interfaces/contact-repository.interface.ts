@@ -14,6 +14,7 @@ export interface ContactListCriteria {
 
 export interface ContactRepository {
   create(data: NewContactSubmission): Promise<ContactSubmission>;
+  findById(id: string): Promise<ContactSubmission | null>;
   list(criteria: ContactListCriteria): Promise<PaginatedResult<ContactSubmission>>;
   delete(id: string, actorId: string): Promise<boolean>;
 }

@@ -15,6 +15,7 @@ describe('validateEnvironment', () => {
     STORAGE_SECRET_ACCESS_KEY: 'production-storage-key',
     STORAGE_PUBLIC_URL: 'https://media.example.org',
     PASSWORD_RESET_URL: 'https://www.example.org/admin/reset-password',
+    CONTACT_NOTIFICATION_EMAIL: 'contact@example.org',
   } as const;
 
   it('applies safe development defaults', () => {
@@ -43,6 +44,7 @@ describe('validateEnvironment', () => {
       MAIL_CONNECTION_TIMEOUT_MS: 3_000,
       MAIL_GREETING_TIMEOUT_MS: 3_000,
       MAIL_SOCKET_TIMEOUT_MS: 10_000,
+      CONTACT_NOTIFICATION_EMAIL: 'contact@nehemiah.local',
       OUTBOX_WORKER_ENABLED: true,
       OUTBOX_WORKER_INTERVAL_MS: 5_000,
       OUTBOX_WORKER_BATCH_SIZE: 10,
@@ -50,6 +52,22 @@ describe('validateEnvironment', () => {
       OUTBOX_WORKER_BACKOFF_MS: 30_000,
       OUTBOX_WORKER_LOCK_TIMEOUT_MS: 300_000,
     });
+  });
+
+  it('requires a valid contact notification mailbox in production', () => {
+    expect(() =>
+      validateEnvironment({
+        ...validProductionEnvironment,
+        CONTACT_NOTIFICATION_EMAIL: 'not-an-email',
+      }),
+    ).toThrow('CONTACT_NOTIFICATION_EMAIL must be a valid email address');
+
+    expect(() =>
+      validateEnvironment({
+        ...validProductionEnvironment,
+        CONTACT_NOTIFICATION_EMAIL: undefined,
+      }),
+    ).toThrow('CONTACT_NOTIFICATION_EMAIL is required in production');
   });
 
   it('never permits trial payment routes in production', () => {

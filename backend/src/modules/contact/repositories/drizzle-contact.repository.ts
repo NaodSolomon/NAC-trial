@@ -3,7 +3,12 @@ import { and, asc, count, desc, eq, ilike, or, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DRIZZLE } from '../../../database/drizzle.module';
 import * as schema from '../../../database/schema';
-import { auditLogs, contactSubmissions, NewContactSubmission } from '../../../database/schema';
+import {
+  auditLogs,
+  contactSubmissions,
+  NewContactSubmission,
+  notificationOutbox,
+} from '../../../database/schema';
 import { ContactListCriteria, ContactRepository } from '../interfaces/contact-repository.interface';
 
 @Injectable()
@@ -14,8 +19,24 @@ export class DrizzleContactRepository implements ContactRepository {
   ) {}
 
   async create(data: NewContactSubmission) {
-    const [created] = await this.db.insert(contactSubmissions).values(data).returning();
-    return created;
+    return this.db.transaction(async (tx) => {
+      const [created] = await tx.insert(contactSubmissions).values(data).returning();
+      await tx.insert(notificationOutbox).values({
+        type: 'CONTACT_SUBMISSION_EMAIL',
+        // Keep personal data in its authoritative contact row rather than duplicating it here.
+        payload: { submissionId: created.id },
+      });
+      return created;
+    });
+  }
+
+  async findById(id: string) {
+    const [submission] = await this.db
+      .select()
+      .from(contactSubmissions)
+      .where(eq(contactSubmissions.id, id))
+      .limit(1);
+    return submission ?? null;
   }
 
   async list(criteria: ContactListCriteria) {

@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { auditLogs } from '../../src/database/schema';
+import { auditLogs, notificationOutbox } from '../../src/database/schema';
 import { DrizzleContactRepository } from '../../src/modules/contact/repositories/drizzle-contact.repository';
 import { DrizzleEngagementRepository } from '../../src/modules/engagement/repositories/drizzle-engagement.repository';
 import { cleanTestDatabase } from '../helpers/database-cleaner.helper';
@@ -40,6 +40,19 @@ describeWithPostgres('Contact and engagement repositories (PostgreSQL)', () => {
       message: 'I would like more information.',
       languageCode: 'en',
     });
+
+    const [notification] = await context.db.select().from(notificationOutbox);
+    expect(notification).toMatchObject({
+      type: 'CONTACT_SUBMISSION_EMAIL',
+      status: 'PENDING',
+      payload: { submissionId: submission.id },
+    });
+    expect(notification.payload).not.toEqual(
+      expect.objectContaining({
+        email: expect.anything(),
+        message: expect.anything(),
+      }),
+    );
 
     await expect(
       contactRepository.list({ ...pageCriteria, search: 'volunteer', languageCode: 'en' }),

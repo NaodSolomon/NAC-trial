@@ -478,8 +478,11 @@ client, and stored without IP addresses or user-agent fingerprints.
 
 The public request accepts `name`, `email`, `message`, optional `subject`, and optional
 `languageCode` (`en` or `am`). Deletion is audited without copying the sender's personal data
-into audit metadata. Outbound email is intentionally deferred to a queued mail/outbox slice;
-contact persistence must succeed independently of temporary email-provider failures.
+into audit metadata. Submission persistence and a `CONTACT_SUBMISSION_EMAIL` outbox entry share
+one PostgreSQL transaction. The asynchronous worker forwards the message to the validated
+`CONTACT_NOTIFICATION_EMAIL` mailbox, so a temporary SMTP outage never causes a successfully
+stored contact request to be rejected. The outbox payload contains only the submission ID;
+personal data remains in the authoritative contact row.
 
 ## Volunteer Engagement
 
@@ -914,13 +917,15 @@ authentication implementation, not a second active authentication stack. Real Pa
 Telebirr, and CBE collection also remains disabled; trial donations continue to use the fake
 gateway and never request or store card or bank credentials.
 
-Administrative receipt resends use the PostgreSQL `notification_outbox`. An in-process worker
-claims due rows with `FOR UPDATE SKIP LOCKED`, sends each receipt through the configured SMTP
-adapter, and records `SENT` only after SMTP acceptance. Transient failures return to `PENDING`
-with exponential backoff; exhausted or invalid items become `FAILED`. Stale `PROCESSING` claims
-are recoverable after the configured lock timeout, and deterministic SMTP Message-IDs make
-retries idempotent for receivers that support Message-ID deduplication. Configure the worker with
-`OUTBOX_WORKER_*`; it is enabled by default outside tests.
+Administrative receipt resends and public contact notifications use the PostgreSQL
+`notification_outbox`. Type-specific in-process workers claim due rows with
+`FOR UPDATE SKIP LOCKED`, send through the configured SMTP adapter, and record `SENT` only after
+SMTP acceptance. Transient failures return to `PENDING` with exponential backoff; exhausted or
+invalid items become `FAILED`. Stale `PROCESSING` claims are recoverable after the configured
+lock timeout, and deterministic SMTP Message-IDs make retries idempotent for receivers that
+support Message-ID deduplication. Configure the workers with `OUTBOX_WORKER_*`; they are enabled
+by default outside tests. Set `CONTACT_NOTIFICATION_EMAIL` to the center mailbox that should
+receive contact-form messages; production startup rejects missing or invalid values.
 
 ## Production Deployment
 

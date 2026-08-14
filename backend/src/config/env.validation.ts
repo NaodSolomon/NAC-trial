@@ -49,6 +49,7 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   MAIL_HOST: string;
   MAIL_PORT: number;
   MAIL_FROM: string;
+  CONTACT_NOTIFICATION_EMAIL: string;
   MAIL_CONNECTION_TIMEOUT_MS: number;
   MAIL_GREETING_TIMEOUT_MS: number;
   MAIL_SOCKET_TIMEOUT_MS: number;
@@ -164,6 +165,14 @@ function requiredInProduction(
     throw new Error(`${name} is required in production`);
   }
   return supplied || developmentFallback;
+}
+
+function validateEmailAddress(value: string, name: string): string {
+  const normalized = value.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+    throw new Error(`${name} must be a valid email address`);
+  }
+  return normalized;
 }
 
 function parseBoolean(value: unknown, fallback = false): boolean {
@@ -406,6 +415,15 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     MAIL_HOST: String(raw.MAIL_HOST ?? 'mailpit'),
     MAIL_PORT: parsePort(raw.MAIL_PORT, 'MAIL_PORT', 1025),
     MAIL_FROM: String(raw.MAIL_FROM ?? 'noreply@nehemiah.local'),
+    CONTACT_NOTIFICATION_EMAIL: validateEmailAddress(
+      requiredInProduction(
+        raw.CONTACT_NOTIFICATION_EMAIL,
+        'CONTACT_NOTIFICATION_EMAIL',
+        environment,
+        'contact@nehemiah.local',
+      ),
+      'CONTACT_NOTIFICATION_EMAIL',
+    ),
     MAIL_CONNECTION_TIMEOUT_MS: parseBoundedInteger(
       raw.MAIL_CONNECTION_TIMEOUT_MS,
       'MAIL_CONNECTION_TIMEOUT_MS',
