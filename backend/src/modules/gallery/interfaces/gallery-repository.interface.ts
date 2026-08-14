@@ -25,5 +25,5 @@ export interface GalleryRepository {
     data: Partial<Pick<NewGalleryItem, 'title' | 'altText'>>,
     actorId: string,
   ): Promise<GalleryItemView | null>;
-  delete(id: string, actorId: string): Promise<boolean>;
+  deleteAndEnqueueStorageCleanup(id: string, actorId: string): Promise<boolean>;
 }

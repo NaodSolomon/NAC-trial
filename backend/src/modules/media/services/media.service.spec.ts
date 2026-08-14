@@ -36,7 +36,7 @@ describe('MediaService', () => {
       list: jest.fn(),
       create: jest.fn().mockResolvedValue(asset),
       findById: jest.fn(),
-      delete: jest.fn(),
+      deleteAndEnqueueStorageCleanup: jest.fn(),
     };
     storage = {
       put: jest.fn(),
@@ -110,10 +110,20 @@ describe('MediaService', () => {
     expect(storage.delete).toHaveBeenCalledTimes(1);
   });
 
-  it('does not call object storage for an unknown asset', async () => {
-    repository.findById.mockResolvedValue(null);
+  it('does not call object storage inline and reports an unknown asset', async () => {
+    repository.deleteAndEnqueueStorageCleanup.mockResolvedValue(false);
 
     await expect(service.delete(asset.id, actor)).rejects.toBeInstanceOf(NotFoundException);
+    expect(storage.delete).not.toHaveBeenCalled();
+  });
+
+  it('commits deletion through the repository without deleting storage inline', async () => {
+    repository.deleteAndEnqueueStorageCleanup.mockResolvedValue(true);
+
+    await expect(service.delete(asset.id, actor)).resolves.toEqual({
+      message: 'Media deleted successfully',
+    });
+    expect(repository.deleteAndEnqueueStorageCleanup).toHaveBeenCalledWith(asset.id, actor.id);
     expect(storage.delete).not.toHaveBeenCalled();
   });
 });

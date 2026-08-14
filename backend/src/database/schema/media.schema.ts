@@ -1,6 +1,15 @@
-import { bigint, index, pgTable, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import {
+  bigint,
+  index,
+  integer,
+  pgTable,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
 import { admins } from './admin.schema';
-import { languageCodeEnum, mediaTypeEnum } from './enums';
+import { languageCodeEnum, mediaTypeEnum, outboxStatusEnum } from './enums';
 
 export const mediaAssets = pgTable(
   'media_assets',
@@ -45,6 +54,32 @@ export const mediaTranslations = pgTable(
     uniqueIndex('media_translations_media_language_unique_idx').on(
       table.mediaId,
       table.languageCode,
+    ),
+  ],
+);
+
+export const storageDeletionOutbox = pgTable(
+  'storage_deletion_outbox',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    objectKey: varchar('object_key', { length: 1024 }).notNull(),
+    status: outboxStatusEnum('status').default('PENDING').notNull(),
+    attempts: integer('attempts').default(0).notNull(),
+    nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    lockedAt: timestamp('locked_at', { withTimezone: true, precision: 3 }),
+    lockToken: uuid('lock_token'),
+    lastError: varchar('last_error', { length: 100 }),
+    createdAt: timestamp('created_at', { withTimezone: true, precision: 3 }).defaultNow().notNull(),
+    processedAt: timestamp('processed_at', { withTimezone: true, precision: 3 }),
+  },
+  (table) => [
+    uniqueIndex('storage_deletion_outbox_object_key_unique_idx').on(table.objectKey),
+    index('storage_deletion_outbox_delivery_idx').on(
+      table.status,
+      table.nextAttemptAt,
+      table.createdAt,
     ),
   ],
 );

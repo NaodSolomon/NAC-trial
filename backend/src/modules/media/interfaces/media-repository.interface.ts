@@ -29,5 +29,5 @@ export interface MediaRepository {
     actorId: string,
   ): Promise<MediaAssetView>;
   findById(id: string): Promise<MediaAsset | null>;
-  delete(id: string, actorId: string): Promise<boolean>;
+  deleteAndEnqueueStorageCleanup(id: string, actorId: string): Promise<boolean>;
 }

@@ -42,6 +42,12 @@ describe('validateEnvironment', () => {
       RESOURCE_DOWNLOAD_LOG_CLEANUP_ENABLED: true,
       RESOURCE_DOWNLOAD_LOG_RETENTION_DAYS: 365,
       RESOURCE_DOWNLOAD_LOG_CLEANUP_INTERVAL_MS: 86_400_000,
+      STORAGE_DELETION_WORKER_ENABLED: true,
+      STORAGE_DELETION_WORKER_INTERVAL_MS: 5_000,
+      STORAGE_DELETION_WORKER_BATCH_SIZE: 10,
+      STORAGE_DELETION_WORKER_MAX_ATTEMPTS: 5,
+      STORAGE_DELETION_WORKER_BACKOFF_MS: 30_000,
+      STORAGE_DELETION_WORKER_LOCK_TIMEOUT_MS: 300_000,
       PASSWORD_RESET_TTL_MINUTES: 20,
       PASSWORD_RESET_URL: 'http://localhost:3000/admin/reset-password',
       MAIL_CONNECTION_TIMEOUT_MS: 3_000,
@@ -64,6 +70,15 @@ describe('validateEnvironment', () => {
     expect(() =>
       validateEnvironment({ RESOURCE_DOWNLOAD_LOG_CLEANUP_INTERVAL_MS: 3_599_999 }),
     ).toThrow('RESOURCE_DOWNLOAD_LOG_CLEANUP_INTERVAL_MS must be between 3600000 and 604800000');
+  });
+
+  it('bounds storage deletion retry settings', () => {
+    expect(() => validateEnvironment({ STORAGE_DELETION_WORKER_BATCH_SIZE: 101 })).toThrow(
+      'STORAGE_DELETION_WORKER_BATCH_SIZE must be between 1 and 100',
+    );
+    expect(() => validateEnvironment({ STORAGE_DELETION_WORKER_MAX_ATTEMPTS: 0 })).toThrow(
+      'STORAGE_DELETION_WORKER_MAX_ATTEMPTS must be between 1 and 20',
+    );
   });
 
   it('requires a valid contact notification mailbox in production', () => {

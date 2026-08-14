@@ -20,6 +20,7 @@ import {
   analyticsEvents,
   analyticsEventTypeEnum,
   resourceDownloadLogs,
+  storageDeletionOutbox,
 } from '.';
 
 describe('database schema foundation', () => {
@@ -106,5 +107,16 @@ describe('database schema foundation', () => {
     expect(config.foreignKeys).toHaveLength(1);
     expect(config.checks).toHaveLength(1);
     expect(config.indexes).toHaveLength(3);
+  });
+
+  it('persists idempotent storage deletion jobs without database entity references', () => {
+    const config = getTableConfig(storageDeletionOutbox);
+    const columns = config.columns.map((column) => column.name);
+
+    expect(columns).toEqual(
+      expect.arrayContaining(['object_key', 'status', 'attempts', 'next_attempt_at', 'lock_token']),
+    );
+    expect(config.foreignKeys).toHaveLength(0);
+    expect(config.indexes.some((index) => index.config.unique)).toBe(true);
   });
 });

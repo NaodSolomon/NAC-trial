@@ -1,4 +1,6 @@
 import * as request from 'supertest';
+import { eq } from 'drizzle-orm';
+import { storageDeletionOutbox } from '../../src/database/schema';
 import { authenticatedSession, TestSession } from '../helpers/auth-test.helper';
 import {
   closeE2eTestContext,
@@ -19,7 +21,11 @@ describe('Media metadata and gallery (e2e)', () => {
 
   beforeAll(async () => {
     context = await createE2eTestContext();
-    superAdmin = await authenticatedSession(context.app, context.actors.superAdmin.email, E2E_PASSWORD);
+    superAdmin = await authenticatedSession(
+      context.app,
+      context.actors.superAdmin.email,
+      E2E_PASSWORD,
+    );
     editor = await authenticatedSession(context.app, context.actors.editor.email, E2E_PASSWORD);
     finance = await authenticatedSession(context.app, context.actors.finance.email, E2E_PASSWORD);
   });
@@ -53,6 +59,13 @@ describe('Media metadata and gallery (e2e)', () => {
       .delete(`/api/v1/admin/media/${id}`)
       .set('Authorization', superAdmin.authorization)
       .expect(200);
+    expect(context.storage.delete).not.toHaveBeenCalled();
+    expect(
+      await context.db
+        .select()
+        .from(storageDeletionOutbox)
+        .where(eq(storageDeletionOutbox.objectKey, uploaded.body.data.objectKey)),
+    ).toEqual([expect.objectContaining({ status: 'PENDING' })]);
   });
 
   it('covers the gallery lifecycle and public metadata view', async () => {
@@ -82,5 +95,6 @@ describe('Media metadata and gallery (e2e)', () => {
       .delete(`/api/v1/admin/gallery/${id}`)
       .set('Authorization', superAdmin.authorization)
       .expect(200);
+    expect(context.storage.delete).not.toHaveBeenCalled();
   });
 });

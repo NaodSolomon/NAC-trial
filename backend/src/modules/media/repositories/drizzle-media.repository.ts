@@ -3,7 +3,12 @@ import { and, asc, count, desc, eq, ilike, inArray, SQL } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DRIZZLE } from '../../../database/drizzle.module';
 import * as schema from '../../../database/schema';
-import { auditLogs, mediaAssets, mediaTranslations } from '../../../database/schema';
+import {
+  auditLogs,
+  mediaAssets,
+  mediaTranslations,
+  storageDeletionOutbox,
+} from '../../../database/schema';
 import {
   MediaListCriteria,
   MediaRepository,
@@ -92,7 +97,7 @@ export class DrizzleMediaRepository implements MediaRepository {
     return asset ?? null;
   }
 
-  async delete(id: string, actorId: string): Promise<boolean> {
+  async deleteAndEnqueueStorageCleanup(id: string, actorId: string): Promise<boolean> {
     return this.db.transaction(async (tx) => {
       const [deleted] = await tx.delete(mediaAssets).where(eq(mediaAssets.id, id)).returning();
       if (!deleted) return false;
@@ -106,6 +111,7 @@ export class DrizzleMediaRepository implements MediaRepository {
           originalName: deleted.originalName,
         },
       });
+      await tx.insert(storageDeletionOutbox).values({ objectKey: deleted.objectKey });
       return true;
     });
   }
