@@ -938,6 +938,18 @@ The production Traefik dashboard is disabled and no infrastructure dashboard is 
 the public reverse proxy. Application logs remain available over SSH with
 `docker compose --env-file .env.production -f docker-compose.prod.yml logs backend`.
 
+Uptime Kuma runs continuously but its administration interface binds only to the VPS loopback
+interface and is explicitly disabled in Traefik. Reach it through an authenticated SSH tunnel:
+
+```bash
+ssh -L 3001:127.0.0.1:3001 <user>@<vps-host>
+```
+
+Then open `http://127.0.0.1:3001` locally. The supplied stack does not publish a public status
+page. If one is required later, expose only Uptime Kuma's separately configured read-only status
+page; keep its administration interface restricted to loopback, an allowlisted VPN, or another
+authenticated private operations network.
+
 Dozzle is an optional operations profile. When temporary browser-based log inspection is
 needed, start it on the VPS with:
 

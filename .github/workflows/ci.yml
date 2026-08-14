@@ -114,6 +114,14 @@ jobs:
           docker compose -f docker-compose.benchmark.yml config --quiet
           docker run --rm -v "$GITHUB_WORKSPACE/performance/k6:/scripts:ro" \
             grafana/k6:0.54.0 inspect /scripts/concurrency.js
+      - name: Validate production monitoring access
+        working-directory: .
+        run: |
+          cp backend/.env.production.example backend/.env.production
+          cp frontend/.env.production.example frontend/.env.production
+          trap 'rm -f backend/.env.production frontend/.env.production' EXIT
+          docker compose --env-file .env.production.example -f docker-compose.prod.yml \
+            config --format json | node ops/validate-production-monitoring.mjs
 
   frontend:
     needs: backend
