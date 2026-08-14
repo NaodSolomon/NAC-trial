@@ -27,6 +27,7 @@ describe('ContactService', () => {
         createdAt: now,
         ...data,
       })),
+      findById: jest.fn(),
       list: jest.fn(),
       delete: jest.fn(),
     };
