@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { frontendSecurityHeaders } from './src/lib/security/security-headers';
 
 function mediaRemotePatterns(): URL[] {
   const storageOrigin = process.env.NEXT_PUBLIC_STORAGE_ORIGIN;
@@ -29,6 +30,14 @@ function mediaRemotePatterns(): URL[] {
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: frontendSecurityHeaders(process.env),
+      },
+    ];
+  },
   // Windows cannot create pnpm's standalone symlinks without Developer Mode.
   output: process.platform === 'win32' ? undefined : 'standalone',
   images: {

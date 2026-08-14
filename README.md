@@ -310,6 +310,14 @@ analytics timeout or failure does not affect page content. Chart and CMS/blog/SE
 split into route-specific chunks. Next Image serves AVIF/WebP with responsive sizes and a bounded
 cache, and the two bundled Google font families include only their used Latin subset and weights.
 
+Next.js applies a security-header policy to every public, authentication, and administrator
+response. Its CSP denies framing and plugins, limits API and media connections to configured
+origins, permits frames only from the same Google domains accepted by map validation, and keeps
+fonts local. Production removes the development-only `unsafe-eval` and WebSocket allowances and
+adds HSTS and insecure-request upgrading. Inline scripts and styles remain explicitly allowed for
+the Next.js runtime, JSON-LD, and generated styles; all other script and style origins remain
+blocked. Responses also disable MIME sniffing and browser capabilities that the site does not use.
+
 After `pnpm build`, run `pnpm performance:check` from `frontend/` to enforce optimized chunk
 budgets in CI. Then run `pnpm lighthouse:ci`; its launcher starts the mock API and production
 frontend server and performs three audits of the home, About, Blog, and Events routes. CI runs these
