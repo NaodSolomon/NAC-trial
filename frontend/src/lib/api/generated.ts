@@ -11,7 +11,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get admin/analytics/summary */
+        /** Get the complete cross-feature analytics summary */
         get: operations["AdminAnalyticsController_summary"];
         put?: never;
         post?: never;
@@ -28,7 +28,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get admin/analytics/timeline */
+        /** Get daily page, form, resource, and donation trends */
         get: operations["AdminAnalyticsController_timeline"];
         put?: never;
         post?: never;
@@ -1596,6 +1596,54 @@ export interface components {
             /** @example Mozilla/5.0 */
             userAgent: string | null;
         };
+        AnalyticsSummaryApiResponseDto: {
+            data: components["schemas"]["AnalyticsSummaryDto"];
+            /** @example 200 */
+            statusCode: number;
+            /** @enum {boolean} */
+            success: true;
+            /** Format: date-time */
+            timestamp: string;
+        };
+        AnalyticsSummaryDto: {
+            donations: components["schemas"]["DonationAnalyticsDto"];
+            forms: components["schemas"]["FormSummaryDto"];
+            resources: components["schemas"]["ResourceAnalyticsDto"];
+            topCountries: components["schemas"]["CountryVisitsDto"][];
+            topPages: components["schemas"]["PageVisitsDto"][];
+            /**
+             * @description Recorded page-view events, not unique visitors
+             * @example 500
+             */
+            totalVisitors: number;
+        };
+        AnalyticsTimelineApiResponseDto: {
+            data: components["schemas"]["AnalyticsTimelinePointDto"][];
+            /** @example 200 */
+            statusCode: number;
+            /** @enum {boolean} */
+            success: true;
+            /** Format: date-time */
+            timestamp: string;
+        };
+        AnalyticsTimelinePointDto: {
+            /** @example 1500.00 */
+            confirmedEtb: string;
+            /** @example 25.00 */
+            confirmedUsd: string;
+            /** @example 2026-08-14 */
+            date: string;
+            /** @example 2 */
+            donationsConfirmed: number;
+            /** @example 3 */
+            donationsCreated: number;
+            /** @example 4 */
+            formSubmissions: number;
+            /** @example 6 */
+            resourceDownloads: number;
+            /** @example 20 */
+            visitors: number;
+        };
         ApiErrorResponseDto: {
             /** @example Bad Request */
             error?: string;
@@ -1608,6 +1656,12 @@ export interface components {
             success: boolean;
             /** Format: date-time */
             timestamp: string;
+        };
+        CountryVisitsDto: {
+            /** @example ET */
+            country: string;
+            /** @example 42 */
+            visits: number;
         };
         CreateAdminDto: Record<string, never>;
         CreateBlogPostDto: Record<string, never>;
@@ -1654,6 +1708,39 @@ export interface components {
         CreateRsvpDto: Record<string, never>;
         CreateTestimonialDto: Record<string, never>;
         CreateVolunteerApplicationDto: Record<string, never>;
+        DonationAnalyticsDto: {
+            confirmedValues: components["schemas"]["DonationValueDto"][];
+            statusCounts: components["schemas"]["DonationStatusCountDto"][];
+            /** @example 15 */
+            totalDonations: number;
+        };
+        DonationStatusCountDto: {
+            /** @example 5 */
+            count: number;
+            /** @enum {string} */
+            status: "INITIATED" | "PENDING" | "CONFIRMED" | "FAILED" | "CANCELLED";
+        };
+        DonationValueDto: {
+            /**
+             * @description Decimal string to preserve monetary precision
+             * @example 1250.00
+             */
+            amount: string;
+            /** @enum {string} */
+            currency: "USD" | "ETB";
+        };
+        FormSummaryDto: {
+            /** @example 10 */
+            contact: number;
+            /** @example 10 */
+            eventRsvp: number;
+            /** @example 12 */
+            newsletter: number;
+            /** @example 40 */
+            totalSubmissions: number;
+            /** @example 8 */
+            volunteer: number;
+        };
         LoginDto: {
             /**
              * Format: email
@@ -1668,6 +1755,12 @@ export interface components {
         };
         NewsletterSignupDto: Record<string, never>;
         Object: Record<string, never>;
+        PageVisitsDto: {
+            /** @example /services */
+            route: string;
+            /** @example 42 */
+            visits: number;
+        };
         PaginatedResponse: {
             data: unknown;
             /** @example 200 */
@@ -1718,6 +1811,18 @@ export interface components {
         RefreshTokenDto: {
             /** @description Opaque JWT refresh token */
             refreshToken: string;
+        };
+        ResourceAnalyticsDto: {
+            topCountries: components["schemas"]["ResourceCountryDto"][];
+            topResources: components["schemas"]["TopResourceDto"][];
+            /** @example 30 */
+            totalDownloads: number;
+        };
+        ResourceCountryDto: {
+            /** @example ET */
+            country: string;
+            /** @example 18 */
+            downloads: number;
         };
         RevokeSessionApiResponseDto: {
             data: components["schemas"]["RevokeSessionResponseDto"];
@@ -1790,6 +1895,14 @@ export interface components {
             /** @example https://youtube.com/@nehemiah */
             youtube?: string;
         };
+        TopResourceDto: {
+            /** @example 20 */
+            downloads: number;
+            /** Format: uuid */
+            resourceId: string;
+            /** @example Family support guide */
+            title: string;
+        };
         TrackAnalyticsEventDto: Record<string, never>;
         UpdateAdminDto: Record<string, never>;
         UpdateBlogPostDto: Record<string, never>;
@@ -1861,15 +1974,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        data: unknown;
-                        /** @example 200 */
-                        statusCode: number;
-                        /** @enum {boolean} */
-                        success: true;
-                        /** Format: date-time */
-                        timestamp: string;
-                    };
+                    "application/json": components["schemas"]["AnalyticsSummaryApiResponseDto"];
                 };
             };
             /** @description Authentication required */
@@ -1903,7 +2008,9 @@ export interface operations {
     };
     AdminAnalyticsController_timeline: {
         parameters: {
-            query?: never;
+            query?: {
+                range?: "day" | "week" | "month";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1915,15 +2022,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        data: unknown;
-                        /** @example 200 */
-                        statusCode: number;
-                        /** @enum {boolean} */
-                        success: true;
-                        /** Format: date-time */
-                        timestamp: string;
-                    };
+                    "application/json": components["schemas"]["AnalyticsTimelineApiResponseDto"];
                 };
             };
             /** @description Authentication required */
@@ -6688,7 +6787,10 @@ export interface operations {
     PublicResourcesController_download: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Optional two-letter country code supplied by the trusted edge proxy */
+                "cf-ipcountry"?: string;
+            };
             path: {
                 id: string;
             };

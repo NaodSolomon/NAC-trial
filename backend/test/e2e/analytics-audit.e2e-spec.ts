@@ -14,7 +14,11 @@ describe('Analytics and audit logs (e2e)', () => {
 
   beforeAll(async () => {
     context = await createE2eTestContext();
-    superAdmin = await authenticatedSession(context.app, context.actors.superAdmin.email, E2E_PASSWORD);
+    superAdmin = await authenticatedSession(
+      context.app,
+      context.actors.superAdmin.email,
+      E2E_PASSWORD,
+    );
     editor = await authenticatedSession(context.app, context.actors.editor.email, E2E_PASSWORD);
   });
   afterAll(async () => closeE2eTestContext(context));
@@ -34,11 +38,45 @@ describe('Analytics and audit logs (e2e)', () => {
       .get('/api/v1/admin/analytics/summary')
       .set('Authorization', superAdmin.authorization)
       .expect(200)
-      .expect(({ body }) => expect(body.data.totalVisitors).toBeGreaterThanOrEqual(1));
+      .expect(({ body }) => {
+        expect(body.data.totalVisitors).toBeGreaterThanOrEqual(1);
+        expect(body.data.forms).toEqual(
+          expect.objectContaining({
+            totalSubmissions: expect.any(Number),
+            contact: expect.any(Number),
+            volunteer: expect.any(Number),
+            newsletter: expect.any(Number),
+            eventRsvp: expect.any(Number),
+          }),
+        );
+        expect(body.data.resources).toEqual(
+          expect.objectContaining({ totalDownloads: expect.any(Number) }),
+        );
+        expect(body.data.donations).toEqual(
+          expect.objectContaining({
+            totalDonations: expect.any(Number),
+            statusCounts: expect.any(Array),
+            confirmedValues: expect.any(Array),
+          }),
+        );
+      });
     await request(context.app.getHttpServer())
       .get('/api/v1/admin/analytics/timeline?range=month')
       .set('Authorization', superAdmin.authorization)
-      .expect(200);
+      .expect(200)
+      .expect(({ body }) =>
+        expect(body.data[0]).toEqual(
+          expect.objectContaining({
+            visitors: expect.any(Number),
+            formSubmissions: expect.any(Number),
+            resourceDownloads: expect.any(Number),
+            donationsCreated: expect.any(Number),
+            donationsConfirmed: expect.any(Number),
+            confirmedUsd: expect.any(String),
+            confirmedEtb: expect.any(String),
+          }),
+        ),
+      );
   });
 
   it('records administrative mutations and restricts the audit trail', async () => {
