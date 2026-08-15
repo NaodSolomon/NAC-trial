@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -32,12 +33,15 @@ export class DonationService {
   ) {}
 
   gateways() {
-    return this.paymentGateway.isEnabled() ? ['PAYPAL'] : [];
+    return this.paymentGateway.isEnabled() ? [this.paymentGateway.gateway] : [];
   }
 
   async initiate(dto: CreateDonationDto) {
     if (!this.paymentGateway.isEnabled()) {
       throw new ServiceUnavailableException('Payments are not configured');
+    }
+    if (dto.gateway !== this.paymentGateway.gateway) {
+      throw new BadRequestException('Selected payment gateway is unavailable');
     }
     const donation = await this.donations.create({
       donorName: dto.donorName.trim(),
@@ -112,6 +116,7 @@ export class DonationService {
     const verified = await this.paymentGateway.verifyWebhook(headers, event);
     if (verified.status && verified.providerOrderId && verified.eventId) {
       await this.donations.applyWebhook({
+        gateway: this.paymentGateway.gateway,
         eventId: verified.eventId,
         eventType: verified.eventType,
         providerOrderId: verified.providerOrderId,
@@ -124,6 +129,9 @@ export class DonationService {
 
   async simulate(id: string, outcome: 'CONFIRMED' | 'FAILED') {
     const row = await this.requireDonation(id);
+    if (row.gateway !== 'SIMULATED') {
+      throw new ConflictException('Only simulated donations can use trial payment controls');
+    }
     if (!row.providerOrderId) throw new ConflictException('Donation has no simulated checkout');
     const eventId = `FAKE-${outcome}-${row.id}`;
 
@@ -132,6 +140,7 @@ export class DonationService {
     }
 
     const processed = await this.donations.applyWebhook({
+      gateway: 'SIMULATED',
       eventId,
       eventType: outcome === 'CONFIRMED' ? 'FAKE.PAYMENT.CONFIRMED' : 'FAKE.PAYMENT.FAILED',
       providerOrderId: row.providerOrderId,

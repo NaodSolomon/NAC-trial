@@ -27,6 +27,7 @@ export interface DonationRepository {
   cancel(id: string): Promise<Donation | null>;
   verify(id: string, actorId: string): Promise<Donation | null>;
   applyWebhook(event: {
+    gateway: Donation['gateway'];
     eventId: string;
     eventType: string;
     providerOrderId: string;

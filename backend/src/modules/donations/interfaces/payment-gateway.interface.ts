@@ -24,6 +24,7 @@ export interface VerifiedPaymentEvent {
 }
 
 export interface PaymentGateway {
+  readonly gateway: Donation['gateway'];
   isEnabled(): boolean;
   createCheckout(donation: Donation): Promise<GatewayCheckout>;
   verifyWebhook(

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { Language } from '@/lib/i18n';
 
-const gatewaySchema = z.enum(['PAYPAL', 'TELEBIRR', 'CBE']);
+const gatewaySchema = z.enum(['SIMULATED', 'PAYPAL', 'TELEBIRR', 'CBE']);
 const currencySchema = z.enum(['USD', 'ETB']);
 const donationStatusSchema = z.enum(['INITIATED', 'PENDING', 'CONFIRMED', 'FAILED', 'CANCELLED']);
 

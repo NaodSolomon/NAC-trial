@@ -10,6 +10,8 @@ import {
 
 @Injectable()
 export class PayPalGateway implements PaymentGateway {
+  readonly gateway = 'PAYPAL' as const;
+
   constructor(private readonly config: ConfigService) {}
 
   isEnabled(): boolean {

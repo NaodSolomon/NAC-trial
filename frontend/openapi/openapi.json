@@ -5095,6 +5095,7 @@
             "schema": {
               "type": "string",
               "enum": [
+                "SIMULATED",
                 "PAYPAL",
                 "TELEBIRR",
                 "CBE"
@@ -5324,6 +5325,7 @@
             "schema": {
               "type": "string",
               "enum": [
+                "SIMULATED",
                 "PAYPAL",
                 "TELEBIRR",
                 "CBE"
@@ -9534,10 +9536,11 @@
           "gateway": {
             "type": "string",
             "enum": [
+              "SIMULATED",
               "PAYPAL"
             ],
-            "example": "PAYPAL",
-            "description": "Compatibility label; trial mode uses the fake gateway and collects no money."
+            "example": "SIMULATED",
+            "description": "SIMULATED is the only provider available in trial mode and collects no money."
           },
           "donorName": {
             "type": "string",

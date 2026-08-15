@@ -163,7 +163,7 @@ function donation() {
     message: 'A simulated gift.',
     amount: '25.00',
     currency: 'USD',
-    gateway: 'PAYPAL',
+    gateway: 'SIMULATED',
     status: 'CONFIRMED',
     providerOrderId: `FAKE-${donationId}`,
     externalTransactionId: `FAKE-RECEIPT-${donationId}`,

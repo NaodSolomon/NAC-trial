@@ -41,7 +41,7 @@ test('trial donation requests only approved fields and creates once across refre
     amount: 75.25,
     currency: 'USD',
     message: 'Trial donation only',
-    gateway: 'PAYPAL',
+    gateway: 'SIMULATED',
   });
   expect(page.url()).not.toContain(donorEmail);
 

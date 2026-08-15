@@ -218,7 +218,7 @@ export function DonationAdmin() {
             setGateway(value);
             setPage(1);
           }}
-          options={['', 'PAYPAL', 'TELEBIRR', 'CBE']}
+          options={['', 'SIMULATED', 'PAYPAL', 'TELEBIRR', 'CBE']}
         />
         <Button
           type="button"

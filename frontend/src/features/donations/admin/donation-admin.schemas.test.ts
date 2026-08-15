@@ -8,7 +8,7 @@ const donation = {
   message: null,
   amount: '25.00',
   currency: 'USD',
-  gateway: 'PAYPAL',
+  gateway: 'SIMULATED',
   status: 'CONFIRMED',
   providerOrderId: 'FAKE-ORDER',
   externalTransactionId: 'FAKE-RECEIPT',

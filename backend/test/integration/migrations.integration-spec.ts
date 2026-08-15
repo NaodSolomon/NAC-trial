@@ -68,7 +68,21 @@ describe('Drizzle migration chain', () => {
       const migrations = await context.pool.query<{ count: string }>(
         'select count(*) from drizzle.__drizzle_migrations',
       );
-      expect(Number(migrations.rows[0].count)).toBe(16);
+      expect(Number(migrations.rows[0].count)).toBe(18);
+
+      const donationGateways = await context.pool.query<{ enumlabel: string }>(
+        `select enumlabel
+         from pg_enum
+         join pg_type on pg_type.oid = pg_enum.enumtypid
+         where pg_type.typname = 'donation_gateway'
+         order by enumsortorder`,
+      );
+      expect(donationGateways.rows.map((row) => row.enumlabel)).toEqual([
+        'SIMULATED',
+        'PAYPAL',
+        'TELEBIRR',
+        'CBE',
+      ]);
 
       const storageOutboxColumns = await context.pool.query<{ column_name: string }>(
         `select column_name
@@ -196,6 +210,63 @@ describe('Drizzle migration chain', () => {
       );
       expect(indexes.rows.map((row) => row.indexname)).toEqual(searchIndexes);
       expect(indexes.rows.every((row) => row.indexdef.includes('gin_trgm_ops'))).toBe(true);
+    } finally {
+      await context.pool.end();
+    }
+  });
+
+  itWithPostgres('backfills only records with an identifiable fake-provider signature', async () => {
+    const context = await connectTestPostgres();
+    try {
+      await context.pool.query(
+        `insert into donations
+          (id, donor_name, donor_email, amount, currency, gateway, provider_order_id)
+         values
+          ('00000000-0000-4000-8000-000000001601', 'Fake donor', 'fake@example.org', 25, 'USD', 'PAYPAL', 'FAKE-ORDER-1'),
+          ('00000000-0000-4000-8000-000000001602', 'PayPal donor', 'paypal@example.org', 25, 'USD', 'PAYPAL', 'PAYPAL-ORDER-1')`,
+      );
+      await context.pool.query(
+        `insert into payment_webhook_events (gateway, provider_event_id, event_type)
+         values
+          ('PAYPAL', 'FAKE-EVENT-1', 'FAKE.PAYMENT.CONFIRMED'),
+          ('PAYPAL', 'PAYPAL-EVENT-1', 'PAYMENT.CAPTURE.COMPLETED')`,
+      );
+
+      const migration = readFileSync(
+        resolve(
+          __dirname,
+          '../../src/database/migrations/0017_backfill_simulated_donation_gateways.sql',
+        ),
+        'utf8',
+      );
+      for (const statement of migration.split('--> statement-breakpoint')) {
+        await context.pool.query(statement);
+      }
+
+      const donationRows = await context.pool.query<{ provider_order_id: string; gateway: string }>(
+        `select provider_order_id, gateway::text
+         from donations
+         where id in (
+           '00000000-0000-4000-8000-000000001601',
+           '00000000-0000-4000-8000-000000001602'
+         )
+         order by provider_order_id`,
+      );
+      expect(donationRows.rows).toEqual([
+        { provider_order_id: 'FAKE-ORDER-1', gateway: 'SIMULATED' },
+        { provider_order_id: 'PAYPAL-ORDER-1', gateway: 'PAYPAL' },
+      ]);
+
+      const eventRows = await context.pool.query<{ provider_event_id: string; gateway: string }>(
+        `select provider_event_id, gateway::text
+         from payment_webhook_events
+         where provider_event_id in ('FAKE-EVENT-1', 'PAYPAL-EVENT-1')
+         order by provider_event_id`,
+      );
+      expect(eventRows.rows).toEqual([
+        { provider_event_id: 'FAKE-EVENT-1', gateway: 'SIMULATED' },
+        { provider_event_id: 'PAYPAL-EVENT-1', gateway: 'PAYPAL' },
+      ]);
     } finally {
       await context.pool.end();
     }

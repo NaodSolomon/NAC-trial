@@ -124,7 +124,7 @@ test.beforeEach(async ({ context, page }) => {
             message: 'A simulated gift for family programs.',
             amount: '25.00',
             currency: 'USD',
-            gateway: 'PAYPAL',
+            gateway: 'SIMULATED',
             status: 'CONFIRMED',
             providerOrderId: 'FAKE-ORDER-1510',
             externalTransactionId: 'FAKE-RECEIPT-1510',
