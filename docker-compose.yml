@@ -6,6 +6,7 @@ services:
       target: deps
     command: sh -c "pnpm db:migrate:local && pnpm dev"
     environment:
+      DATABASE_URL: postgresql://${DATABASE_USER:-nehemiah}:${DATABASE_PASSWORD:-12345}@postgres:5432/${DATABASE_NAME:-nehemiah}
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
       DATABASE_USER: ${DATABASE_USER:-nehemiah}

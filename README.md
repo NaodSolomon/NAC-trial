@@ -41,17 +41,34 @@ cp frontend/.env.example frontend/.env
 cp backend/.env.example backend/.env
 
 # Start everything (Postgres, Redis, MinIO, Mailpit, backend, frontend)
-docker compose up
+docker compose up -d --build --wait
+
+# Create bootstrap settings, then populate the trial website
+docker compose exec backend pnpm db:seed
+docker compose exec backend pnpm db:seed:demo
 ```
+
+The backend applies pending migrations before its development server starts. The two seed commands
+are deliberately separate and idempotent: `db:seed` creates production-safe global settings and an
+administrator only when explicit `SEED_ADMIN_*` values are configured; `db:seed:demo` adds local
+demonstration content. Open <http://localhost:3000> after both commands complete. Do not run the demo
+seed in production.
 
 ### Run without Docker
 
 ```bash
-# Frontend (requires backend services running)
-cd frontend && pnpm install && pnpm dev
+# Backend (after starting PostgreSQL, Redis, MinIO, and Mailpit)
+cd backend
+pnpm install
+pnpm db:migrate
+pnpm db:seed
+pnpm db:seed:demo
+pnpm dev
 
-# Backend (requires Postgres + Redis)
-cd backend && pnpm install && pnpm dev
+# Frontend (in a second terminal)
+cd frontend
+pnpm install
+pnpm dev
 ```
 
 ## Service URLs (Development)
@@ -90,9 +107,6 @@ nehemiah/
 │   │   ├── config/    # App, database, JWT configuration
 │   │   └── database/  # Drizzle schema, migrations, seeds
 │   └── test/          # E2E tests
-│
-├── shared/            # Shared TypeScript types
-│   └── types/
 │
 ├── .github/workflows/ # CI/CD pipelines
 ├── docker-compose.yml          # Dev environment
@@ -156,13 +170,27 @@ declare English.
 | `pnpm lint`                    | Lint with ESLint                          |
 | `pnpm format`                  | Format with Prettier                      |
 
-## Shared Types
+## API Contract
 
-Both apps use `@shared/*` path alias to import from `shared/types/`:
+The backend-generated OpenAPI document is the only cross-application API contract. There is no
+parallel hand-maintained shared-types package. This avoids allowing a TypeScript interface to drift
+away from the route that actually runs.
 
-```typescript
-import type { AdminUser, ApiResponse, PaginatedResponse } from "@shared/types";
+After changing a backend controller, DTO, response schema, or route:
+
+```bash
+cd backend
+pnpm openapi:generate
+
+cd ../frontend
+pnpm api:generate
 ```
+
+The frontend generator reads `backend/dist/openapi.json`, commits a reviewable snapshot at
+`frontend/openapi/openapi.json`, and writes `frontend/src/lib/api/generated.ts`. Feature clients use
+the generated OpenAPI `paths` type for endpoint, method, request, and response compatibility. Zod
+schemas remain the runtime validation boundary for untrusted network JSON. Never edit either
+generated artifact by hand. CI runs `pnpm api:check` and fails when they are stale.
 
 ## Backend Architecture
 
@@ -219,14 +247,23 @@ The platform has no public user registration. Administrator authentication uses:
 To create the first super administrator, set `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL`, and `SEED_ADMIN_PASSWORD`, then run `pnpm db:seed` from `backend/`. Seed credentials are never given default values, and an existing administrator is never overwritten.
 
 For a local trial environment, run `pnpm db:seed:demo` after migrations and the bootstrap seed.
-This separate, idempotent seed publishes bilingual homepage, about, FAQ, contact, volunteer,
-blog, event, testimonial, resource, media, and gallery demonstration records. The local MinIO
-initializer copies matching trial files into the public bucket, so resource downloads and gallery
-images work without external storage. All sample files and gallery descriptions identify
-themselves as trial content that must be replaced before launch. The seed creates an inactive
-technical content author with no usable login credential, never creates a default administrator,
-and leaves existing records unchanged when run again. Demonstration content is not part of the
-production bootstrap seed.
+This separate, idempotent seed creates:
+
+- published English and Amharic homepage, about, FAQ, contact, and volunteer CMS pages, including
+  structured hero, services, location/map, call-to-action, mission, history, service, FAQ, and
+  volunteer-role data;
+- draft English and Amharic team pages with no fictional names, biographies, or claims;
+- four published blog translations, six published event translations covering upcoming and past
+  events, and four published testimonial translations;
+- four local media/gallery records with bilingual trial labels; and
+- two downloadable bilingual trial resources.
+
+The local MinIO initializer copies the matching image and resource files into the public bucket, so
+downloads and gallery images work without external storage. Every sample file and gallery
+description identifies itself as trial content that must be replaced before launch. The seed
+creates an inactive technical content author with no usable login credential, never creates a
+default administrator, and leaves existing records unchanged when run again. Demonstration content
+is not part of the production bootstrap seed and must not be used as authoritative launch content.
 
 The seed creates English and Amharic `team` pages as drafts with no people, biographies, or
 unsupported claims. Content editors must enter NAC-approved bilingual team records through the
