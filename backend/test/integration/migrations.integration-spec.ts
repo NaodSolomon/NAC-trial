@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { connectTestPostgres } from '../helpers/postgres-test.helper';
+import { itWithPostgres } from '../helpers/database-availability.helper';
 
 const expectedTables = [
   'admins',
@@ -53,7 +54,6 @@ describe('Drizzle migration chain', () => {
     }
   });
 
-  const itWithPostgres = process.env.TEST_DATABASE_URL ? it : it.skip;
   itWithPostgres('applies the complete chain to an empty PostgreSQL schema', async () => {
     const context = await connectTestPostgres();
     try {

@@ -9,9 +9,7 @@ import { cleanTestDatabase } from '../helpers/database-cleaner.helper';
 import { clearMailpitMailbox, waitForMailpitText } from '../helpers/mailpit-test.helper';
 import { connectTestPostgres, PostgresTestContext } from '../helpers/postgres-test.helper';
 import { ACTOR_ID, insertTestAdmin } from '../helpers/repository-fixtures.helper';
-
-const describeWithServices =
-  process.env.TEST_DATABASE_URL && process.env.TEST_MAIL_HOST ? describe : describe.skip;
+import { describeWithServices } from '../helpers/database-availability.helper';
 
 describeWithServices('Donation receipt outbox delivery (PostgreSQL and Mailpit)', () => {
   let context: PostgresTestContext;

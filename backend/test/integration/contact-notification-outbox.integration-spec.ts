@@ -8,9 +8,7 @@ import { MailpitMailerService } from '../../src/modules/mail/mailpit-mailer.serv
 import { cleanTestDatabase } from '../helpers/database-cleaner.helper';
 import { clearMailpitMailbox, waitForMailpitText } from '../helpers/mailpit-test.helper';
 import { connectTestPostgres, PostgresTestContext } from '../helpers/postgres-test.helper';
-
-const describeWithServices =
-  process.env.TEST_DATABASE_URL && process.env.TEST_MAIL_HOST ? describe : describe.skip;
+import { describeWithServices } from '../helpers/database-availability.helper';
 
 describeWithServices('Contact notification outbox delivery (PostgreSQL and Mailpit)', () => {
   let context: PostgresTestContext;

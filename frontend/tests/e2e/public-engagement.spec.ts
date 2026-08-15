@@ -146,7 +146,7 @@ async function fillVolunteer(page: Page, email: string) {
   await page.getByLabel('Your name').fill('Step 37 Volunteer');
   await page.getByLabel('Email address').first().fill(email);
   await page.getByLabel('Phone number').fill('+251 911 234 567');
-  await page.getByLabel('Area of interest').fill('Community events');
+  await page.getByLabel('Role of interest').selectOption('Event support');
   await page
     .getByLabel('Tell us about your experience and interest')
     .fill('I would like to support inclusive events and help families feel welcome.');

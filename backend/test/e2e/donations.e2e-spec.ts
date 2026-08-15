@@ -130,6 +130,7 @@ describe('Donations in simulated mode (e2e)', () => {
     await request(context.app.getHttpServer()).post('/api/v1/webhooks/cbe').send({}).expect(503);
   });
 
+
   it('confirms, fails, and deduplicates trial payments without collecting payment details', async () => {
     const confirmed = await request(context.app.getHttpServer())
       .post('/api/v1/public/donations')

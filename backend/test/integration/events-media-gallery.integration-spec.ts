@@ -15,8 +15,7 @@ import {
   PostgresTestContext,
 } from '../helpers/postgres-test.helper';
 import { ACTOR_ID, insertTestAdmin, pageCriteria } from '../helpers/repository-fixtures.helper';
-
-const describeWithPostgres = process.env.TEST_DATABASE_URL ? describe : describe.skip;
+import { describeWithPostgres } from '../helpers/database-availability.helper';
 
 describeWithPostgres('Event, media, and gallery repositories (PostgreSQL)', () => {
   let context: PostgresTestContext;

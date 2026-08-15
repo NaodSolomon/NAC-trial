@@ -19,8 +19,7 @@ import {
   PostgresTestContext,
 } from '../helpers/postgres-test.helper';
 import { ACTOR_ID, insertTestAdmin } from '../helpers/repository-fixtures.helper';
-
-const describeWithPostgres = process.env.TEST_DATABASE_URL ? describe : describe.skip;
+import { describeWithPostgres } from '../helpers/database-availability.helper';
 
 describeWithPostgres('Demonstration content features (PostgreSQL)', () => {
   let context: PostgresTestContext;

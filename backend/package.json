@@ -13,7 +13,7 @@
     "test:e2e": "jest --config test/e2e/jest-e2e.json",
     "test:e2e:security": "jest --config test/e2e/jest-e2e.json --runInBand test/e2e/security-regression.e2e-spec.ts",
     "test:integration": "ts-node test/helpers/report-integration-environment.ts && jest --config test/integration/jest-integration.json --runInBand",
-    "openapi:generate": "ts-node src/openapi/generate-openapi.ts",
+    "openapi:generate": "nest build && node dist/src/openapi/generate-openapi.js",
     "openapi:lint": "pnpm openapi:generate && redocly lint dist/openapi.json",
     "test:ci": "pnpm lint && pnpm test:coverage --runInBand && pnpm test:e2e --runInBand && pnpm test:integration && pnpm db:check && pnpm build",
     "db:generate": "drizzle-kit generate",

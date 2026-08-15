@@ -12,8 +12,7 @@ import {
 import { DEMO_SEED_AUTHOR_ID, seedDemoContent } from '../../src/database/seeds/demo-content.seed';
 import { cleanTestDatabase } from '../helpers/database-cleaner.helper';
 import { connectTestPostgres, PostgresTestContext } from '../helpers/postgres-test.helper';
-
-const describeWithPostgres = process.env.TEST_DATABASE_URL ? describe : describe.skip;
+import { describeWithPostgres } from '../helpers/database-availability.helper';
 
 describeWithPostgres('Trial demonstration seed (PostgreSQL)', () => {
   let context: PostgresTestContext;

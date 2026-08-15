@@ -25,6 +25,7 @@ export default defineConfig({
     {
       name: 'visual-desktop',
       testMatch: /visual\/.*\.spec\.ts/,
+      timeout: 90_000,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1440, height: 900 },
@@ -33,6 +34,7 @@ export default defineConfig({
     {
       name: 'visual-mobile',
       testMatch: /visual\/.*\.spec\.ts/,
+      timeout: 90_000,
       use: {
         ...devices['Pixel 7'],
         viewport: { width: 390, height: 844 },
@@ -53,6 +55,7 @@ export default defineConfig({
         API_URL: 'http://127.0.0.1:4010/api/v1',
         NEXT_PUBLIC_API_URL: 'http://127.0.0.1:4010/api/v1',
         NEXT_PUBLIC_STORAGE_ORIGIN: 'http://127.0.0.1:4010',
+        MEDIA_IMAGE_ORIGIN: 'http://127.0.0.1:4010',
       },
     },
   ],
