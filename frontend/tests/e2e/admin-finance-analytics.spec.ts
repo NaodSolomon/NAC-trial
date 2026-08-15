@@ -107,7 +107,7 @@ test('analytics provides non-color chart labels and visible data tables', async 
           { status: 'CONFIRMED', count: 2 },
           { status: 'PENDING', count: 1 },
         ],
-        confirmedValues: [{ currency: 'USD', amount: 50 }],
+        confirmedValues: [{ currency: 'USD', amount: '50.00' }],
       },
     }),
   );
@@ -121,8 +121,8 @@ test('analytics provides non-color chart labels and visible data tables', async 
         resourceDownloads: 3,
         donationsCreated: 2,
         donationsConfirmed: 1,
-        confirmedUsd: 25,
-        confirmedEtb: 0,
+        confirmedUsd: '25.00',
+        confirmedEtb: '0.00',
       },
       {
         date: '2026-08-12',
@@ -131,8 +131,8 @@ test('analytics provides non-color chart labels and visible data tables', async 
         resourceDownloads: 3,
         donationsCreated: 1,
         donationsConfirmed: 1,
-        confirmedUsd: 25,
-        confirmedEtb: 0,
+        confirmedUsd: '25.00',
+        confirmedEtb: '0.00',
       },
     ]);
   });

@@ -98,7 +98,12 @@ test('homepage and FAQ editors create structured metadata and preview generic co
   expect(api.lastCreated?.metadata).toMatchObject({
     sections: [
       { type: 'hero', heading: 'Welcome families' },
-      { type: 'services', items: [{ title: 'Family support' }] },
+      { type: 'services', heading: 'Our services', items: [{ title: 'Family support' }] },
+      {
+        type: 'location',
+        heading: 'Visit the center',
+        mapEmbedUrl: 'https://www.google.com/maps/embed?pb=nehemiah-autism-center',
+      },
       { type: 'callToAction', action: { label: 'Donate', href: '/donate' } },
     ],
   });
