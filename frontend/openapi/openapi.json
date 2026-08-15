@@ -257,30 +257,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data",
-                    "statusCode",
-                    "timestamp"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {},
-                    "statusCode": {
-                      "type": "integer",
-                      "example": 200
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -619,6 +596,27 @@
                 "desc"
               ]
             }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SUPER_ADMIN",
+                "CONTENT_EDITOR",
+                "FINANCE_VIEWER"
+              ]
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -692,30 +690,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data",
-                    "statusCode",
-                    "timestamp"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {},
-                    "statusCode": {
-                      "type": "integer",
-                      "example": 201
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -781,30 +756,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data",
-                    "statusCode",
-                    "timestamp"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {},
-                    "statusCode": {
-                      "type": "integer",
-                      "example": 200
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -878,30 +830,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data",
-                    "statusCode",
-                    "timestamp"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {},
-                    "statusCode": {
-                      "type": "integer",
-                      "example": 200
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -1089,6 +1018,49 @@
                 "desc"
               ]
             }
+          },
+          {
+            "name": "adminId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 50,
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1196,6 +1168,31 @@
               "enum": [
                 "asc",
                 "desc"
+              ]
+            }
+          },
+          {
+            "name": "languageCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "SCHEDULED",
+                "PUBLISHED"
               ]
             }
           }
@@ -1813,6 +1810,19 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
           }
         ],
         "responses": {
@@ -1870,7 +1880,21 @@
     "/api/v1/public/content/homepage": {
       "get": {
         "operationId": "PublicCompositionController_homepage",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -1926,7 +1950,21 @@
     "/api/v1/public/content/faqs": {
       "get": {
         "operationId": "PublicCompositionController_faqs",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -1982,7 +2020,30 @@
     "/api/v1/admin/slugs/check": {
       "get": {
         "operationId": "SlugCheckController_check",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "maxLength": 180,
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -2181,6 +2242,18 @@
               "enum": [
                 "asc",
                 "desc"
+              ]
+            }
+          },
+          {
+            "name": "languageCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
               ]
             }
           }
@@ -2515,7 +2588,21 @@
     "/api/v1/navigation": {
       "get": {
         "operationId": "PublicNavigationController_list",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -2746,30 +2833,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data",
-                    "statusCode",
-                    "timestamp"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {},
-                    "statusCode": {
-                      "type": "integer",
-                      "example": 200
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -2845,6 +2909,28 @@
                 "asc",
                 "desc"
               ]
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "IMAGE",
+                "VIDEO",
+                "DOCUMENT"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
             }
           }
         ],
@@ -3116,7 +3202,21 @@
     "/api/v1/public/contact": {
       "get": {
         "operationId": "PublicContactController_getPage",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -3287,6 +3387,27 @@
                 "desc"
               ]
             }
+          },
+          {
+            "name": "languageCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3434,7 +3555,21 @@
     "/api/v1/public/volunteer": {
       "get": {
         "operationId": "PublicEngagementController_volunteerPage",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -3607,6 +3742,19 @@
                 "desc"
               ]
             }
+          },
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
           }
         ],
         "responses": {
@@ -3757,6 +3905,40 @@
                 "asc",
                 "desc"
               ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "APPROVED",
+                "REJECTED"
+              ]
+            }
+          },
+          {
+            "name": "languageCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
             }
           }
         ],
@@ -3954,6 +4136,31 @@
               "enum": [
                 "asc",
                 "desc"
+              ]
+            }
+          },
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "PUBLISHED"
               ]
             }
           }
@@ -4404,7 +4611,10 @@
             "in": "path",
             "description": "Email address of the newsletter subscriber to remove",
             "schema": {
-              "example": "subscriber@example.org"
+              "maxLength": 255,
+              "format": "email",
+              "example": "subscriber@example.org",
+              "type": "string"
             }
           }
         ],
@@ -5796,6 +6006,45 @@
                 "desc"
               ]
             }
+          },
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          },
+          {
+            "name": "timeframe",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "upcoming",
+              "type": "string",
+              "enum": [
+                "upcoming",
+                "past",
+                "all"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "PUBLISHED"
+              ]
+            }
           }
         ],
         "responses": {
@@ -5804,7 +6053,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse"
+                  "type": "object"
                 }
               }
             }
@@ -5837,6 +6086,19 @@
             "in": "path",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
             }
           }
         ],
@@ -5902,6 +6164,19 @@
             "in": "path",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
             }
           }
         ],
@@ -6086,6 +6361,45 @@
                 "desc"
               ]
             }
+          },
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          },
+          {
+            "name": "timeframe",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "upcoming",
+              "type": "string",
+              "enum": [
+                "upcoming",
+                "past",
+                "all"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DRAFT",
+                "PUBLISHED"
+              ]
+            }
           }
         ],
         "responses": {
@@ -6094,7 +6408,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse"
+                  "type": "object"
                 }
               }
             }
@@ -6485,7 +6799,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse"
+                  "type": "object"
                 }
               }
             }
@@ -6675,6 +6989,31 @@
                 "desc"
               ]
             }
+          },
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "IMAGE",
+                "VIDEO"
+              ]
+            }
           }
         ],
         "responses": {
@@ -6683,7 +7022,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse"
+                  "type": "object"
                 }
               }
             }
@@ -6857,30 +7196,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data",
-                    "statusCode",
-                    "timestamp"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {},
-                    "statusCode": {
-                      "type": "integer",
-                      "example": 200
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
+                  "type": "object"
                 }
               }
             }
@@ -7662,6 +7978,18 @@
                 "desc"
               ]
             }
+          },
+          {
+            "name": "languageCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
           }
         ],
         "responses": {
@@ -7703,6 +8031,19 @@
             "in": "path",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "languageCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
             }
           }
         ],
@@ -7810,6 +8151,18 @@
               "enum": [
                 "asc",
                 "desc"
+              ]
+            }
+          },
+          {
+            "name": "languageCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
               ]
             }
           }
@@ -8233,7 +8586,30 @@
     "/api/v1/public/search": {
       "get": {
         "operationId": "SearchController_find",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minLength": 2,
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "languageCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -8384,6 +8760,18 @@
               "enum": [
                 "asc",
                 "desc"
+              ]
+            }
+          },
+          {
+            "name": "languageCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
               ]
             }
           }
@@ -8545,6 +8933,18 @@
               "enum": [
                 "asc",
                 "desc"
+              ]
+            }
+          },
+          {
+            "name": "languageCode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en",
+                "am"
               ]
             }
           }
@@ -9031,11 +9431,14 @@
         "properties": {
           "email": {
             "type": "string",
-            "example": "admin@nehemiah.org",
-            "format": "email"
+            "maxLength": 255,
+            "format": "email",
+            "example": "admin@nehemiah.org"
           },
           "password": {
             "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
             "example": "strong-password",
             "format": "password",
             "writeOnly": true
@@ -9051,6 +9454,8 @@
         "properties": {
           "refreshToken": {
             "type": "string",
+            "minLength": 20,
+            "maxLength": 4096,
             "description": "Opaque JWT refresh token",
             "writeOnly": true
           }
@@ -9096,13 +9501,13 @@
           },
           "userAgent": {
             "type": "string",
-            "example": "Mozilla/5.0",
-            "nullable": true
+            "nullable": true,
+            "example": "Mozilla/5.0"
           },
           "ipFingerprint": {
             "type": "string",
-            "example": "d1e2f3a4b5c6",
             "nullable": true,
+            "example": "d1e2f3a4b5c6",
             "description": "A short, non-reversible prefix of the stored IP hash"
           },
           "createdAt": {
@@ -9118,12 +9523,12 @@
             "type": "string"
           },
           "status": {
-            "type": "string",
             "enum": [
               "ACTIVE",
               "REVOKED",
               "EXPIRED"
-            ]
+            ],
+            "type": "string"
           }
         },
         "required": [
@@ -9271,6 +9676,7 @@
         "properties": {
           "email": {
             "type": "string",
+            "maxLength": 255,
             "format": "email",
             "example": "admin@example.org"
           }
@@ -9324,12 +9730,14 @@
             "type": "string",
             "minLength": 64,
             "maxLength": 64,
+            "pattern": "^[a-f0-9]{64}$",
             "description": "Single-use token delivered in the password-reset email"
           },
           "newPassword": {
             "type": "string",
             "minLength": 12,
             "maxLength": 128,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$",
             "writeOnly": true
           }
         },
@@ -9340,50 +9748,392 @@
       },
       "CreateAdminDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 150
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 128,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "SUPER_ADMIN",
+              "CONTENT_EDITOR",
+              "FINANCE_VIEWER"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password",
+          "role"
+        ]
       },
       "UpdateAdminDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 150
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "SUPER_ADMIN",
+              "CONTENT_EDITOR",
+              "FINANCE_VIEWER"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 128,
+            "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$"
+          }
+        }
+      },
+      "HomepageSectionDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "hero",
+              "services",
+              "location",
+              "callToAction"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "FaqItemDto": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 300
+          },
+          "answer": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "question",
+          "answer"
+        ]
+      },
+      "ContentSectionDto": {
+        "type": "object",
+        "properties": {
+          "heading": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 180
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          }
+        },
+        "required": [
+          "heading",
+          "body"
+        ]
+      },
+      "HomepageServiceItemDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "title",
+          "body"
+        ]
+      },
+      "AboutMetadataDto": {
+        "type": "object",
+        "properties": {
+          "mission": {
+            "$ref": "#/components/schemas/ContentSectionDto"
+          },
+          "history": {
+            "$ref": "#/components/schemas/ContentSectionDto"
+          },
+          "services": {
+            "minItems": 1,
+            "maxItems": 12,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomepageServiceItemDto"
+            }
+          }
+        },
+        "required": [
+          "mission",
+          "history",
+          "services"
+        ]
+      },
+      "VolunteerRoleDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "commitment": {
+            "type": "string",
+            "maxLength": 300
+          }
+        },
+        "required": [
+          "title",
+          "summary"
+        ]
+      },
+      "TeamMemberDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "role": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "biography": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "imageUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "format": "uri"
+          }
+        },
+        "required": [
+          "name",
+          "role",
+          "biography"
+        ]
+      },
+      "CmsPageMetadataDto": {
+        "type": "object",
+        "properties": {
+          "sections": {
+            "minItems": 1,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomepageSectionDto"
+            }
+          },
+          "items": {
+            "minItems": 1,
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FaqItemDto"
+            }
+          },
+          "about": {
+            "$ref": "#/components/schemas/AboutMetadataDto"
+          },
+          "volunteerRoles": {
+            "minItems": 1,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VolunteerRoleDto"
+            }
+          },
+          "teamMembers": {
+            "minItems": 1,
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamMemberDto"
+            }
+          },
+          "contentApproved": {
+            "type": "boolean"
+          },
+          "mapEmbedUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "format": "uri"
+          }
+        }
       },
       "CreateCmsPageDto": {
         "type": "object",
-        "properties": {}
-      },
-      "UpdateCmsPageDto": {
-        "type": "object",
-        "properties": {}
-      },
-      "ScheduleCmsPageDto": {
-        "type": "object",
-        "properties": {}
-      },
-      "CreateNavigationItemDto": {
-        "type": "object",
         "properties": {
-          "label": {
+          "slug": {
             "type": "string",
-            "example": "About us",
-            "minLength": 1,
-            "maxLength": 100
-          },
-          "url": {
-            "type": "string",
-            "example": "/about",
-            "maxLength": 500
-          },
-          "order": {
-            "type": "number",
-            "example": 10,
-            "minimum": 0,
-            "maximum": 10000
+            "minLength": 2,
+            "maxLength": 180,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "languageCode": {
             "type": "string",
             "enum": [
               "en",
               "am"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200000
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/CmsPageMetadataDto"
+          },
+          "translationKey": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "seoTitle": {
+            "type": "string",
+            "maxLength": 70
+          },
+          "seoDescription": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "seoImageUrl": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "slug",
+          "languageCode",
+          "title",
+          "content"
+        ]
+      },
+      "UpdateCmsPageDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 180,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200000
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/CmsPageMetadataDto"
+          },
+          "seoTitle": {
+            "type": "string",
+            "maxLength": 70
+          },
+          "seoDescription": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "seoImageUrl": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        }
+      },
+      "ScheduleCmsPageDto": {
+        "type": "object",
+        "properties": {
+          "scheduledAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "scheduledAt"
+        ]
+      },
+      "CreateNavigationItemDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "example": "About us"
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 500,
+            "pattern": "^(?:\\/(?!\\/)\\S*|https?:\\/\\/\\S+)$",
+            "example": "/about"
+          },
+          "order": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10000,
+            "example": 10
+          },
+          "languageCode": {
+            "enum": [
+              "en",
+              "am"
             ],
+            "type": "string",
             "example": "en"
           }
         },
@@ -9399,20 +10149,21 @@
         "properties": {
           "label": {
             "type": "string",
-            "example": "About us",
             "minLength": 1,
-            "maxLength": 100
+            "maxLength": 100,
+            "example": "About us"
           },
           "url": {
             "type": "string",
-            "example": "/about",
-            "maxLength": 500
+            "maxLength": 500,
+            "pattern": "^(?:\\/(?!\\/)\\S*|https?:\\/\\/\\S+)$",
+            "example": "/about"
           },
           "order": {
             "type": "number",
-            "example": 10,
             "minimum": 0,
-            "maximum": 10000
+            "maximum": 10000,
+            "example": 10
           },
           "isVisible": {
             "type": "boolean",
@@ -9425,23 +10176,27 @@
         "properties": {
           "facebook": {
             "type": "string",
-            "example": "https://facebook.com/nehemiah",
-            "maxLength": 2048
+            "maxLength": 2048,
+            "format": "uri",
+            "example": "https://facebook.com/nehemiah"
           },
           "instagram": {
             "type": "string",
-            "example": "https://instagram.com/nehemiah",
-            "maxLength": 2048
+            "maxLength": 2048,
+            "format": "uri",
+            "example": "https://instagram.com/nehemiah"
           },
           "youtube": {
             "type": "string",
-            "example": "https://youtube.com/@nehemiah",
-            "maxLength": 2048
+            "maxLength": 2048,
+            "format": "uri",
+            "example": "https://youtube.com/@nehemiah"
           },
           "linkedin": {
             "type": "string",
-            "example": "https://linkedin.com/company/nehemiah",
-            "maxLength": 2048
+            "maxLength": 2048,
+            "format": "uri",
+            "example": "https://linkedin.com/company/nehemiah"
           }
         }
       },
@@ -9450,46 +10205,49 @@
         "properties": {
           "siteName": {
             "type": "string",
-            "example": "Nehemiah Autism Center",
             "minLength": 2,
-            "maxLength": 150
+            "maxLength": 150,
+            "example": "Nehemiah Autism Center"
           },
           "defaultLanguage": {
-            "type": "string",
             "enum": [
               "en",
               "am"
             ],
+            "type": "string",
             "example": "en"
           },
           "supportedLanguages": {
             "type": "array",
-            "example": [
-              "en",
-              "am"
-            ],
+            "minItems": 1,
+            "maxItems": 2,
             "items": {
               "type": "string",
               "enum": [
                 "en",
                 "am"
               ]
-            }
+            },
+            "example": [
+              "en",
+              "am"
+            ]
           },
           "contactEmail": {
             "type": "string",
-            "example": "info@example.org",
-            "maxLength": 255
+            "maxLength": 255,
+            "format": "email",
+            "example": "info@example.org"
           },
           "phone": {
             "type": "string",
-            "example": "+251 11 000 0000",
-            "maxLength": 50
+            "maxLength": 50,
+            "example": "+251 11 000 0000"
           },
           "address": {
             "type": "string",
-            "example": "Addis Ababa, Ethiopia",
-            "maxLength": 500
+            "maxLength": 500,
+            "example": "Addis Ababa, Ethiopia"
           },
           "socialLinks": {
             "$ref": "#/components/schemas/SocialLinksDto"
@@ -9498,59 +10256,207 @@
       },
       "CreateContactSubmissionDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "message": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 5000
+          },
+          "languageCode": {
+            "type": "string",
+            "default": "en",
+            "enum": [
+              "en",
+              "am"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "message",
+          "languageCode"
+        ]
       },
       "CreateVolunteerApplicationDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "pattern": "^\\+?[0-9 ()-]{7,25}$"
+          },
+          "roleInterest": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 150
+          },
+          "message": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 5000
+          },
+          "languageCode": {
+            "type": "string",
+            "default": "en",
+            "enum": [
+              "en",
+              "am"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "phone",
+          "roleInterest",
+          "message",
+          "languageCode"
+        ]
       },
       "NewsletterSignupDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "languageCode": {
+            "type": "string",
+            "default": "en",
+            "enum": [
+              "en",
+              "am"
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "languageCode"
+        ]
       },
       "CreateTestimonialDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "text": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 2000
+          },
+          "languageCode": {
+            "type": "string",
+            "enum": [
+              "en",
+              "am"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "default": "DRAFT",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ]
+          },
+          "translationKey": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "name",
+          "text",
+          "languageCode",
+          "status"
+        ]
       },
       "UpdateTestimonialDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "text": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 2000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ]
+          }
+        }
       },
       "CreateDonationDto": {
         "type": "object",
         "properties": {
           "amount": {
             "type": "number",
-            "example": 25,
             "minimum": 1,
-            "maximum": 1000000
+            "maximum": 1000000,
+            "example": 25
           },
           "currency": {
-            "type": "string",
             "enum": [
               "USD",
               "ETB"
             ],
+            "type": "string",
             "example": "USD"
           },
           "gateway": {
-            "type": "string",
             "enum": [
               "SIMULATED",
               "PAYPAL"
             ],
+            "type": "string",
             "example": "SIMULATED",
             "description": "SIMULATED is the only provider available in trial mode and collects no money."
           },
           "donorName": {
             "type": "string",
-            "example": "Trial Donor",
-            "maxLength": 100
+            "maxLength": 100,
+            "example": "Trial Donor"
           },
           "donorEmail": {
             "type": "string",
-            "example": "donor@example.com",
-            "format": "email"
+            "maxLength": 255,
+            "format": "email",
+            "example": "donor@example.com"
           },
           "message": {
             "type": "string",
@@ -9567,23 +10473,184 @@
       },
       "CreateRsvpDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "attendees": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 20
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "attendees"
+        ]
       },
       "CreateEventDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 180
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 10000
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 500
+          },
+          "rsvpEnabled": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ]
+          },
+          "languageCode": {
+            "type": "string",
+            "enum": [
+              "en",
+              "am"
+            ]
+          },
+          "translationKey": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "slug",
+          "title",
+          "description",
+          "startDate",
+          "endDate",
+          "location",
+          "rsvpEnabled",
+          "status",
+          "languageCode"
+        ]
       },
       "UpdateEventDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 180
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 10000
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 500
+          },
+          "rsvpEnabled": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ]
+          }
+        }
       },
       "UpdateGalleryItemDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "altText": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 500
+          }
+        }
       },
       "TrackAnalyticsEventDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "eventType": {
+            "type": "string",
+            "enum": [
+              "page_view",
+              "click",
+              "submit"
+            ]
+          },
+          "pageUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "pattern": "^\\/(?!\\/)[^\\s]*$"
+          },
+          "deviceType": {
+            "type": "string",
+            "default": "unknown",
+            "enum": [
+              "mobile",
+              "desktop",
+              "tablet",
+              "unknown"
+            ]
+          },
+          "referrer": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "eventType",
+          "pageUrl",
+          "deviceType"
+        ]
       },
       "CountryVisitsDto": {
         "type": "object",
@@ -9933,11 +11000,91 @@
       },
       "CreateBlogPostDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 180
+          },
+          "languageCode": {
+            "type": "string",
+            "enum": [
+              "en",
+              "am"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "excerpt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200000
+          },
+          "seoTitle": {
+            "type": "string",
+            "maxLength": 70
+          },
+          "seoDescription": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "seoImageUrl": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "slug",
+          "languageCode",
+          "title",
+          "excerpt",
+          "content"
+        ]
       },
       "UpdateBlogPostDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 180
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "excerpt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200000
+          },
+          "seoTitle": {
+            "type": "string",
+            "maxLength": 70
+          },
+          "seoDescription": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "seoImageUrl": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        }
       },
       "SearchReindexDataDto": {
         "type": "object",
@@ -10000,7 +11147,55 @@
       },
       "CreateResourceDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "fileUrl": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "fileName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "mimeType": {
+            "type": "string",
+            "enum": [
+              "application/pdf",
+              "application/msword",
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+              "application/vnd.ms-excel",
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              "application/vnd.ms-powerpoint",
+              "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+              "text/plain",
+              "text/csv"
+            ]
+          },
+          "languageCode": {
+            "type": "string",
+            "enum": [
+              "en",
+              "am"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "fileUrl",
+          "fileName",
+          "mimeType",
+          "languageCode"
+        ]
       },
       "SeoResponseDto": {
         "type": "object",
@@ -10076,33 +11271,37 @@
         "type": "object",
         "properties": {
           "languageCode": {
-            "type": "string",
             "enum": [
               "en",
               "am"
-            ]
+            ],
+            "type": "string"
           },
           "title": {
             "type": "string",
-            "maxLength": 70,
-            "nullable": true
+            "nullable": true,
+            "minLength": 1,
+            "maxLength": 70
           },
           "description": {
             "type": "string",
-            "maxLength": 160,
-            "nullable": true
+            "nullable": true,
+            "minLength": 1,
+            "maxLength": 160
           },
           "keywords": {
             "maxItems": 10,
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "maxLength": 40,
+              "minLength": 1
             }
           },
           "imageUrl": {
             "type": "string",
-            "maxLength": 2048,
-            "nullable": true
+            "nullable": true,
+            "maxLength": 2048
           }
         },
         "required": [

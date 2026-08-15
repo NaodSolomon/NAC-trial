@@ -1556,6 +1556,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AboutMetadataDto: {
+            history: components["schemas"]["ContentSectionDto"];
+            mission: components["schemas"]["ContentSectionDto"];
+            services: components["schemas"]["HomepageServiceItemDto"][];
+        };
         AdminSessionAdministratorDto: {
             /** Format: email */
             email: string;
@@ -1657,16 +1662,70 @@ export interface components {
             /** Format: date-time */
             timestamp: string;
         };
+        CmsPageMetadataDto: {
+            about?: components["schemas"]["AboutMetadataDto"];
+            contentApproved?: boolean;
+            items?: components["schemas"]["FaqItemDto"][];
+            /** Format: uri */
+            mapEmbedUrl?: string;
+            sections?: components["schemas"]["HomepageSectionDto"][];
+            teamMembers?: components["schemas"]["TeamMemberDto"][];
+            volunteerRoles?: components["schemas"]["VolunteerRoleDto"][];
+        };
+        ContentSectionDto: {
+            body: string;
+            heading: string;
+        };
         CountryVisitsDto: {
             /** @example ET */
             country: string;
             /** @example 42 */
             visits: number;
         };
-        CreateAdminDto: Record<string, never>;
-        CreateBlogPostDto: Record<string, never>;
-        CreateCmsPageDto: Record<string, never>;
-        CreateContactSubmissionDto: Record<string, never>;
+        CreateAdminDto: {
+            /** Format: email */
+            email: string;
+            name: string;
+            password: string;
+            /** @enum {string} */
+            role: "SUPER_ADMIN" | "CONTENT_EDITOR" | "FINANCE_VIEWER";
+        };
+        CreateBlogPostDto: {
+            content: string;
+            excerpt: string;
+            /** @enum {string} */
+            languageCode: "en" | "am";
+            seoDescription?: string;
+            seoImageUrl?: string;
+            seoTitle?: string;
+            slug: string;
+            title: string;
+        };
+        CreateCmsPageDto: {
+            content: string;
+            /** @enum {string} */
+            languageCode: "en" | "am";
+            metadata?: components["schemas"]["CmsPageMetadataDto"];
+            seoDescription?: string;
+            seoImageUrl?: string;
+            seoTitle?: string;
+            slug: string;
+            title: string;
+            /** Format: uuid */
+            translationKey?: string;
+        };
+        CreateContactSubmissionDto: {
+            /** Format: email */
+            email: string;
+            /**
+             * @default en
+             * @enum {string}
+             */
+            languageCode: "en" | "am";
+            message: string;
+            name: string;
+            subject?: string;
+        };
         CreateDonationDto: {
             /** @example 25 */
             amount: number;
@@ -1690,7 +1749,21 @@ export interface components {
             gateway: "SIMULATED" | "PAYPAL";
             message?: string;
         };
-        CreateEventDto: Record<string, never>;
+        CreateEventDto: {
+            description: string;
+            endDate: string;
+            /** @enum {string} */
+            languageCode: "en" | "am";
+            location: string;
+            rsvpEnabled: boolean;
+            slug: string;
+            startDate: string;
+            /** @enum {string} */
+            status: "DRAFT" | "PUBLISHED";
+            title: string;
+            /** Format: uuid */
+            translationKey?: string;
+        };
         CreateNavigationItemDto: {
             /** @example About us */
             label: string;
@@ -1704,10 +1777,48 @@ export interface components {
             /** @example /about */
             url: string;
         };
-        CreateResourceDto: Record<string, never>;
-        CreateRsvpDto: Record<string, never>;
-        CreateTestimonialDto: Record<string, never>;
-        CreateVolunteerApplicationDto: Record<string, never>;
+        CreateResourceDto: {
+            description: string;
+            fileName: string;
+            fileUrl: string;
+            /** @enum {string} */
+            languageCode: "en" | "am";
+            /** @enum {string} */
+            mimeType: "application/pdf" | "application/msword" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document" | "application/vnd.ms-excel" | "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" | "application/vnd.ms-powerpoint" | "application/vnd.openxmlformats-officedocument.presentationml.presentation" | "text/plain" | "text/csv";
+            title: string;
+        };
+        CreateRsvpDto: {
+            attendees: number;
+            /** Format: email */
+            email: string;
+            name: string;
+        };
+        CreateTestimonialDto: {
+            /** @enum {string} */
+            languageCode: "en" | "am";
+            name: string;
+            /**
+             * @default DRAFT
+             * @enum {string}
+             */
+            status: "DRAFT" | "PUBLISHED";
+            text: string;
+            /** Format: uuid */
+            translationKey?: string;
+        };
+        CreateVolunteerApplicationDto: {
+            /** Format: email */
+            email: string;
+            /**
+             * @default en
+             * @enum {string}
+             */
+            languageCode: "en" | "am";
+            message: string;
+            name: string;
+            phone: string;
+            roleInterest: string;
+        };
         DonationAnalyticsDto: {
             confirmedValues: components["schemas"]["DonationValueDto"][];
             statusCounts: components["schemas"]["DonationStatusCountDto"][];
@@ -1729,6 +1840,10 @@ export interface components {
             /** @enum {string} */
             currency: "USD" | "ETB";
         };
+        FaqItemDto: {
+            answer: string;
+            question: string;
+        };
         FormSummaryDto: {
             /** @example 10 */
             contact: number;
@@ -1740,6 +1855,14 @@ export interface components {
             totalSubmissions: number;
             /** @example 8 */
             volunteer: number;
+        };
+        HomepageSectionDto: {
+            /** @enum {string} */
+            type: "hero" | "services" | "location" | "callToAction";
+        };
+        HomepageServiceItemDto: {
+            body: string;
+            title: string;
         };
         LoginDto: {
             /**
@@ -1753,7 +1876,15 @@ export interface components {
              */
             password: string;
         };
-        NewsletterSignupDto: Record<string, never>;
+        NewsletterSignupDto: {
+            /** Format: email */
+            email: string;
+            /**
+             * @default en
+             * @enum {string}
+             */
+            languageCode: "en" | "am";
+        };
         Object: Record<string, never>;
         PageVisitsDto: {
             /** @example /services */
@@ -1850,7 +1981,9 @@ export interface components {
             message: string;
             revokedCount: number;
         };
-        ScheduleCmsPageDto: Record<string, never>;
+        ScheduleCmsPageDto: {
+            scheduledAt: string;
+        };
         SearchReindexApiResponseDto: {
             data: components["schemas"]["SearchReindexDataDto"];
             /** @example 200 */
@@ -1886,14 +2019,33 @@ export interface components {
             title: string;
         };
         SocialLinksDto: {
-            /** @example https://facebook.com/nehemiah */
+            /**
+             * Format: uri
+             * @example https://facebook.com/nehemiah
+             */
             facebook?: string;
-            /** @example https://instagram.com/nehemiah */
+            /**
+             * Format: uri
+             * @example https://instagram.com/nehemiah
+             */
             instagram?: string;
-            /** @example https://linkedin.com/company/nehemiah */
+            /**
+             * Format: uri
+             * @example https://linkedin.com/company/nehemiah
+             */
             linkedin?: string;
-            /** @example https://youtube.com/@nehemiah */
+            /**
+             * Format: uri
+             * @example https://youtube.com/@nehemiah
+             */
             youtube?: string;
+        };
+        TeamMemberDto: {
+            biography: string;
+            /** Format: uri */
+            imageUrl?: string;
+            name: string;
+            role: string;
         };
         TopResourceDto: {
             /** @example 20 */
@@ -1903,12 +2055,57 @@ export interface components {
             /** @example Family support guide */
             title: string;
         };
-        TrackAnalyticsEventDto: Record<string, never>;
-        UpdateAdminDto: Record<string, never>;
-        UpdateBlogPostDto: Record<string, never>;
-        UpdateCmsPageDto: Record<string, never>;
-        UpdateEventDto: Record<string, never>;
-        UpdateGalleryItemDto: Record<string, never>;
+        TrackAnalyticsEventDto: {
+            /**
+             * @default unknown
+             * @enum {string}
+             */
+            deviceType: "mobile" | "desktop" | "tablet" | "unknown";
+            /** @enum {string} */
+            eventType: "page_view" | "click" | "submit";
+            pageUrl: string;
+            referrer?: string;
+        };
+        UpdateAdminDto: {
+            isActive?: boolean;
+            name?: string;
+            password?: string;
+            /** @enum {string} */
+            role?: "SUPER_ADMIN" | "CONTENT_EDITOR" | "FINANCE_VIEWER";
+        };
+        UpdateBlogPostDto: {
+            content?: string;
+            excerpt?: string;
+            seoDescription?: string;
+            seoImageUrl?: string;
+            seoTitle?: string;
+            slug?: string;
+            title?: string;
+        };
+        UpdateCmsPageDto: {
+            content?: string;
+            metadata?: components["schemas"]["CmsPageMetadataDto"];
+            seoDescription?: string;
+            seoImageUrl?: string;
+            seoTitle?: string;
+            slug?: string;
+            title?: string;
+        };
+        UpdateEventDto: {
+            description?: string;
+            endDate?: string;
+            location?: string;
+            rsvpEnabled?: boolean;
+            slug?: string;
+            startDate?: string;
+            /** @enum {string} */
+            status?: "DRAFT" | "PUBLISHED";
+            title?: string;
+        };
+        UpdateGalleryItemDto: {
+            altText?: string;
+            title?: string;
+        };
         UpdateNavigationItemDto: {
             /** @example true */
             isVisible?: boolean;
@@ -1930,7 +2127,10 @@ export interface components {
         UpdateSiteSettingsDto: {
             /** @example Addis Ababa, Ethiopia */
             address?: string;
-            /** @example info@example.org */
+            /**
+             * Format: email
+             * @example info@example.org
+             */
             contactEmail?: string;
             /**
              * @example en
@@ -1950,7 +2150,17 @@ export interface components {
              */
             supportedLanguages?: ("en" | "am")[];
         };
-        UpdateTestimonialDto: Record<string, never>;
+        UpdateTestimonialDto: {
+            name?: string;
+            /** @enum {string} */
+            status?: "DRAFT" | "PUBLISHED";
+            text?: string;
+        };
+        VolunteerRoleDto: {
+            commitment?: string;
+            summary: string;
+            title: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -2057,11 +2267,16 @@ export interface operations {
     AuditLogsController_list: {
         parameters: {
             query?: {
+                action?: string;
+                adminId?: string;
+                entityType?: string;
+                from?: string;
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
                 /** @description Repository-supported field used for sorting */
                 sortBy?: string;
                 sortOrder?: "asc" | "desc";
+                to?: string;
             };
             header?: never;
             path?: never;
@@ -2109,6 +2324,7 @@ export interface operations {
     AdminBlogController_list: {
         parameters: {
             query?: {
+                languageCode?: "en" | "am";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
                 /** @description Repository-supported field used for sorting */
@@ -2499,11 +2715,13 @@ export interface operations {
     AdminCmsPagesController_list: {
         parameters: {
             query?: {
+                languageCode?: "en" | "am";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
                 /** @description Repository-supported field used for sorting */
                 sortBy?: string;
                 sortOrder?: "asc" | "desc";
+                status?: "DRAFT" | "SCHEDULED" | "PUBLISHED";
             };
             header?: never;
             path?: never;
@@ -2897,8 +3115,10 @@ export interface operations {
     AdminContactController_list: {
         parameters: {
             query?: {
+                languageCode?: "en" | "am";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
+                search?: string;
                 /** @description Repository-supported field used for sorting */
                 sortBy?: string;
                 sortOrder?: "asc" | "desc";
@@ -3392,12 +3612,15 @@ export interface operations {
     };
     AdminEventsController_list: {
         parameters: {
-            query?: {
+            query: {
+                languageCode: "en" | "am";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
                 /** @description Repository-supported field used for sorting */
                 sortBy?: string;
                 sortOrder?: "asc" | "desc";
+                status?: "DRAFT" | "PUBLISHED";
+                timeframe: "upcoming" | "past" | "all";
             };
             header?: never;
             path?: never;
@@ -3410,7 +3633,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedResponse"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Authentication required */
@@ -3638,7 +3861,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedResponse"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Authentication required */
@@ -3878,15 +4101,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        data: unknown;
-                        /** @example 200 */
-                        statusCode: number;
-                        /** @enum {boolean} */
-                        success: true;
-                        /** Format: date-time */
-                        timestamp: string;
-                    };
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Authentication required */
@@ -3923,9 +4138,11 @@ export interface operations {
             query?: {
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
+                search?: string;
                 /** @description Repository-supported field used for sorting */
                 sortBy?: string;
                 sortOrder?: "asc" | "desc";
+                type?: "IMAGE" | "VIDEO" | "DOCUMENT";
             };
             header?: never;
             path?: never;
@@ -4104,6 +4321,7 @@ export interface operations {
     AdminNavigationController_list: {
         parameters: {
             query?: {
+                languageCode?: "en" | "am";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
                 /** @description Repository-supported field used for sorting */
@@ -4385,7 +4603,7 @@ export interface operations {
             header?: never;
             path: {
                 /** @description Email address of the newsletter subscriber to remove */
-                email: unknown;
+                email: string;
             };
             cookie?: never;
         };
@@ -4439,6 +4657,7 @@ export interface operations {
     AdminResourcesController_list: {
         parameters: {
             query?: {
+                languageCode?: "en" | "am";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
                 /** @description Repository-supported field used for sorting */
@@ -4834,7 +5053,10 @@ export interface operations {
     };
     SlugCheckController_check: {
         parameters: {
-            query?: never;
+            query: {
+                languageCode: "en" | "am";
+                slug: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -5052,12 +5274,14 @@ export interface operations {
     };
     AdminEngagementController_testimonials: {
         parameters: {
-            query?: {
+            query: {
+                languageCode: "en" | "am";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
                 /** @description Repository-supported field used for sorting */
                 sortBy?: string;
                 sortOrder?: "asc" | "desc";
+                status?: "DRAFT" | "PUBLISHED";
             };
             header?: never;
             path?: never;
@@ -5279,8 +5503,10 @@ export interface operations {
     AdminsController_list: {
         parameters: {
             query?: {
+                isActive?: boolean;
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
+                role?: "SUPER_ADMIN" | "CONTENT_EDITOR" | "FINANCE_VIEWER";
                 /** @description Repository-supported field used for sorting */
                 sortBy?: string;
                 sortOrder?: "asc" | "desc";
@@ -5346,15 +5572,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        data: unknown;
-                        /** @example 201 */
-                        statusCode: number;
-                        /** @enum {boolean} */
-                        success: true;
-                        /** Format: date-time */
-                        timestamp: string;
-                    };
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Authentication required */
@@ -5402,15 +5620,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        data: unknown;
-                        /** @example 200 */
-                        statusCode: number;
-                        /** @enum {boolean} */
-                        success: true;
-                        /** Format: date-time */
-                        timestamp: string;
-                    };
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Authentication required */
@@ -5518,15 +5728,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        data: unknown;
-                        /** @example 200 */
-                        statusCode: number;
-                        /** @enum {boolean} */
-                        success: true;
-                        /** Format: date-time */
-                        timestamp: string;
-                    };
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Authentication required */
@@ -5561,11 +5763,14 @@ export interface operations {
     AdminEngagementController_applications: {
         parameters: {
             query?: {
+                languageCode?: "en" | "am";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
+                search?: string;
                 /** @description Repository-supported field used for sorting */
                 sortBy?: string;
                 sortOrder?: "asc" | "desc";
+                status?: "PENDING" | "APPROVED" | "REJECTED";
             };
             header?: never;
             path?: never;
@@ -5788,15 +5993,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        data: unknown;
-                        /** @example 200 */
-                        statusCode: number;
-                        /** @enum {boolean} */
-                        success: true;
-                        /** Format: date-time */
-                        timestamp: string;
-                    };
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Authentication required */
@@ -6001,7 +6198,9 @@ export interface operations {
     };
     PublicNavigationController_list: {
         parameters: {
-            query?: never;
+            query: {
+                languageCode: "en" | "am";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -6080,6 +6279,7 @@ export interface operations {
     PublicBlogController_list: {
         parameters: {
             query?: {
+                languageCode?: "en" | "am";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
                 /** @description Repository-supported field used for sorting */
@@ -6113,7 +6313,9 @@ export interface operations {
     };
     PublicBlogController_detail: {
         parameters: {
-            query?: never;
+            query: {
+                languageCode: "en" | "am";
+            };
             header?: never;
             path: {
                 slug: string;
@@ -6151,7 +6353,9 @@ export interface operations {
     };
     PublicContactController_getPage: {
         parameters: {
-            query?: never;
+            query: {
+                languageCode: "en" | "am";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -6227,7 +6431,9 @@ export interface operations {
     };
     PublicCompositionController_faqs: {
         parameters: {
-            query?: never;
+            query: {
+                languageCode: "en" | "am";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -6263,7 +6469,9 @@ export interface operations {
     };
     PublicCompositionController_homepage: {
         parameters: {
-            query?: never;
+            query: {
+                languageCode: "en" | "am";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -6488,12 +6696,15 @@ export interface operations {
     };
     PublicEventsController_list: {
         parameters: {
-            query?: {
+            query: {
+                languageCode: "en" | "am";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
                 /** @description Repository-supported field used for sorting */
                 sortBy?: string;
                 sortOrder?: "asc" | "desc";
+                status?: "DRAFT" | "PUBLISHED";
+                timeframe: "upcoming" | "past" | "all";
             };
             header?: never;
             path?: never;
@@ -6506,7 +6717,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedResponse"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Rate limit exceeded */
@@ -6564,7 +6775,9 @@ export interface operations {
     };
     PublicEventsController_detail: {
         parameters: {
-            query?: never;
+            query: {
+                languageCode: "en" | "am";
+            };
             header?: never;
             path: {
                 slug: string;
@@ -6602,7 +6815,9 @@ export interface operations {
     };
     PublicEventsController_calendar: {
         parameters: {
-            query?: never;
+            query: {
+                languageCode: "en" | "am";
+            };
             header?: never;
             path: {
                 slug: string;
@@ -6640,12 +6855,14 @@ export interface operations {
     };
     PublicGalleryController_list: {
         parameters: {
-            query?: {
+            query: {
+                languageCode: "en" | "am";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
                 /** @description Repository-supported field used for sorting */
                 sortBy?: string;
                 sortOrder?: "asc" | "desc";
+                type?: "IMAGE" | "VIDEO";
             };
             header?: never;
             path?: never;
@@ -6658,7 +6875,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedResponse"];
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Rate limit exceeded */
@@ -6714,7 +6931,9 @@ export interface operations {
     };
     PublicCmsPagesController_findPublished: {
         parameters: {
-            query?: never;
+            query: {
+                languageCode: "en" | "am";
+            };
             header?: never;
             path: {
                 slug: string;
@@ -6753,6 +6972,7 @@ export interface operations {
     PublicResourcesController_list: {
         parameters: {
             query?: {
+                languageCode?: "en" | "am";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
                 /** @description Repository-supported field used for sorting */
@@ -6827,7 +7047,10 @@ export interface operations {
     };
     SearchController_find: {
         parameters: {
-            query?: never;
+            query: {
+                languageCode?: "en" | "am";
+                q: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -6902,7 +7125,8 @@ export interface operations {
     };
     PublicEngagementController_testimonials: {
         parameters: {
-            query?: {
+            query: {
+                languageCode: "en" | "am";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
                 /** @description Repository-supported field used for sorting */
@@ -6936,7 +7160,9 @@ export interface operations {
     };
     PublicEngagementController_volunteerPage: {
         parameters: {
-            query?: never;
+            query: {
+                languageCode: "en" | "am";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -7024,15 +7250,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        data: unknown;
-                        /** @example 200 */
-                        statusCode: number;
-                        /** @enum {boolean} */
-                        success: true;
-                        /** Format: date-time */
-                        timestamp: string;
-                    };
+                    "application/json": Record<string, never>;
                 };
             };
             /** @description Rate limit exceeded */
