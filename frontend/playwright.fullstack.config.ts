@@ -3,6 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/fullstack',
   globalSetup: './tests/fullstack/global-setup.ts',
+  grep: process.env.E2E_TEST_SCOPE === 'smoke' ? /@smoke/ : undefined,
   workers: 1,
   timeout: 120_000,
   retries: process.env.CI ? 1 : 0,

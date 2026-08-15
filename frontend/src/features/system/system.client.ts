@@ -21,12 +21,13 @@ interface PageCriteria {
   page: number;
   signal?: AbortSignal;
 }
-function pageQuery(criteria: PageCriteria, limit = 10) {
-  return new URLSearchParams({
+function pageQuery(criteria: PageCriteria, limit = 10, includeSortOrder = true) {
+  const query = new URLSearchParams({
     page: String(criteria.page),
     limit: String(limit),
-    sortOrder: 'desc',
   });
+  if (includeSortOrder) query.set('sortOrder', 'desc');
+  return query;
 }
 
 export async function listAdministrators(
@@ -79,7 +80,7 @@ export async function listAuditLogs(
 export async function listAdminSessions(
   criteria: PageCriteria & { adminId?: string; status?: string },
 ) {
-  const query = pageQuery(criteria, 20);
+  const query = pageQuery(criteria, 20, false);
   if (criteria.adminId) query.set('adminId', criteria.adminId);
   if (criteria.status) query.set('status', criteria.status);
   return adminSessionListSchema.parse(

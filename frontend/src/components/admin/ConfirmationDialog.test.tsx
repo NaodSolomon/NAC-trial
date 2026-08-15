@@ -40,7 +40,7 @@ describe('ConfirmedActionButton', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete content' }));
-    await waitFor(() => expect(screen.getByText(/Nothing was deleted/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/No changes were applied/)).toBeInTheDocument());
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 });

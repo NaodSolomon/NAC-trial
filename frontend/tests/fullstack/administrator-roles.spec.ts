@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 const password = 'E2eStrongPassword123!';
 
-test('super administrator reaches security and operations workspaces', async ({ page }) => {
+test('@smoke super administrator reaches security and operations workspaces', async ({ page }) => {
   await login(page, 'e2e-super@nehemiah.test');
   await expect(page.getByRole('navigation', { name: 'Administrator navigation' })).toContainText(
     'Administrators',
@@ -13,7 +13,7 @@ test('super administrator reaches security and operations workspaces', async ({ 
   await expect(page.getByText(/Redis/).first()).toBeVisible();
 });
 
-test('content editor reaches content tools but not financial data', async ({ page }) => {
+test('@smoke content editor reaches content tools but not financial data', async ({ page }) => {
   await login(page, 'e2e-editor@nehemiah.test');
   const navigation = page.getByRole('navigation', { name: 'Administrator navigation' });
   await expect(navigation).toContainText('CMS pages');
@@ -22,7 +22,7 @@ test('content editor reaches content tools but not financial data', async ({ pag
   await expect(page.getByRole('heading', { name: /role cannot access/i })).toBeVisible();
 });
 
-test('finance viewer reaches donations but not content tools', async ({ page }) => {
+test('@smoke finance viewer reaches donations but not content tools', async ({ page }) => {
   await login(page, 'e2e-finance@nehemiah.test');
   const navigation = page.getByRole('navigation', { name: 'Administrator navigation' });
   await expect(navigation).toContainText('Donations');
@@ -31,7 +31,7 @@ test('finance viewer reaches donations but not content tools', async ({ page }) 
   await expect(page.getByRole('heading', { name: /role cannot access/i })).toBeVisible();
 });
 
-test('content editor creates and publishes a page through the real administration UI', async ({
+test('@smoke content editor creates and publishes a page through the real administration UI', async ({
   page,
 }) => {
   const slug = `e2e-published-${Date.now()}`;
@@ -54,7 +54,7 @@ test('content editor creates and publishes a page through the real administratio
   await expect(page.getByText('Published by the disposable full-stack test.')).toBeVisible();
 });
 
-test('super administrator updates settings and runs an audited cache mutation', async ({ page }) => {
+test('@smoke super administrator updates settings and runs an audited cache mutation', async ({ page }) => {
   await login(page, 'e2e-super@nehemiah.test');
   await page.goto('/admin/settings');
   await page.getByLabel('Address').fill('Addis Ababa, Ethiopia — verified by E2E');

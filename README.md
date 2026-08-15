@@ -360,9 +360,10 @@ rasterization is platform-specific.
 
 `docker-compose.e2e.yml` is deliberately separate from development Compose. It uses an in-memory
 PostgreSQL database named exactly `nehemiah_e2e`, non-persistent Redis and MinIO data, Mailpit,
-trial payments, and three deterministic test-only roles. The E2E seed refuses to run against any
+trial payments, and five deterministic test-only accounts. The E2E seed refuses to run against any
 other database name. The stack never reads development volumes, never enables real payments, and
-is removed with its named dependency/test volumes after CI.
+is removed with its named test-result volume after CI. A dedicated Playwright image installs the
+locked frontend dependencies during its build, so the runner never mutates the mounted repository.
 
 Run the complete free local stack and its real Playwright journeys with one command from the
 repository root:
@@ -371,6 +372,13 @@ repository root:
 docker compose -f docker-compose.e2e.yml up --build \
   --abort-on-container-exit --exit-code-from playwright-e2e playwright-e2e
 ```
+
+Set `E2E_TEST_SCOPE=smoke` before that command to run only the tagged seven-test pull-request
+gate. With the default `all` scope, the suite also verifies automatic scheduled publishing,
+draft-to-public SEO, engagement and finance review, password recovery through a real Mailpit
+message, per-device session revocation, Redis cache maintenance, search reindexing, and advisory
+lock conflict handling. Pull requests use the smoke scope in CI; pushes to `main` and
+`Backend/Features` run the extended scope.
 
 Always remove its disposable containers and volumes afterward (the database name and Compose
 project guard make this command specific to E2E data):
@@ -386,6 +394,8 @@ For interactive inspection, start through `frontend-e2e` in detached mode and op
 - `e2e-super@nehemiah.test`
 - `e2e-editor@nehemiah.test`
 - `e2e-finance@nehemiah.test`
+- `e2e-recovery@nehemiah.test` (dedicated password-reset account)
+- `e2e-security@nehemiah.test` (isolated session-revocation administrator)
 
 The browser coverage matrix is layered intentionally: every implemented public/admin page has
 mocked success plus relevant loading, empty, validation, unavailable, forbidden, or destructive
@@ -394,8 +404,9 @@ states in `frontend/tests/e2e` and approved desktop/mobile snapshots in
 search/download, RSVP, engagement, simulated-donation, role, and system-health journeys against
 real PostgreSQL, Redis, MinIO, and Mailpit adapters. The real-service role suite additionally
 creates and publishes CMS content as an editor and updates settings and warms cache as a super
-administrator, proving that representative protected mutations work rather than checking route
-visibility alone.
+administrator. The extended suite covers the stateful security, publishing, SEO, finance, cache,
+and search-maintenance workflows that cannot be proven by mocked browser tests, while the tagged
+smoke suite keeps pull-request feedback bounded.
 
 ## Authorization and Audit
 
