@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-Full-stack monorepo: Next.js frontend + NestJS backend + shared TypeScript types.
+Full-stack monorepo: Next.js frontend + NestJS backend sharing a generated API contract.
 
 - **Frontend**: `frontend/` — Next.js 15, React 19, Tailwind CSS v4, shadcn/ui, Zustand, TanStack Query
 - **Backend**: `backend/` — NestJS with Fastify adapter, Drizzle ORM, PostgreSQL, Repository Pattern
-- **Shared**: `shared/types/` — TypeScript interfaces used by both apps via `@shared/*` path alias
+- **Contract**: `frontend/src/lib/api/generated.ts` — types generated from the backend OpenAPI document
 - **Infra**: Docker Compose (dev + prod), GitHub Actions CI/CD
 
 ## Commands
@@ -181,26 +181,31 @@ Always use this pattern:
 - Each group has its own `layout.tsx`
 - Global error/loading/not-found pages are in `src/app/`
 
-## Shared Types
+## API Contract
 
-Located in `shared/types/`. Both apps import via `@shared/types`:
-```typescript
-import type { ApiResponse, BaseUser, PaginatedResponse } from '@shared/types';
+The backend OpenAPI document is the single source of cross-app types. There is no hand-written
+shared types package.
+
+```bash
+cd backend && pnpm openapi:generate   # emits backend/dist/openapi.json from Nest metadata
+cd frontend && pnpm api:generate      # regenerates openapi/openapi.json + src/lib/api/generated.ts
+cd frontend && pnpm api:check         # fails when the committed artifacts are stale
 ```
 
-When both apps need the same interface, add it here. Feature-local types stay in their respective app.
+Import contract types from the generated module:
+```typescript
+import type { paths } from '@/lib/api/generated';
+```
 
-Key types:
-- `ApiResponse<T>` — standard API response wrapper
-- `ApiError` — error response shape
-- `BaseUser` / `UserRole` — user entity shape
-- `PaginationQuery` / `PaginatedResponse<T>` — pagination helpers
+Never edit `src/lib/api/generated.ts` by hand — regenerate it. When a backend route or DTO
+changes, run `pnpm api:generate` and commit the result, or CI's `api:check` step will fail.
+Zod schemas in `features/<name>/schemas/` remain the runtime trust boundary, because generated
+types are erased at compile time.
 
 ## Path Aliases
 
-Both apps use these `tsconfig.json` paths:
+Both apps use this `tsconfig.json` path:
 - `@/*` → `./src/*` (app-local imports)
-- `@shared/*` → `../shared/*` (shared types)
 
 Always use path aliases, never relative imports like `../../../`.
 
@@ -239,6 +244,6 @@ Always use path aliases, never relative imports like `../../../`.
 - Don't import Drizzle `db` in services — use the injected repository interface
 - Don't use Express types/middleware — this is a Fastify project
 - Don't skip DTO validation — every endpoint input goes through a validated DTO
-- Don't put shared types in `frontend/` or `backend/` — use `shared/types/`
+- Don't hand-edit `frontend/src/lib/api/generated.ts` — regenerate it with `pnpm api:generate`
 - Don't define table schemas inside modules — all schemas go in `src/database/schema/`
 - Don't use `db:push` in production — use `db:generate` + `db:migrate`

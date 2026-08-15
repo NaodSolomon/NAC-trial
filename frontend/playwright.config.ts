@@ -53,6 +53,7 @@ export default defineConfig({
         API_URL: 'http://127.0.0.1:4010/api/v1',
         NEXT_PUBLIC_API_URL: 'http://127.0.0.1:4010/api/v1',
         NEXT_PUBLIC_STORAGE_ORIGIN: 'http://127.0.0.1:4010',
+        MEDIA_IMAGE_ORIGIN: 'http://127.0.0.1:4010',
       },
     },
   ],
