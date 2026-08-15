@@ -21,6 +21,16 @@ export const E2E_ACTORS = [
     email: 'e2e-finance@nehemiah.test',
     role: 'FINANCE_VIEWER' as const,
   },
+  {
+    name: 'E2E Password Recovery',
+    email: 'e2e-recovery@nehemiah.test',
+    role: 'CONTENT_EDITOR' as const,
+  },
+  {
+    name: 'E2E Security Administrator',
+    email: 'e2e-security@nehemiah.test',
+    role: 'SUPER_ADMIN' as const,
+  },
 ];
 
 function assertDedicatedDatabase(): void {

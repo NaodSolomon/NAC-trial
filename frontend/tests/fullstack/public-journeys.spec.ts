@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('bilingual discovery, search, and tracked resource download use real services', async ({
+test('@smoke bilingual discovery, search, and tracked resource download use real services', async ({
   page,
 }) => {
   await page.goto('/?lang=en');
@@ -19,7 +19,7 @@ test('bilingual discovery, search, and tracked resource download use real servic
   await expect(resource).toContainText(`${initialDownloads + 1} downloads`);
 });
 
-test('RSVP, contact, volunteer, and fake donation complete without external accounts', async ({
+test('@smoke RSVP, contact, volunteer, and fake donation complete without external accounts', async ({
   page,
   request,
 }) => {
@@ -44,7 +44,7 @@ test('RSVP, contact, volunteer, and fake donation complete without external acco
   await volunteerForm.getByLabel('Name').fill('E2E Volunteer');
   await volunteerForm.getByLabel('Email address').fill(`volunteer-${run}@nehemiah.test`);
   await volunteerForm.getByLabel(/Phone/).fill('+251911000000');
-  await volunteerForm.getByLabel('Area of interest').fill('Inclusive event support');
+  await volunteerForm.getByLabel('Role of interest').selectOption({ index: 1 });
   await volunteerForm
     .getByLabel('Tell us about your experience and interest')
     .fill('I am available on weekends for family activities.');

@@ -22,6 +22,8 @@ export class PostgresSearchMaintenanceRepository implements SearchMaintenanceRep
       lockAcquired = await this.tryLock(client);
       if (!lockAcquired) return { status: 'busy' };
 
+      await this.holdLockForE2eConflictTest(client);
+
       const startedAt = new Date();
       for (const indexName of SEARCH_TRIGRAM_INDEXES) {
         // Index identifiers are compile-time constants and never originate from a request.
@@ -58,5 +60,12 @@ export class PostgresSearchMaintenanceRepository implements SearchMaintenanceRep
       [SEARCH_REINDEX_LOCK_NAMESPACE, SEARCH_REINDEX_LOCK_ID],
     );
     return result.rows[0]?.acquired === true;
+  }
+
+  private async holdLockForE2eConflictTest(client: PoolClient): Promise<void> {
+    if (process.env.NODE_ENV !== 'test') return;
+    const delayMs = Number(process.env.SEARCH_REINDEX_TEST_DELAY_MS ?? 0);
+    if (!Number.isFinite(delayMs) || delayMs <= 0) return;
+    await client.query('SELECT pg_sleep($1)', [Math.min(delayMs, 5_000) / 1_000]);
   }
 }

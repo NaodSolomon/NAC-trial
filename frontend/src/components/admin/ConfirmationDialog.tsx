@@ -102,7 +102,7 @@ export function ConfirmedActionButton({
       await onConfirm();
       setOpen(false);
     } catch {
-      setActionError('The action could not be completed. Nothing was deleted.');
+      setActionError('The action could not be completed. No changes were applied.');
     } finally {
       setBusy(false);
     }
