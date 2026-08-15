@@ -31,6 +31,7 @@ for (const screen of publicScreens) {
     await page.goto(screen.path, { waitUntil: 'domcontentloaded' });
     await page.locator('main').waitFor({ state: 'visible' });
     await page.evaluate(() => document.fonts.ready);
+    await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
     await revealLazyContent(page);
     await expect(page).toHaveScreenshot(`${screen.name}.png`, {
       fullPage: true,
@@ -40,23 +41,32 @@ for (const screen of publicScreens) {
 }
 
 async function revealLazyContent(page: import('@playwright/test').Page) {
+  await page.locator('img').evaluateAll((images) => {
+    for (const image of images as HTMLImageElement[]) image.loading = 'eager';
+  });
   await page.evaluate(async () => {
     const step = Math.max(window.innerHeight * 0.75, 400);
     for (let y = 0; y < document.documentElement.scrollHeight; y += step) {
       window.scrollTo(0, y);
-      await new Promise((resolve) => window.setTimeout(resolve, 40));
+      await new Promise((resolve) => window.setTimeout(resolve, 75));
     }
     window.scrollTo(0, 0);
   });
-  await page
-    .waitForFunction(
-      () =>
-        Array.from(document.images).every(
-          (image) => !image.currentSrc || (image.complete && image.naturalWidth > 0),
-        ),
-      undefined,
-      { timeout: 10_000 },
-    )
-    .catch(() => undefined);
-  await page.waitForTimeout(500);
+  await page.waitForFunction(
+    () =>
+      Array.from(document.images).every(
+        (image) => !image.getAttribute('src') || (image.complete && image.naturalWidth > 0),
+      ),
+    undefined,
+    { timeout: 20_000 },
+  );
+  await page.locator('img').evaluateAll(async (images) => {
+    await Promise.all((images as HTMLImageElement[]).map((image) => image.decode()));
+  });
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
 }

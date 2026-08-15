@@ -55,6 +55,35 @@ test.beforeEach(async ({ context, page }) => {
         totalVisitors: 1248,
         topCountries: [{ country: 'ET', visits: 900 }],
         topPages: [{ route: '/', visits: 720 }],
+        forms: {
+          totalSubmissions: 42,
+          contact: 12,
+          volunteer: 8,
+          newsletter: 15,
+          eventRsvp: 7,
+        },
+        resources: {
+          totalDownloads: 36,
+          topResources: [
+            {
+              resourceId: '00000000-0000-4000-8000-000000001521',
+              title: 'Family support guide',
+              downloads: 24,
+            },
+          ],
+          topCountries: [{ country: 'ET', downloads: 30 }],
+        },
+        donations: {
+          totalDonations: 18,
+          statusCounts: [
+            { status: 'CONFIRMED', count: 12 },
+            { status: 'PENDING', count: 6 },
+          ],
+          confirmedValues: [
+            { currency: 'USD', amount: '1250.00' },
+            { currency: 'ETB', amount: '45000.00' },
+          ],
+        },
       }),
     }),
   );
@@ -114,9 +143,36 @@ test.beforeEach(async ({ context, page }) => {
       status: 200,
       contentType: 'application/json',
       body: envelope([
-        { date: '2026-08-08', visitors: 320 },
-        { date: '2026-08-09', visitors: 410 },
-        { date: '2026-08-10', visitors: 518 },
+        {
+          date: '2026-08-08',
+          visitors: 320,
+          formSubmissions: 12,
+          resourceDownloads: 10,
+          donationsCreated: 5,
+          donationsConfirmed: 3,
+          confirmedUsd: '250.00',
+          confirmedEtb: '10000.00',
+        },
+        {
+          date: '2026-08-09',
+          visitors: 410,
+          formSubmissions: 14,
+          resourceDownloads: 12,
+          donationsCreated: 6,
+          donationsConfirmed: 4,
+          confirmedUsd: '400.00',
+          confirmedEtb: '15000.00',
+        },
+        {
+          date: '2026-08-10',
+          visitors: 518,
+          formSubmissions: 16,
+          resourceDownloads: 14,
+          donationsCreated: 7,
+          donationsConfirmed: 5,
+          confirmedUsd: '600.00',
+          confirmedEtb: '20000.00',
+        },
       ]),
     }),
   );
@@ -504,9 +560,17 @@ for (const screen of [
     await page.goto(screen.path, { waitUntil: 'domcontentloaded' });
     await page.locator('main').waitFor({ state: 'visible' });
     await expect(page.getByRole('heading', { name: screen.ready })).toBeVisible();
+    if (screen.name === 'admin-analytics') {
+      await expect(
+        page.getByRole('heading', { name: 'Thirty-day confirmed ETB trend' }),
+      ).toBeVisible();
+    }
+    await page.evaluate(() => document.fonts.ready);
+    await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
     await expect(page).toHaveScreenshot(`${screen.name}.png`, {
       fullPage: true,
       animations: 'disabled',
+      timeout: 15_000,
     });
   });
 }
