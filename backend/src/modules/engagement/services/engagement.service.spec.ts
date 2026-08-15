@@ -34,6 +34,9 @@ describe('EngagementService', () => {
         title: 'Volunteer with us',
         content: 'Join our mission.',
         languageCode: 'en',
+        metadata: {
+          volunteerRoles: [{ title: 'Therapy Assistant', summary: 'Support therapy sessions.' }],
+        },
       }),
     };
     service = new EngagementService(repository, pages as unknown as CmsPagesService);
@@ -44,8 +47,20 @@ describe('EngagementService', () => {
       title: 'Volunteer with us',
       description: 'Join our mission.',
       languageCode: 'en',
+      roles: [{ title: 'Therapy Assistant', summary: 'Support therapy sessions.' }],
     });
     expect(pages.findPublicPage).toHaveBeenCalledWith('volunteer', 'en');
+  });
+
+  it('returns no roles when the published page omits them', async () => {
+    pages.findPublicPage.mockResolvedValue({
+      title: 'Volunteer with us',
+      content: 'Join our mission.',
+      languageCode: 'en',
+      metadata: {},
+    });
+
+    await expect(service.getVolunteerPage('en')).resolves.toMatchObject({ roles: [] });
   });
 
   it('normalizes volunteer application data before persistence', async () => {

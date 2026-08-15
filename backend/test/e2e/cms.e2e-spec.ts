@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import * as request from 'supertest';
 import { authenticatedSession, TestSession } from '../helpers/auth-test.helper';
 import {
@@ -111,10 +112,17 @@ describe('CMS pages and publishing (e2e)', () => {
       .set('Authorization', editor.authorization)
       .send({ scheduledAt: new Date(Date.now() + 3_600_000).toISOString() })
       .expect(201);
+    const internalApiKey = context.app
+      .get(ConfigService)
+      .getOrThrow<string>('app.internalApiKey');
     await request(context.app.getHttpServer())
       .post('/api/v1/internal/jobs/publish-scheduled')
-      .set('x-internal-api-key', 'development-internal-api-key-change-me')
+      .set('x-internal-api-key', internalApiKey)
       .expect(201);
+    await request(context.app.getHttpServer())
+      .post('/api/v1/internal/jobs/publish-scheduled')
+      .set('x-internal-api-key', `${internalApiKey}-wrong`)
+      .expect(401);
     await request(context.app.getHttpServer())
       .delete(`/api/v1/admin/cms/pages/${id}`)
       .set('Authorization', editor.authorization)

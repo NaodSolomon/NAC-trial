@@ -4,8 +4,9 @@ import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { ContactForm } from '@/features/contact/components/ContactForm';
 import { browserApiClient } from '@/lib/api/browser-client';
+import { API_URL } from '@/lib/constants';
 
-const apiUrl = 'http://localhost:8000/api/v1';
+const apiUrl = API_URL;
 const server = setupServer();
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));

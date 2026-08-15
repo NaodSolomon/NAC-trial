@@ -93,7 +93,8 @@ test('analytics provides non-color chart labels and visible data tables', async 
     ]);
   });
   await page.goto('/admin/analytics');
-  await expect(page.getByText('Recorded page-view events')).toBeVisible();
+  await expect(page.getByText('Recorded page views')).toBeVisible();
+  await expect(page.getByText('Event count, not unique visitors')).toBeVisible();
   await expect(page.getByRole('table', { name: 'Top pages data table' })).toBeVisible();
   await expect(page.getByRole('table', { name: 'Top countries data table' })).toBeVisible();
   await expect(page.getByRole('table', { name: 'Thirty-day timeline data table' })).toBeVisible();
