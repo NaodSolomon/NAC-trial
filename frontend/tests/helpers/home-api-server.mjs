@@ -523,6 +523,23 @@ function volunteerPage(language) {
         ? 'በጎ ፈቃደኞች አካታች ዝግጅቶችን፣ የቤተሰብ እንቅስቃሴዎችንና የማህበረሰብ ግንዛቤን መደገፍ ይችላሉ።'
         : 'Volunteers can support inclusive events, family activities, administration, and community awareness.',
     languageCode: language,
+    roles: [
+      {
+        title: language === 'am' ? 'የዝግጅት ድጋፍ' : 'Event support',
+        summary:
+          language === 'am'
+            ? 'አካታች የቤተሰብና የማህበረሰብ ዝግጅቶችን ለማዘጋጀት ያግዙ።'
+            : 'Help prepare welcoming, inclusive family and community activities.',
+        commitment: language === 'am' ? 'በየዝግጅቱ' : 'Per event',
+      },
+      {
+        title: language === 'am' ? 'የአስተዳደር ድጋፍ' : 'Administration support',
+        summary:
+          language === 'am'
+            ? 'የማዕከሉን ዕለታዊ የአስተዳደር ሥራዎች ይደግፉ።'
+            : 'Support practical administrative tasks at the center.',
+      },
+    ],
   };
 }
 
