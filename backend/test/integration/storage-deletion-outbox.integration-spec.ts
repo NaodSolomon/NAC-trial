@@ -8,8 +8,7 @@ import { StorageDeletionOutboxService } from '../../src/modules/media/services/s
 import { cleanTestDatabase } from '../helpers/database-cleaner.helper';
 import { connectTestPostgres, PostgresTestContext } from '../helpers/postgres-test.helper';
 import { ACTOR_ID, insertTestAdmin } from '../helpers/repository-fixtures.helper';
-
-const describeWithPostgres = process.env.TEST_DATABASE_URL ? describe : describe.skip;
+import { describeWithPostgres } from '../helpers/database-availability.helper';
 
 describeWithPostgres('Storage deletion outbox (PostgreSQL)', () => {
   let context: PostgresTestContext;

@@ -2,8 +2,7 @@ import { PostgresSearchMaintenanceRepository } from '../../src/modules/search/re
 import { SEARCH_TRIGRAM_INDEXES } from '../../src/modules/search/interfaces/search-maintenance-repository.interface';
 import { cleanTestDatabase } from '../helpers/database-cleaner.helper';
 import { connectTestPostgres, PostgresTestContext } from '../helpers/postgres-test.helper';
-
-const describeWithPostgres = process.env.TEST_DATABASE_URL ? describe : describe.skip;
+import { describeWithPostgres } from '../helpers/database-availability.helper';
 
 describeWithPostgres('Search index maintenance (PostgreSQL)', () => {
   let context: PostgresTestContext;
