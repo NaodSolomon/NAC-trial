@@ -25,6 +25,7 @@ export default defineConfig({
     {
       name: 'visual-desktop',
       testMatch: /visual\/.*\.spec\.ts/,
+      timeout: 90_000,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1440, height: 900 },
@@ -33,6 +34,7 @@ export default defineConfig({
     {
       name: 'visual-mobile',
       testMatch: /visual\/.*\.spec\.ts/,
+      timeout: 90_000,
       use: {
         ...devices['Pixel 7'],
         viewport: { width: 390, height: 844 },

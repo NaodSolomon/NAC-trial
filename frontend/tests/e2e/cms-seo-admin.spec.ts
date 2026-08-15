@@ -82,6 +82,10 @@ test('homepage and FAQ editors create structured metadata and preview generic co
   await page.getByLabel('Content structure').selectOption('homepage');
   await page.getByLabel('Hero heading').fill('Welcome families');
   await page.getByLabel('Services heading').fill('Our services');
+  await page.getByLabel('Location heading').fill('Visit the center');
+  await page
+    .getByLabel('Google Maps embed URL')
+    .fill('https://www.google.com/maps/embed?pb=nehemiah-autism-center');
   await page.getByLabel('Call-to-action heading').fill('Support our work');
   await page.getByLabel('Call-to-action label').fill('Donate');
   await page.getByLabel('Call-to-action link').fill('/donate');

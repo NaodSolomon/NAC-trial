@@ -83,13 +83,57 @@ test('analytics provides non-color chart labels and visible data tables', async 
         { route: '/', visits: 11 },
         { route: '/about', visits: 7 },
       ],
+      forms: {
+        totalSubmissions: 9,
+        contact: 4,
+        volunteer: 3,
+        newsletter: 1,
+        eventRsvp: 1,
+      },
+      resources: {
+        totalDownloads: 6,
+        topResources: [
+          {
+            resourceId: '00000000-0000-4000-8000-000000000301',
+            title: 'Family support guide',
+            downloads: 4,
+          },
+        ],
+        topCountries: [{ country: 'ET', downloads: 5 }],
+      },
+      donations: {
+        totalDonations: 3,
+        statusCounts: [
+          { status: 'CONFIRMED', count: 2 },
+          { status: 'PENDING', count: 1 },
+        ],
+        confirmedValues: [{ currency: 'USD', amount: 50 }],
+      },
     }),
   );
   await page.route('**/api/v1/admin/analytics/timeline?**', (route) => {
     timelineUrl = route.request().url();
     return respond(route, [
-      { date: '2026-08-11', visitors: 8 },
-      { date: '2026-08-12', visitors: 10 },
+      {
+        date: '2026-08-11',
+        visitors: 8,
+        formSubmissions: 4,
+        resourceDownloads: 3,
+        donationsCreated: 2,
+        donationsConfirmed: 1,
+        confirmedUsd: 25,
+        confirmedEtb: 0,
+      },
+      {
+        date: '2026-08-12',
+        visitors: 10,
+        formSubmissions: 5,
+        resourceDownloads: 3,
+        donationsCreated: 1,
+        donationsConfirmed: 1,
+        confirmedUsd: 25,
+        confirmedEtb: 0,
+      },
     ]);
   });
   await page.goto('/admin/analytics');
