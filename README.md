@@ -769,7 +769,8 @@ The trial stack uses PostgreSQL, MinIO object storage, Mailpit SMTP, Redis, and 
 payment gateway. Mailpit is available at `http://localhost:8025` and the MinIO console at
 `http://localhost:9001`. The API health and version endpoints identify `mode: trial` and
 list the selected adapters. Fake checkouts persist donation workflows but cannot collect
-money or contact PayPal, Telebirr, or CBE.
+money or contact PayPal, Telebirr, or CBE. Trial records use the explicit `SIMULATED`
+gateway label in the database, API responses, receipts, dashboards, and CSV exports.
 
 Real PayPal traffic requires all three explicit switches:
 `PAYMENT_DRIVER=paypal`, `PAYMENTS_ENABLED=true`, and `PAYPAL_ENABLED=true`, plus valid

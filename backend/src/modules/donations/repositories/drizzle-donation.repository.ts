@@ -97,7 +97,11 @@ export class DrizzleDonationRepository implements DonationRepository {
     return this.db.transaction(async (tx) => {
       const inserted = await tx
         .insert(paymentWebhookEvents)
-        .values({ gateway: 'PAYPAL', providerEventId: event.eventId, eventType: event.eventType })
+        .values({
+          gateway: event.gateway,
+          providerEventId: event.eventId,
+          eventType: event.eventType,
+        })
         .onConflictDoNothing()
         .returning();
       if (!inserted.length) return false;
@@ -111,7 +115,7 @@ export class DrizzleDonationRepository implements DonationRepository {
         })
         .where(
           and(
-            eq(donations.gateway, 'PAYPAL'),
+            eq(donations.gateway, event.gateway),
             eq(donations.providerOrderId, event.providerOrderId),
             inArray(donations.status, ['INITIATED', 'PENDING']),
           ),

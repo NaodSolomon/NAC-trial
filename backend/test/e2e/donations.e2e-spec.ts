@@ -10,7 +10,7 @@ import {
 const donationPayload = (email: string) => ({
   amount: 25,
   currency: 'USD',
-  gateway: 'PAYPAL',
+  gateway: 'SIMULATED',
   donorName: 'E2E Donor',
   donorEmail: email,
   message: 'Simulated donation for local end-to-end testing.',
@@ -34,14 +34,17 @@ describe('Donations in simulated mode (e2e)', () => {
     await request(context.app.getHttpServer())
       .get('/api/v1/public/donations/gateways')
       .expect(200)
-      .expect(({ body }) => expect(body.data).toContain('PAYPAL'));
+      .expect(({ body }) => expect(body.data).toEqual(['SIMULATED']));
     const initiated = await request(context.app.getHttpServer())
       .post('/api/v1/public/donations')
       .send(donationPayload('cancelled-donor@e2e.test'))
       .expect(201);
     const id = initiated.body.data.donationId as string;
     expect(initiated.body.data.paymentUrl).toContain('payments.e2e.test');
-    await request(context.app.getHttpServer()).get(`/api/v1/public/donations/${id}`).expect(200);
+    await request(context.app.getHttpServer())
+      .get(`/api/v1/public/donations/${id}`)
+      .expect(200)
+      .expect(({ body }) => expect(body.data.gateway).toBe('SIMULATED'));
     await request(context.app.getHttpServer())
       .post(`/api/v1/public/donations/${id}/cancel`)
       .expect(201)
@@ -92,10 +95,14 @@ describe('Donations in simulated mode (e2e)', () => {
       .get('/api/v1/admin/donations/export')
       .set('Authorization', finance.authorization)
       .expect('Content-Type', /text\/csv/)
+      .expect(({ text }) => {
+        expect(text).toContain('SIMULATED');
+        expect(text).not.toContain('PAYPAL');
+      })
       .expect(200);
   });
 
-  it('handles a signed simulated PayPal webhook and fails closed for unavailable providers', async () => {
+  it('handles a signed simulated webhook and fails closed for unavailable providers', async () => {
     const initiated = await request(context.app.getHttpServer())
       .post('/api/v1/public/donations')
       .send(donationPayload('webhook-donor@e2e.test'))

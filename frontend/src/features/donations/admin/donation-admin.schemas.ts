@@ -23,7 +23,7 @@ export const adminDonationSchema = z.object({
   message: z.string().nullable(),
   amount: z.string().regex(/^\d+(?:\.\d{1,2})?$/),
   currency: z.enum(['USD', 'ETB']),
-  gateway: z.enum(['PAYPAL', 'TELEBIRR', 'CBE']),
+  gateway: z.enum(['SIMULATED', 'PAYPAL', 'TELEBIRR', 'CBE']),
   status: donationStatusSchema,
   providerOrderId: z.string().nullable(),
   externalTransactionId: z.string().nullable(),

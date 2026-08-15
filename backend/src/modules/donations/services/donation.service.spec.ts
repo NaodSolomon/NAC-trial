@@ -1,4 +1,4 @@
-import { ServiceUnavailableException } from '@nestjs/common';
+import { BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { DonationRepository } from '../interfaces/donation-repository.interface';
 import { PaymentGateway } from '../interfaces/payment-gateway.interface';
 import { ObjectStorage } from '../../media/interfaces/object-storage.interface';
@@ -27,6 +27,7 @@ describe('DonationService', () => {
       enqueueReceipt: jest.fn(),
     };
     gateway = {
+      gateway: 'SIMULATED',
       isEnabled: jest.fn().mockReturnValue(false),
       createCheckout: jest.fn(),
       verifyWebhook: jest.fn(),
@@ -48,7 +49,7 @@ describe('DonationService', () => {
       message: null,
       amount: '25.00',
       currency: 'USD',
-      gateway: 'PAYPAL',
+      gateway: 'SIMULATED',
       status: 'PENDING',
       providerOrderId: 'FAKE-ORDER',
       externalTransactionId: null,
@@ -95,6 +96,22 @@ describe('DonationService', () => {
         donorEmail: 'jane@example.com',
       }),
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(repository.create).not.toHaveBeenCalled();
+  });
+
+  it('advertises only the selected provider and rejects a mismatched label', async () => {
+    gateway.isEnabled.mockReturnValue(true);
+
+    expect(service.gateways()).toEqual(['SIMULATED']);
+    await expect(
+      service.initiate({
+        amount: 50,
+        currency: 'USD',
+        gateway: 'PAYPAL',
+        donorName: 'Jane Doe',
+        donorEmail: 'jane@example.com',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(repository.create).not.toHaveBeenCalled();
   });
 

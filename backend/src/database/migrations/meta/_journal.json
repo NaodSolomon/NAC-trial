@@ -113,6 +113,20 @@
       "when": 1786710583968,
       "tag": "0015_add_storage_deletion_outbox",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1786774512290,
+      "tag": "0016_add_simulated_donation_gateway",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1786775681281,
+      "tag": "0017_backfill_simulated_donation_gateways",
+      "breakpoints": true
     }
   ]
 }

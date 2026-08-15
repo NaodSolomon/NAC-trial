@@ -10,6 +10,8 @@ import {
 
 @Injectable()
 export class FakePaymentGateway implements PaymentGateway {
+  readonly gateway = 'SIMULATED' as const;
+
   constructor(private readonly config: ConfigService) {}
 
   isEnabled(): boolean {

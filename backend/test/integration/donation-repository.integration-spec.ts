@@ -40,7 +40,7 @@ describeWithPostgres('Donation repository (PostgreSQL)', () => {
       donorEmail: 'donor@integration.test',
       amount: '50.00',
       currency: 'USD',
-      gateway: 'PAYPAL',
+      gateway: 'SIMULATED',
       message: 'Integration test donation',
     });
     const pending = await repository.attachOrder(donation.id, 'ORDER-INTEGRATION-1');
@@ -64,14 +64,14 @@ describeWithPostgres('Donation repository (PostgreSQL)', () => {
       donorEmail: 'first@integration.test',
       amount: '25.00',
       currency: 'USD',
-      gateway: 'PAYPAL',
+      gateway: 'SIMULATED',
     });
     const second = await repository.create({
       donorName: 'Second Donor',
       donorEmail: 'second@integration.test',
       amount: '30.00',
       currency: 'USD',
-      gateway: 'PAYPAL',
+      gateway: 'SIMULATED',
     });
     await repository.attachOrder(first.id, 'ORDER-UNIQUE');
     await expectPostgresError(repository.attachOrder(second.id, 'ORDER-UNIQUE'), '23505');
@@ -83,10 +83,11 @@ describeWithPostgres('Donation repository (PostgreSQL)', () => {
       donorEmail: 'webhook@integration.test',
       amount: '100.00',
       currency: 'USD',
-      gateway: 'PAYPAL',
+      gateway: 'SIMULATED',
     });
     await repository.attachOrder(donation.id, 'ORDER-WEBHOOK');
     const webhook = {
+      gateway: 'SIMULATED' as const,
       eventId: 'EVENT-INTEGRATION-1',
       eventType: 'PAYMENT.CAPTURE.COMPLETED',
       providerOrderId: 'ORDER-WEBHOOK',

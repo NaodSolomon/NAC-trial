@@ -15,7 +15,7 @@ const donations = new Map([
       amount: '50.00',
       currency: 'USD',
       status: 'PENDING',
-      gateway: 'PAYPAL',
+      gateway: 'SIMULATED',
       createdAt: '2026-08-11T10:00:00.000Z',
     },
   ],
@@ -48,7 +48,7 @@ createServer(async (request, response) => {
     });
   }
   if (url.pathname === '/api/v1/public/donations/gateways') {
-    return envelope(response, ['PAYPAL']);
+    return envelope(response, ['SIMULATED']);
   }
   if (url.pathname === '/api/v1/public/donations' && request.method === 'POST') {
     const body = await readJson(request);

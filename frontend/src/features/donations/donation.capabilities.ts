@@ -18,6 +18,8 @@ export function deriveDonationCapabilities(
     gateways,
     trialMode,
     trialControlsEnabled: trialMode,
-    canCreateDonation: gateways.length > 0 && (trialMode || productionPayments),
+    canCreateDonation:
+      (trialMode && gateways.includes('SIMULATED')) ||
+      (productionPayments && gateways.includes('PAYPAL')),
   };
 }

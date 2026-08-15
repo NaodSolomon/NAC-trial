@@ -28,7 +28,12 @@ export const donationStatusEnum = pgEnum('donation_status', [
   'CANCELLED',
 ]);
 export const donationCurrencyEnum = pgEnum('donation_currency', ['USD', 'ETB']);
-export const donationGatewayEnum = pgEnum('donation_gateway', ['PAYPAL', 'TELEBIRR', 'CBE']);
+export const donationGatewayEnum = pgEnum('donation_gateway', [
+  'SIMULATED',
+  'PAYPAL',
+  'TELEBIRR',
+  'CBE',
+]);
 export const outboxStatusEnum = pgEnum('outbox_status', [
   'PENDING',
   'PROCESSING',

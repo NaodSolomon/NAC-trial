@@ -47,7 +47,7 @@ describeWithServices('Donation receipt outbox delivery (PostgreSQL and Mailpit)'
         donorEmail: 'outbox@integration.test',
         amount: '75.00',
         currency: 'ETB',
-        gateway: 'PAYPAL',
+        gateway: 'SIMULATED',
         status: 'CONFIRMED',
         receiptUrl: 'http://minio/receipts/integration.pdf',
         confirmedAt: new Date(),

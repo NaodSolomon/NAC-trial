@@ -14,7 +14,7 @@ const trialRuntime: RuntimeInformation = {
 
 describe('donation runtime capabilities', () => {
   it('enables simulation controls only for an explicitly safe trial runtime', () => {
-    const capabilities = deriveDonationCapabilities(trialRuntime, ['PAYPAL']);
+    const capabilities = deriveDonationCapabilities(trialRuntime, ['SIMULATED']);
     expect(capabilities).toMatchObject({
       trialMode: true,
       trialControlsEnabled: true,
@@ -26,6 +26,7 @@ describe('donation runtime capabilities', () => {
     ]);
     expect(production.trialControlsEnabled).toBe(false);
     expect(production.canCreateDonation).toBe(false);
+    expect(deriveDonationCapabilities(trialRuntime, ['PAYPAL']).canCreateDonation).toBe(false);
   });
 
   it('requires explicit real-payment configuration outside trial mode', () => {

@@ -1683,11 +1683,11 @@ export interface components {
             /** @example Trial Donor */
             donorName: string;
             /**
-             * @description Compatibility label; trial mode uses the fake gateway and collects no money.
-             * @example PAYPAL
+             * @description SIMULATED is the only provider available in trial mode and collects no money.
+             * @example SIMULATED
              * @enum {string}
              */
-            gateway: "PAYPAL";
+            gateway: "SIMULATED" | "PAYPAL";
             message?: string;
         };
         CreateEventDto: Record<string, never>;
@@ -3006,7 +3006,7 @@ export interface operations {
         parameters: {
             query?: {
                 currency?: "USD" | "ETB";
-                gateway?: "PAYPAL" | "TELEBIRR" | "CBE";
+                gateway?: "SIMULATED" | "PAYPAL" | "TELEBIRR" | "CBE";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
                 /** @description Repository-supported field used for sorting */
@@ -3285,7 +3285,7 @@ export interface operations {
         parameters: {
             query?: {
                 currency?: "USD" | "ETB";
-                gateway?: "PAYPAL" | "TELEBIRR" | "CBE";
+                gateway?: "SIMULATED" | "PAYPAL" | "TELEBIRR" | "CBE";
                 limit?: components["schemas"]["Object"];
                 page?: components["schemas"]["Object"];
                 /** @description Repository-supported field used for sorting */

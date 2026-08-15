@@ -148,6 +148,7 @@ async function createBaseE2eTestContext(mailer?: jest.Mocked<Mailer>): Promise<B
     publicUrl: jest.fn((key: string) => `https://storage.e2e.test/${key}`),
   };
   const gateway: jest.Mocked<PaymentGateway> = {
+    gateway: 'SIMULATED',
     isEnabled: jest.fn().mockReturnValue(true),
     createCheckout: jest.fn(async (donation) => ({
       providerOrderId: `SIM-${donation.id}`,

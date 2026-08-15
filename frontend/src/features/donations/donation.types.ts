@@ -2,7 +2,7 @@ import type { z } from 'zod';
 import type { donationFormSchema } from './donation.schemas';
 
 export type DonationCurrency = 'USD' | 'ETB';
-export type DonationGateway = 'PAYPAL' | 'TELEBIRR' | 'CBE';
+export type DonationGateway = 'SIMULATED' | 'PAYPAL' | 'TELEBIRR' | 'CBE';
 export type DonationStatus = 'INITIATED' | 'PENDING' | 'CONFIRMED' | 'FAILED' | 'CANCELLED';
 
 export interface RuntimeInformation {
