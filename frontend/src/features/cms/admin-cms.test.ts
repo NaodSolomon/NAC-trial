@@ -51,7 +51,7 @@ describe('CMS administration contracts', () => {
     expect(values.homepage.ctaHref).toBe('/donate');
   });
 
-  it('requires structured homepage and FAQ content within backend limits', () => {
+  it('requires structured homepage content within backend limits', () => {
     const empty = editorValuesFromPage();
     expect(
       cmsEditorSchema.safeParse({
@@ -62,6 +62,10 @@ describe('CMS administration contracts', () => {
         contentType: 'homepage',
       }).success,
     ).toBe(false);
+  });
+
+  it('no longer accepts a faq content type, which the FAQ module now owns', () => {
+    const empty = editorValuesFromPage();
     expect(
       cmsEditorSchema.safeParse({
         ...empty,

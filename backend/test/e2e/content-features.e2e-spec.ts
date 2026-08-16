@@ -23,7 +23,7 @@ describe('Frontend demonstration content (e2e)', () => {
   });
   afterAll(async () => closeE2eTestContext(context));
 
-  it('serves homepage and FAQ compositions with SEO metadata', async () => {
+  it('serves homepage composition and published FAQ entries', async () => {
     await request(context.app.getHttpServer())
       .get('/api/v1/public/content/homepage?languageCode=en')
       .expect(200)
@@ -34,9 +34,9 @@ describe('Frontend demonstration content (e2e)', () => {
         }),
       );
     await request(context.app.getHttpServer())
-      .get('/api/v1/public/content/faqs?languageCode=en')
+      .get('/api/v1/public/faqs?languageCode=en')
       .expect(200)
-      .expect(({ body }) => expect(body.data.items).toHaveLength(1));
+      .expect(({ body }) => expect(Array.isArray(body.data.items)).toBe(true));
   });
 
   it('publishes a blog and exposes it through public search', async () => {

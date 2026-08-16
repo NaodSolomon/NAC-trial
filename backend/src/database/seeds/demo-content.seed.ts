@@ -1,6 +1,7 @@
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../schema';
 import {
+  faqs,
   admins,
   blogPosts,
   cmsPages,
@@ -669,5 +670,30 @@ export async function seedDemoContent(database: NodePgDatabase<typeof schema>): 
         })),
       )
       .onConflictDoNothing({ target: resources.id });
+
+    const faqSource = demoPages.filter((page) => page.slug === 'faq');
+    const faqRows = faqSource.flatMap((page) =>
+      (
+        (page.metadata as unknown as { items?: ReadonlyArray<{ question: string; answer: string }> })
+          .items ?? []
+      ).map(
+        (item, index) => ({
+          languageCode: page.languageCode,
+          translationKey: `demo-faq-${index + 1}`,
+          question: item.question,
+          answer: item.answer,
+          status: 'PUBLISHED' as const,
+          sortOrder: index,
+          createdBy: DEMO_SEED_AUTHOR_ID,
+          publishedAt: new Date(),
+        }),
+      ),
+    );
+    if (faqRows.length) {
+      await transaction
+        .insert(faqs)
+        .values(faqRows)
+        .onConflictDoNothing({ target: [faqs.translationKey, faqs.languageCode] });
+    }
   });
 }

@@ -14,6 +14,7 @@ const expectedTables = [
   'donations',
   'event_rsvps',
   'events',
+  'faqs',
   'gallery_items',
   'media_assets',
   'media_translations',
@@ -68,7 +69,7 @@ describe('Drizzle migration chain', () => {
       const migrations = await context.pool.query<{ count: string }>(
         'select count(*) from drizzle.__drizzle_migrations',
       );
-      expect(Number(migrations.rows[0].count)).toBe(18);
+      expect(Number(migrations.rows[0].count)).toBe(20);
 
       const donationGateways = await context.pool.query<{ enumlabel: string }>(
         `select enumlabel

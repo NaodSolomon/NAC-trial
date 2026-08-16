@@ -26,19 +26,6 @@ export const publishedCmsPageSchema = z.object({
     .transform((value) => value ?? null),
 });
 
-export const faqCompositionSchema = z.object({
-  title: z.string().min(1).max(255),
-  body: z.string(),
-  items: z.array(
-    z.object({
-      question: z.string().min(1).max(500),
-      answer: z.string().min(1).max(5_000),
-    }),
-  ),
-});
-
-export type FaqComposition = z.infer<typeof faqCompositionSchema>;
-
 const contentSectionSchema = z.object({
   heading: z.string().min(1).max(180),
   body: z.string().min(1).max(5_000),

@@ -182,18 +182,6 @@ export class TeamMemberDto {
   imageUrl?: string;
 }
 
-export class FaqItemDto {
-  @IsString()
-  @MinLength(2)
-  @MaxLength(300)
-  question!: string;
-
-  @IsString()
-  @MinLength(1)
-  @MaxLength(2_000)
-  answer!: string;
-}
-
 export class CmsPageMetadataDto {
   [key: string]: unknown;
 
@@ -216,13 +204,6 @@ export class CmsPageMetadataDto {
   })
   sections?: HomepageSectionDto[];
 
-  @IsOptional()
-  @IsArray()
-  @ArrayMinSize(1)
-  @ArrayMaxSize(50)
-  @ValidateNested({ each: true })
-  @Type(() => FaqItemDto)
-  items?: FaqItemDto[];
 
   @IsOptional()
   @ValidateNested()

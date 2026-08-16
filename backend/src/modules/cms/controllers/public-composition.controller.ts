@@ -24,10 +24,4 @@ export class PublicCompositionController {
     };
   }
 
-  @Get('faqs')
-  @ApiOperation({ summary: 'Get FAQ items from the published FAQ CMS page' })
-  async faqs(@Query() query: PublicPageQueryDto) {
-    const page = await this.pages.findPublicPage('faq', query.languageCode);
-    return { title: page.title, items: page.metadata.items ?? [], body: page.content };
-  }
 }

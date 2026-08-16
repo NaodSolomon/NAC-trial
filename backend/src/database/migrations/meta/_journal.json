@@ -127,6 +127,20 @@
       "when": 1786775681281,
       "tag": "0017_backfill_simulated_donation_gateways",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1786883514309,
+      "tag": "0018_add_faq_entries",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1786883515309,
+      "tag": "0019_backfill_faqs_from_cms_pages",
+      "breakpoints": true
     }
   ]
 }
