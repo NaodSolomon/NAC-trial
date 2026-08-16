@@ -2,7 +2,7 @@
 
 import { useLanguage } from '@/hooks/use-language';
 
-export default function PublicLoading() {
+export default function PublicRouteLoading() {
   const { t } = useLanguage();
 
   return (
