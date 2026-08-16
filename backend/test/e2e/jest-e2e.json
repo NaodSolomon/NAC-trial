@@ -1,10 +1,10 @@
 {
   "displayName": "e2e",
   "moduleFileExtensions": ["js", "json", "ts"],
-  "rootDir": ".",
+  "rootDir": "../..",
   "testEnvironment": "node",
-  "testRegex": ".e2e-spec.ts$",
-  "globalSetup": "<rootDir>/global-setup.ts",
+  "testRegex": "test/e2e/.*\\.e2e-spec\\.ts$",
+  "globalSetup": "<rootDir>/test/e2e/global-setup.ts",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },

@@ -53,3 +53,9 @@ backups/
 
 # Drizzle
 drizzle/meta/
+
+# Per-suite coverage output merged by test:coverage:all
+coverage-unit/
+coverage-e2e/
+coverage-integration/
+coverage-merged/
