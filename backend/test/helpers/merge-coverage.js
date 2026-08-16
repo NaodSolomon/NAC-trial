@@ -46,7 +46,7 @@ fs.writeFileSync(
   `${JSON.stringify(map.toJSON())}\n`,
 );
 
-const thresholds = { statements: 80, branches: 70, functions: 80, lines: 80 };
+const thresholds = { statements: 80, branches: 80, functions: 80, lines: 80 };
 const totals = summary.toJSON();
 const rows = Object.keys(thresholds).map((key) => ({
   metric: key,
