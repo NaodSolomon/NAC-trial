@@ -22,24 +22,6 @@ export default defineConfig({
       testMatch: /e2e\/accessibility\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
-    {
-      name: 'visual-desktop',
-      testMatch: /visual\/.*\.spec\.ts/,
-      timeout: 90_000,
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 1440, height: 900 },
-      },
-    },
-    {
-      name: 'visual-mobile',
-      testMatch: /visual\/.*\.spec\.ts/,
-      timeout: 90_000,
-      use: {
-        ...devices['Pixel 7'],
-        viewport: { width: 390, height: 844 },
-      },
-    },
   ],
   webServer: [
     {

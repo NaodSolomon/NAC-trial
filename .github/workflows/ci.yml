@@ -129,12 +129,6 @@ jobs:
     defaults:
       run:
         working-directory: frontend
-    env:
-      API_URL: http://127.0.0.1:4010/api/v1
-      NEXT_PUBLIC_API_URL: http://127.0.0.1:4010/api/v1
-      NEXT_PUBLIC_SITE_URL: http://localhost:3000
-      NEXT_PUBLIC_STORAGE_ORIGIN: http://127.0.0.1:9100
-      MEDIA_IMAGE_ORIGIN: http://127.0.0.1:9100
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -158,12 +152,32 @@ jobs:
       - run: pnpm test:coverage
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm build
+        env:
+          API_URL: http://127.0.0.1:4010/api/v1
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:4010/api/v1
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          NEXT_PUBLIC_STORAGE_ORIGIN: http://127.0.0.1:9100
+          MEDIA_IMAGE_ORIGIN: http://127.0.0.1:9100
       - name: Verify Lighthouse production build artifact
         run: node scripts/assert-lighthouse-production-build.mjs
       - run: pnpm lighthouse:ci
+        env:
+          API_URL: http://127.0.0.1:4010/api/v1
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:4010/api/v1
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          NEXT_PUBLIC_STORAGE_ORIGIN: http://127.0.0.1:9100
+          MEDIA_IMAGE_ORIGIN: http://127.0.0.1:9100
       - run: pnpm performance:check
       - run: pnpm test:e2e
+        env:
+          API_URL: http://127.0.0.1:4010/api/v1
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:4010/api/v1
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
       - run: pnpm test:a11y
+        env:
+          API_URL: http://127.0.0.1:4010/api/v1
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:4010/api/v1
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
       - name: Build production frontend image with explicit public origins
         run: |
           docker build --target runner -t nehemiah-frontend:production-test \
@@ -211,7 +225,7 @@ jobs:
           cache-dependency-path: frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install chromium
-      - run: pnpm exec playwright test --project=${{ matrix.project }}
+      - run: pnpm exec playwright test --config playwright.visual.config.ts --project=${{ matrix.project }}
       - name: Publish visual differences
         if: failure()
         uses: actions/upload-artifact@v4
