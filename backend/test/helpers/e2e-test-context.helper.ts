@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import { ThrottlerStorage } from '@nestjs/throttler';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'node:crypto';
 import { admins, cmsPages, siteSettings } from '../../src/database/schema';
@@ -36,6 +37,7 @@ interface BaseE2eTestContext extends PostgresTestContext {
     invalidate: jest.Mock;
     clear: jest.Mock;
   };
+  resetRateLimits: () => void;
 }
 
 export interface E2eTestContext extends BaseE2eTestContext {
@@ -182,7 +184,11 @@ async function createBaseE2eTestContext(mailer?: jest.Mocked<Mailer>): Promise<B
       return configured;
     },
   });
-  return { ...postgres, app, actors, storage, gateway, cache };
+  const rateLimitStore = app.get<ThrottlerStorage>(ThrottlerStorage, { strict: false });
+  const resetRateLimits = () => {
+    (rateLimitStore as unknown as { storage?: Map<string, unknown> }).storage?.clear();
+  };
+  return { ...postgres, app, actors, storage, gateway, cache, resetRateLimits };
 }
 
 export async function closeE2eTestContext(context: BaseE2eTestContext): Promise<void> {

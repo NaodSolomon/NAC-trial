@@ -26,6 +26,7 @@ describe('Donations fail closed for unconfigured gateways (e2e)', () => {
     context = await createE2eTestContext();
     finance = await authenticatedSession(context.app, context.actors.finance.email, E2E_PASSWORD);
   });
+  beforeEach(() => context.resetRateLimits());
   afterAll(async () => closeE2eTestContext(context));
 
   it('never advertises an unconfigured gateway', async () => {
