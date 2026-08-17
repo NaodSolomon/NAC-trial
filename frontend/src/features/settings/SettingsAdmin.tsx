@@ -1,11 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Save } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { AdminAccessDenied } from '@/components/admin/AdminAccessDenied';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
+import {
+  AdminFormField,
+  AdminFormSelect,
+  AdminFormTextarea,
+} from '@/components/admin/AdminFormField';
 import { getApiErrorMessage, isApiRequestError } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
 import { getAdminSettings, updateAdminSettings } from './admin-settings.client';
@@ -15,19 +22,36 @@ import {
   type SettingsEditorValues,
 } from './admin-settings.schemas';
 
+const SOCIAL_NETWORKS = ['facebook', 'instagram', 'youtube', 'linkedin'] as const;
+const LANGUAGES = [
+  ['en', 'English'],
+  ['am', 'Amharic'],
+] as const;
+
 export function SettingsAdmin() {
-  const [values, setValues] = useState<SettingsEditorValues | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [forbidden, setForbidden] = useState(false);
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
 
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<SettingsEditorValues>({
+    resolver: zodResolver(settingsEditorSchema),
+  });
+
   useEffect(() => {
     const controller = new AbortController();
     void getAdminSettings(controller.signal)
-      .then((settings) => setValues(settingsEditorValues(settings)))
+      .then((settings) => {
+        reset(settingsEditorValues(settings));
+        setLoaded(true);
+      })
       .catch((loadError: unknown) => {
         if (controller.signal.aborted) return;
         if (isApiRequestError(loadError) && loadError.status === 403) setForbidden(true);
@@ -37,20 +61,13 @@ export function SettingsAdmin() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, []);
+  }, [reset]);
 
-  async function save() {
-    if (!values) return;
-    const parsed = settingsEditorSchema.safeParse(values);
-    if (!parsed.success) {
-      setError([...new Set(parsed.error.issues.map((issue) => issue.message))].join(' '));
-      return;
-    }
-    setSaving(true);
+  async function onSubmit(values: SettingsEditorValues) {
     setError('');
     try {
-      const updated = await updateAdminSettings(parsed.data);
-      setValues(settingsEditorValues(updated));
+      const updated = await updateAdminSettings(values);
+      reset(settingsEditorValues(updated));
       await queryClient.invalidateQueries({ queryKey: queryKeys.settings.all });
       await queryClient.refetchQueries({ queryKey: queryKeys.settings.all, type: 'active' });
       notify({
@@ -59,8 +76,6 @@ export function SettingsAdmin() {
       });
     } catch (saveError) {
       setError(`${getApiErrorMessage(saveError)} Your unsaved settings remain unchanged.`);
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -85,112 +100,105 @@ export function SettingsAdmin() {
           aria-label="Loading settings"
           className="bg-card mt-8 h-80 animate-pulse rounded-xl border motion-reduce:animate-none"
         />
-      ) : values ? (
-        <form
-          className="mt-8 space-y-6"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void save();
-          }}
-          noValidate
-        >
+      ) : loaded ? (
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
           <fieldset className="bg-card grid gap-5 rounded-xl border p-6 shadow-sm md:grid-cols-2">
             <legend className="text-heading px-2 font-serif text-xl font-semibold">
               Website identity and languages
             </legend>
-            <Field
+            <AdminFormField
               label="Site name"
-              value={values.siteName}
               maxLength={150}
-              onChange={(siteName) => setValues({ ...values, siteName })}
+              error={errors.siteName?.message}
+              {...register('siteName')}
             />
-            <label className="block">
-              <span className="text-heading mb-2 block text-sm font-semibold">
-                Default language
-              </span>
-              <select
-                value={values.defaultLanguage}
-                onChange={(event) =>
-                  setValues({ ...values, defaultLanguage: event.target.value as 'en' | 'am' })
-                }
-                className="min-h-11 w-full rounded-lg border bg-white px-3"
-              >
-                <option value="en">English</option>
-                <option value="am">Amharic</option>
-              </select>
-            </label>
-            <div className="md:col-span-2">
-              <span className="text-heading mb-2 block text-sm font-semibold">
+            <AdminFormSelect
+              label="Default language"
+              error={errors.defaultLanguage?.message}
+              {...register('defaultLanguage')}
+            >
+              {LANGUAGES.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </AdminFormSelect>
+            <fieldset className="md:col-span-2" aria-describedby="supportedLanguages-error">
+              <legend className="text-heading mb-2 block font-semibold">
                 Enabled public languages
-              </span>
+              </legend>
               <div className="flex flex-wrap gap-5">
-                {(['en', 'am'] as const).map((language) => (
-                  <label key={language} className="flex min-h-11 items-center gap-3">
+                {LANGUAGES.map(([value, label]) => (
+                  <label
+                    key={value}
+                    htmlFor={`supportedLanguages-${value}`}
+                    className="flex min-h-11 items-center gap-3"
+                  >
                     <input
+                      id={`supportedLanguages-${value}`}
                       type="checkbox"
-                      checked={values.supportedLanguages.includes(language)}
-                      onChange={(event) =>
-                        setValues({
-                          ...values,
-                          supportedLanguages: event.target.checked
-                            ? [...new Set([...values.supportedLanguages, language])]
-                            : values.supportedLanguages.filter((item) => item !== language),
-                        })
-                      }
+                      value={value}
                       className="size-5"
+                      {...register('supportedLanguages')}
                     />
-                    {language === 'en' ? 'English' : 'Amharic'}
+                    {label}
                   </label>
                 ))}
               </div>
-            </div>
+              {errors.supportedLanguages?.message && (
+                <p
+                  id="supportedLanguages-error"
+                  role="alert"
+                  className="text-destructive mt-1 text-sm"
+                >
+                  {errors.supportedLanguages.message}
+                </p>
+              )}
+            </fieldset>
           </fieldset>
 
           <fieldset className="bg-card grid gap-5 rounded-xl border p-6 shadow-sm md:grid-cols-2">
             <legend className="text-heading px-2 font-serif text-xl font-semibold">
               Contact information
             </legend>
-            <Field
+            <AdminFormField
               label="Contact email"
               type="email"
-              value={values.contactEmail}
               maxLength={255}
-              onChange={(contactEmail) => setValues({ ...values, contactEmail })}
+              error={errors.contactEmail?.message}
+              {...register('contactEmail')}
             />
-            <Field
+            <AdminFormField
               label="Phone"
               type="tel"
-              value={values.phone}
               maxLength={50}
-              onChange={(phone) => setValues({ ...values, phone })}
+              error={errors.phone?.message}
+              {...register('phone')}
             />
-            <label className="block md:col-span-2">
-              <span className="text-heading mb-2 block text-sm font-semibold">Address</span>
-              <textarea
-                value={values.address}
+            <div className="md:col-span-2">
+              <AdminFormTextarea
+                label="Address"
                 maxLength={500}
                 rows={3}
-                onChange={(event) => setValues({ ...values, address: event.target.value })}
-                className="w-full rounded-lg border p-3"
+                error={errors.address?.message}
+                {...register('address')}
               />
-            </label>
+            </div>
           </fieldset>
 
           <fieldset className="bg-card grid gap-5 rounded-xl border p-6 shadow-sm md:grid-cols-2">
             <legend className="text-heading px-2 font-serif text-xl font-semibold">
               Social links
             </legend>
-            {(['facebook', 'instagram', 'youtube', 'linkedin'] as const).map((network) => (
-              <Field
+            {SOCIAL_NETWORKS.map((network) => (
+              <AdminFormField
                 key={network}
                 label={network.charAt(0).toUpperCase() + network.slice(1)}
                 type="url"
                 placeholder={`https://${network}.com/...`}
-                value={values.socialLinks[network]}
                 maxLength={2048}
-                onChange={(url) =>
-                  setValues({ ...values, socialLinks: { ...values.socialLinks, [network]: url } })
-                }
+                error={errors.socialLinks?.[network]?.message}
+                {...register(`socialLinks.${network}`)}
               />
             ))}
             <p className="text-foreground text-sm md:col-span-2">
@@ -204,9 +212,9 @@ export function SettingsAdmin() {
               {error}
             </p>
           )}
-          <Button type="submit" disabled={saving}>
+          <Button type="submit" disabled={isSubmitting}>
             <Save aria-hidden="true" />
-            {saving ? 'Saving…' : 'Save public settings'}
+            {isSubmitting ? 'Saving…' : 'Save public settings'}
           </Button>
         </form>
       ) : (
@@ -218,35 +226,5 @@ export function SettingsAdmin() {
         </p>
       )}
     </section>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  type = 'text',
-  placeholder,
-  maxLength,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  type?: string;
-  placeholder?: string;
-  maxLength: number;
-}) {
-  return (
-    <label className="block">
-      <span className="text-heading mb-2 block text-sm font-semibold">{label}</span>
-      <input
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        maxLength={maxLength}
-        onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 w-full rounded-lg border px-3"
-      />
-    </label>
   );
 }
