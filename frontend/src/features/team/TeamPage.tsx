@@ -1,6 +1,6 @@
 import PageBanner from '@/components/common/PageBanner';
 import { CmsArticle, teamMetadataSchema, type PublishedCmsPage } from '@/features/cms';
-import { localizedHref, type Language } from '@/lib/i18n';
+import { localizedHref, translate, type Language } from '@/lib/i18n';
 
 export function TeamPage({ page, language }: { page: PublishedCmsPage; language: Language }) {
   const composition = teamMetadataSchema.parse(page.metadata);
@@ -10,7 +10,7 @@ export function TeamPage({ page, language }: { page: PublishedCmsPage; language:
       <PageBanner
         title={page.title}
         breadcrumbs={[
-          { label: language === 'am' ? 'መነሻ' : 'Home', href: localizedHref('/', language) },
+          { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: page.title },
         ]}
         backgroundImage="/images/about-us.jpg"

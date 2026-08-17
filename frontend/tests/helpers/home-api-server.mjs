@@ -239,8 +239,11 @@ createServer(async (request, response) => {
         })
       : json(response, { success: false, statusCode: 404, message: 'Not found' }, 404);
   }
-  if (url.pathname === '/api/v1/public/content/faqs') {
-    return envelope(response, faqs(language));
+  if (url.pathname === '/api/v1/public/faqs') {
+    return envelope(response, { languageCode: language, items: faqs(language) });
+  }
+  if (url.pathname === '/api/v1/public/faqs/categories') {
+    return envelope(response, [...new Set(faqs(language).map((item) => item.category))]);
   }
   if (url.pathname === '/api/v1/public/resources') {
     return envelope(response, paginated(resources(language)));
@@ -631,22 +634,22 @@ function publishedCmsPage(slug, language) {
 
 function faqs(language) {
   const amharic = language === 'am';
-  return {
-    title: amharic ? 'ተደጋጋሚ ጥያቄዎች' : 'Frequently Asked Questions',
-    body: amharic ? 'ስለ ማዕከላችን መልሶችን ያግኙ።' : 'Answers about the center and its services.',
-    items: [
-      {
-        question: amharic ? 'ማዕከሉ ምን ያደርጋል?' : 'What does the center do?',
-        answer: amharic
-          ? 'ለህጻናትና ለቤተሰቦች ድጋፍ ይሰጣል።'
-          : 'We provide practical, family-centered autism support.',
-      },
-      {
-        question: amharic ? 'እንዴት ልገናኝ?' : 'How can I contact the team?',
-        answer: amharic ? 'የመገናኛ ገጹን ይጠቀሙ።' : 'Use the contact page to send us a message.',
-      },
-    ],
-  };
+  return [
+    {
+      id: '00000000-0000-4000-8000-000000000701',
+      question: amharic ? 'ማዕከሉ ምን ያደርጋል?' : 'What does the center do?',
+      answer: amharic
+        ? 'ለህጻናትና ለቤተሰቦች ድጋፍ ይሰጣል።'
+        : 'We provide practical, family-centered autism support.',
+      category: amharic ? 'አገልግሎቶች' : 'Services',
+    },
+    {
+      id: '00000000-0000-4000-8000-000000000702',
+      question: amharic ? 'እንዴት ልገናኝ?' : 'How can I contact the team?',
+      answer: amharic ? 'የመገናኛ ገጹን ይጠቀሙ።' : 'Use the contact page to send us a message.',
+      category: amharic ? 'አገልግሎቶች' : 'Services',
+    },
+  ];
 }
 
 function resources(language) {

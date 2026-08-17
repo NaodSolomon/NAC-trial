@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import PageBanner from '@/components/common/PageBanner';
 import { EventSingle, eventImage, loadPublicEvent } from '@/features/events';
 import { isApiRequestError } from '@/lib/api/errors';
-import { localizedHref, type Language } from '@/lib/i18n';
+import { localizedHref, translate, type Language } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 import { serializeJsonLd } from '@/lib/seo/json-ld';
 import { absoluteUrl, buildLocalizedMetadata, localizedUrl } from '@/lib/seo/site';
@@ -57,7 +57,7 @@ export default async function EventDetailPage({ params, searchParams }: EventPag
       <PageBanner
         title={event.title}
         breadcrumbs={[
-          { label: language === 'am' ? 'መነሻ' : 'Home', href: localizedHref('/', language) },
+          { label: translate(language, 'home'), href: localizedHref('/', language) },
           {
             label: language === 'am' ? 'ዝግጅቶች' : 'Events',
             href: localizedHref('/events', language),

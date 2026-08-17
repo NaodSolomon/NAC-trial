@@ -6,25 +6,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { sanitizeCmsText } from '@/features/cms';
-import { localizedHref, type Language } from '@/lib/i18n';
+import { localizedHref, translate, type Language } from '@/lib/i18n';
 import type { FaqCollection, FaqItem } from '../faq.schemas';
-
-const copy = {
-  en: {
-    title: 'Frequently Asked Questions',
-    home: 'Home',
-    intro: 'Answers about the center, our services and how families can reach us.',
-    uncategorised: 'General',
-    empty: 'Questions will be added soon',
-  },
-  am: {
-    title: 'ተደጋጋሚ ጥያቄዎች',
-    home: 'መነሻ',
-    intro: 'ስለ ማዕከሉ፣ አገልግሎቶቻችንና ቤተሰቦች እንዴት እንደሚያገኙን መልሶች።',
-    uncategorised: 'አጠቃላይ',
-    empty: 'ጥያቄዎች በቅርቡ ይታከላሉ',
-  },
-} as const;
 
 function groupByCategory(items: FaqItem[], fallback: string) {
   const groups = new Map<string, FaqItem[]>();
@@ -42,23 +25,23 @@ export default function FaqPage({
   content: FaqCollection;
   language: Language;
 }) {
-  const text = copy[language];
-  const groups = groupByCategory(content.items, text.uncategorised);
+  const title = translate(language, 'faq');
+  const groups = groupByCategory(content.items, translate(language, 'faqGeneral'));
   const showGroupHeadings = groups.length > 1;
 
   return (
     <>
       <PageBanner
-        title={text.title}
+        title={title}
         breadcrumbs={[
-          { label: text.home, href: localizedHref('/', language) },
-          { label: text.title },
+          { label: translate(language, 'home'), href: localizedHref('/', language) },
+          { label: title },
         ]}
       />
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-4xl px-4">
           <p className="text-foreground mx-auto mb-10 max-w-2xl text-center text-lg">
-            {text.intro}
+            {translate(language, 'faqIntro')}
           </p>
 
           {content.items.length ? (
@@ -83,7 +66,9 @@ export default function FaqPage({
             ))
           ) : (
             <div role="status" className="bg-secondary-bg rounded-xl border p-10 text-center">
-              <h2 className="text-heading text-2xl font-semibold">{text.empty}</h2>
+              <h2 className="text-heading text-2xl font-semibold">
+                {translate(language, 'faqEmpty')}
+              </h2>
             </div>
           )}
         </div>

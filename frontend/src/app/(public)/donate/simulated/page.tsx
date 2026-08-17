@@ -4,7 +4,7 @@ import { TrialModeBanner } from '@/components/shared/TrialModeBanner';
 import { DonationCheckout } from '@/features/donations/components/DonationCheckout';
 import { DonationUnavailable } from '@/features/donations/components/DonationUnavailable';
 import { loadDonationCapabilities, loadPublicDonation } from '@/features/donations/donation.server';
-import { localizedHref } from '@/lib/i18n';
+import { localizedHref, translate } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
@@ -33,7 +33,7 @@ export default async function SimulatedCheckoutPage({
       <PageBanner
         title={language === 'am' ? 'የልገሳ ሙከራ' : 'Donation Simulation'}
         breadcrumbs={[
-          { label: language === 'am' ? 'መነሻ' : 'Home', href: localizedHref('/', language) },
+          { label: translate(language, 'home'), href: localizedHref('/', language) },
           {
             label: language === 'am' ? 'ይለግሱ' : 'Donate',
             href: localizedHref('/donate', language),

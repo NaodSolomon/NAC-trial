@@ -4146,6 +4146,23 @@ export interface operations {
             };
         };
         responses: {
+            /** @description The created draft FAQ entry */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: unknown;
+                        /** @example 201 */
+                        statusCode: number;
+                        /** @enum {boolean} */
+                        success: true;
+                        /** Format: date-time */
+                        timestamp: string;
+                    };
+                };
+            };
             /** @description Authentication required */
             401: {
                 headers: {
@@ -4365,6 +4382,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description The published FAQ entry */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -4421,6 +4439,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description The FAQ entry returned to draft */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -4479,6 +4498,7 @@ export interface operations {
             };
         };
         responses: {
+            /** @description How many entries changed position */
             201: {
                 headers: {
                     [name: string]: unknown;

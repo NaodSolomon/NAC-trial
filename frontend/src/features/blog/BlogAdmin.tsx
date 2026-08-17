@@ -1,10 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { FilePlus2, RotateCcw, Save, Send, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
+import {
+  AdminFormField,
+  AdminFormSelect,
+  AdminFormTextarea,
+} from '@/components/admin/AdminFormField';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
@@ -28,16 +35,25 @@ import {
 export function BlogAdmin() {
   const [posts, setPosts] = useState<AdminBlogPost[]>([]);
   const [selected, setSelected] = useState<AdminBlogPost | null>(null);
-  const [values, setValues] = useState<BlogEditorValues>(emptyBlogEditor);
   const [language, setLanguage] = useState('');
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const role = useAuthStore((state) => state.user?.role);
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<BlogEditorValues>({
+    resolver: zodResolver(blogEditorSchema),
+    defaultValues: emptyBlogEditor,
+  });
+  const watched = watch();
   const load = useCallback(
     async (signal?: AbortSignal) => {
       setLoading(true);
@@ -64,25 +80,21 @@ export function BlogAdmin() {
   }
   function choose(post: AdminBlogPost | null) {
     setSelected(post);
-    setValues(
+    reset(
       post
         ? blogEditorFromPost(post)
         : { ...emptyBlogEditor, languageCode: language === 'am' ? 'am' : 'en' },
     );
     setError('');
   }
-  async function save() {
-    const parsed = blogEditorSchema.safeParse(values);
-    if (!parsed.success)
-      return setError([...new Set(parsed.error.issues.map((issue) => issue.message))].join(' '));
-    setSaving(true);
+  async function onSubmit(values: BlogEditorValues) {
     setError('');
     try {
       const saved = selected
-        ? await updateBlog(selected.id, parsed.data)
-        : await createBlog(parsed.data);
+        ? await updateBlog(selected.id, values)
+        : await createBlog(values);
       setSelected(saved);
-      setValues(blogEditorFromPost(saved));
+      reset(blogEditorFromPost(saved));
       await refresh();
       notify({
         title: selected ? 'Blog post saved as draft' : 'Blog draft created',
@@ -92,14 +104,12 @@ export function BlogAdmin() {
       setError(
         `${getApiErrorMessageWithDetails(saveError)} Your unsaved article remains in the editor.`,
       );
-    } finally {
-      setSaving(false);
     }
   }
   async function publish(post: AdminBlogPost) {
     const published = await publishBlog(post.id);
     setSelected(published);
-    setValues(blogEditorFromPost(published));
+    reset(blogEditorFromPost(published));
     await refresh();
     notify({ title: 'Blog post published', message: post.title });
   }
@@ -198,11 +208,9 @@ export function BlogAdmin() {
           </div>
         </aside>
         <form
+          noValidate
           className="bg-card space-y-5 rounded-xl border p-6 shadow-sm"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void save();
-          }}
+          onSubmit={handleSubmit(onSubmit)}
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -222,82 +230,84 @@ export function BlogAdmin() {
             )}
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field
+            <AdminFormField
               label="Slug"
-              value={values.slug}
               maxLength={180}
-              onChange={(slug) => setValues({ ...values, slug })}
+              counted={watched.slug ?? ''}
+              error={errors.slug?.message}
+              {...register('slug')}
             />
-            <label>
-              <span className="text-heading mb-2 block text-sm font-semibold">Language</span>
-              <select
-                value={values.languageCode}
-                disabled={Boolean(selected)}
-                onChange={(event) =>
-                  setValues({ ...values, languageCode: event.target.value as 'en' | 'am' })
-                }
-                className="min-h-11 w-full rounded-lg border bg-white px-3"
-              >
-                <option value="en">English</option>
-                <option value="am">Amharic</option>
-              </select>
-            </label>
+            <AdminFormSelect
+              label="Language"
+              disabled={Boolean(selected)}
+              error={errors.languageCode?.message}
+              {...register('languageCode')}
+            >
+              <option value="en">English</option>
+              <option value="am">Amharic</option>
+            </AdminFormSelect>
           </div>
-          <Field
+          <AdminFormField
             label="Title"
-            value={values.title}
             maxLength={255}
-            onChange={(title) => setValues({ ...values, title })}
-          />
-          <Textarea
+            counted={watched.title ?? ''}
+            error={errors.title?.message}
+            {...register('title')}
+            />
+          <AdminFormTextarea
             label="Excerpt"
-            value={values.excerpt}
             maxLength={500}
             rows={3}
-            onChange={(excerpt) => setValues({ ...values, excerpt })}
-          />
-          <Textarea
+            counted={watched.excerpt ?? ''}
+            error={errors.excerpt?.message}
+            {...register('excerpt')}
+            />
+          <AdminFormTextarea
             label="Article content"
-            value={values.content}
             maxLength={200000}
             rows={12}
-            onChange={(content) => setValues({ ...values, content })}
-          />
+            counted={watched.content ?? ''}
+            error={errors.content?.message}
+            {...register('content')}
+            />
           <fieldset className="grid gap-4 rounded-lg border p-4 md:grid-cols-2">
             <legend className="px-2 font-semibold">SEO</legend>
-            <Field
+            <AdminFormField
               label="SEO title"
-              value={values.seoTitle}
               maxLength={70}
-              onChange={(seoTitle) => setValues({ ...values, seoTitle })}
-            />
-            <Field
+              counted={watched.seoTitle ?? ''}
+              error={errors.seoTitle?.message}
+              {...register('seoTitle')}
+              />
+            <AdminFormField
               label="SEO image URL"
-              value={values.seoImageUrl}
               maxLength={2048}
-              onChange={(seoImageUrl) => setValues({ ...values, seoImageUrl })}
-            />
+              counted={watched.seoImageUrl ?? ''}
+              error={errors.seoImageUrl?.message}
+              {...register('seoImageUrl')}
+              />
             <div className="md:col-span-2">
-              <Textarea
+              <AdminFormTextarea
                 label="SEO description"
-                value={values.seoDescription}
                 maxLength={160}
                 rows={3}
-                onChange={(seoDescription) => setValues({ ...values, seoDescription })}
-              />
+                counted={watched.seoDescription ?? ''}
+                error={errors.seoDescription?.message}
+                {...register('seoDescription')}
+                />
             </div>
           </fieldset>
           <div className="flex flex-wrap gap-2">
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" disabled={isSubmitting}>
               <Save aria-hidden="true" />
-              {saving ? 'Saving…' : selected ? 'Save changes' : 'Create draft'}
+              {isSubmitting ? 'Saving…' : selected ? 'Save changes' : 'Create draft'}
             </Button>
             {selected && (
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  setValues(blogEditorFromPost(selected));
+                  reset(blogEditorFromPost(selected));
                   setError('');
                 }}
               >
@@ -323,64 +333,5 @@ export function BlogAdmin() {
         </form>
       </div>
     </section>
-  );
-}
-function Field({
-  label,
-  value,
-  maxLength,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  maxLength: number;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label>
-      <span className="text-heading mb-2 flex justify-between text-sm font-semibold">
-        <span>{label}</span>
-        <span className="font-normal">
-          {value.length}/{maxLength}
-        </span>
-      </span>
-      <input
-        value={value}
-        maxLength={maxLength}
-        onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 w-full rounded-lg border px-3"
-      />
-    </label>
-  );
-}
-function Textarea({
-  label,
-  value,
-  maxLength,
-  rows,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  maxLength: number;
-  rows: number;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label>
-      <span className="text-heading mb-2 flex justify-between text-sm font-semibold">
-        <span>{label}</span>
-        <span className="font-normal">
-          {value.length}/{maxLength}
-        </span>
-      </span>
-      <textarea
-        value={value}
-        maxLength={maxLength}
-        rows={rows}
-        onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-lg border p-3"
-      />
-    </label>
   );
 }

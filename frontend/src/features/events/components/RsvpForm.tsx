@@ -1,50 +1,38 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { PublicFormField } from '@/features/engagement/components/PublicFormField';
 import { browserApiClient } from '@/lib/api/browser-client';
 import { getApiErrorMessage, isApiRequestError } from '@/lib/api/errors';
 import type { Language } from '@/lib/i18n';
 import { rsvpConfirmationSchema, rsvpInputSchema } from '../event.schemas';
 
-type FieldErrors = Partial<Record<'name' | 'email' | 'attendees', string>>;
+type RsvpInput = z.input<typeof rsvpInputSchema>;
+type RsvpValues = z.output<typeof rsvpInputSchema>;
 
 export function RsvpForm({ eventId, language }: { eventId: string; language: Language }) {
-  const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<RsvpInput, unknown, RsvpValues>({
+    resolver: zodResolver(rsvpInputSchema),
+    defaultValues: { name: '', email: '', attendees: 1 },
+  });
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (pending) return;
+  async function onSubmit(values: RsvpValues) {
     setMessage(null);
     setError(null);
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const parsed = rsvpInputSchema.safeParse({
-      name: formData.get('name'),
-      email: formData.get('email'),
-      attendees: formData.get('attendees'),
-    });
-    if (!parsed.success) {
-      const flattened = parsed.error.flatten().fieldErrors;
-      setFieldErrors({
-        name: flattened.name?.[0],
-        email: flattened.email?.[0],
-        attendees: flattened.attendees?.[0],
-      });
-      return;
-    }
-
-    setPending(true);
-    setFieldErrors({});
     try {
-      const result = await browserApiClient.post(
-        `/public/events/${eventId}/rsvp`,
-        parsed.data,
-      );
+      const result = await browserApiClient.post(`/public/events/${eventId}/rsvp`, values);
       rsvpConfirmationSchema.parse(result);
-      form.reset();
+      reset({ name: '', email: '', attendees: 1 });
       setMessage(
         language === 'am'
           ? 'ምዝገባዎ ተረጋግጧል። በዝግጅቱ ላይ እንገናኝ።'
@@ -58,8 +46,6 @@ export function RsvpForm({ eventId, language }: { eventId: string; language: Lan
             : 'This email is already registered for this event. No second RSVP was created.'
           : getApiErrorMessage(submitError),
       );
-    } finally {
-      setPending(false);
     }
   }
 
@@ -71,30 +57,37 @@ export function RsvpForm({ eventId, language }: { eventId: string; language: Lan
       <p className="text-foreground mt-2">
         {language === 'am' ? 'የተሳታፊዎችን ብዛት ያሳውቁን።' : 'Let us know how many people will attend.'}
       </p>
-      <form onSubmit={submit} noValidate className="mt-6 grid gap-5 sm:grid-cols-2">
-        <Field label={language === 'am' ? 'ስም' : 'Name'} name="name" error={fieldErrors.name} />
-        <Field
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        className="mt-6 grid gap-5 sm:grid-cols-2"
+      >
+        <PublicFormField
+          label={language === 'am' ? 'ስም' : 'Name'}
+          error={errors.name?.message}
+          {...register('name')}
+        />
+        <PublicFormField
           label={language === 'am' ? 'ኢሜይል' : 'Email'}
-          name="email"
           type="email"
           autoComplete="email"
-          error={fieldErrors.email}
+          error={errors.email?.message}
+          {...register('email')}
         />
-        <Field
+        <PublicFormField
           label={language === 'am' ? 'የተሳታፊዎች ብዛት' : 'Number of attendees'}
-          name="attendees"
           type="number"
           min={1}
           max={20}
-          defaultValue="1"
-          error={fieldErrors.attendees}
+          error={errors.attendees?.message}
+          {...register('attendees', { valueAsNumber: true })}
         />
         <button
           type="submit"
-          disabled={pending}
+          disabled={isSubmitting}
           className="bg-primary hover:bg-primary-hover min-h-12 self-end rounded-lg px-6 font-semibold text-white disabled:cursor-wait disabled:opacity-70"
         >
-          {pending
+          {isSubmitting
             ? language === 'am'
               ? 'በመላክ ላይ…'
               : 'Submitting…'
@@ -120,35 +113,5 @@ export function RsvpForm({ eventId, language }: { eventId: string; language: Lan
         </p>
       )}
     </section>
-  );
-}
-
-function Field({
-  label,
-  name,
-  error,
-  ...input
-}: {
-  label: string;
-  name: 'name' | 'email' | 'attendees';
-  error?: string;
-} & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'name'>) {
-  const errorId = name + '-error';
-  return (
-    <label className="block">
-      <span className="text-heading mb-2 block font-semibold">{label}</span>
-      <input
-        {...input}
-        name={name}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? errorId : undefined}
-        className="border-input min-h-12 w-full rounded-lg border bg-white px-4"
-      />
-      {error && (
-        <span id={errorId} className="text-destructive mt-1 block text-sm">
-          {error}
-        </span>
-      )}
-    </label>
   );
 }

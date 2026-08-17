@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Grid3X3, LayoutGrid } from 'lucide-react';
 import PageBanner from '@/components/common/PageBanner';
-import { localizedHref, type Language } from '@/lib/i18n';
+import { localizedHref, translate, type Language } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 import { loadPublicGallery } from '../gallery.server';
 import type { GalleryFilter, GalleryLayout } from '../gallery.types';
@@ -27,7 +27,7 @@ export default async function GalleryPage({ searchParams, layoutOverride }: Gall
       <PageBanner
         title={title}
         breadcrumbs={[
-          { label: language === 'am' ? 'መነሻ' : 'Home', href: localizedHref('/', language) },
+          { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: language === 'am' ? 'ማዕከለ ስዕል' : 'Gallery' },
         ]}
         backgroundImage="/images/gallery_1.jpg"
