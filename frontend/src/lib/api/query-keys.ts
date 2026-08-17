@@ -18,6 +18,11 @@ export const queryKeys = {
     all: ['seo'] as const,
     page: (slug: string, languageCode = 'en') => ['seo', slug, languageCode] as const,
   },
+  faq: {
+    all: ['faq'] as const,
+    publicList: (parameters: QueryParameters = {}) => ['faq', 'public', parameters] as const,
+    adminList: (parameters: QueryParameters = {}) => ['faq', 'admin', parameters] as const,
+  },
   blog: {
     all: ['blog'] as const,
     publicList: (parameters: QueryParameters = {}) => ['blog', 'public', parameters] as const,

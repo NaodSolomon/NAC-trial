@@ -8830,6 +8830,39 @@
           }
         },
         "responses": {
+          "201": {
+            "description": "The created draft FAQ entry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data",
+                    "statusCode",
+                    "timestamp"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {},
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
           "401": {
             "description": "Authentication required",
             "content": {
@@ -9163,7 +9196,7 @@
         ],
         "responses": {
           "201": {
-            "description": "",
+            "description": "The published FAQ entry",
             "content": {
               "application/json": {
                 "schema": {
@@ -9252,7 +9285,7 @@
         ],
         "responses": {
           "201": {
-            "description": "",
+            "description": "The FAQ entry returned to draft",
             "content": {
               "application/json": {
                 "schema": {
@@ -9342,7 +9375,7 @@
         },
         "responses": {
           "201": {
-            "description": "",
+            "description": "How many entries changed position",
             "content": {
               "application/json": {
                 "schema": {

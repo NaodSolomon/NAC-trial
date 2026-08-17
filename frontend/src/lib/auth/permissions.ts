@@ -80,6 +80,13 @@ export const adminNavigation: readonly AdminNavigationItem[] = [
     description: 'Articles and publishing',
   },
   {
+    label: 'FAQ',
+    href: '/admin/faq',
+    icon: 'content',
+    permission: 'content:manage',
+    description: 'Published questions and answers',
+  },
+  {
     label: 'Events',
     href: '/admin/events',
     icon: 'events',
