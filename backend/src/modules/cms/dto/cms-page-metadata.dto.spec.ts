@@ -75,12 +75,12 @@ describe('CMS composition metadata validation', () => {
     ).resolves.toHaveLength(0);
   });
 
-  it('accepts bounded FAQ question and answer items', async () => {
+  it('rejects FAQ items, which the dedicated FAQ module now owns', async () => {
     await expect(
       errorsFor({
         items: [{ question: 'How can I get help?', answer: 'Contact our team.' }],
       }),
-    ).resolves.toHaveLength(0);
+    ).resolves.not.toHaveLength(0);
   });
 
   it.each([
@@ -89,7 +89,6 @@ describe('CMS composition metadata validation', () => {
     { sections: [{ type: 'unknown', heading: 'Unknown' }] },
     { sections: [{ type: 'location', heading: 'Map', mapEmbedUrl: 'http://example.org' }] },
     { sections: [{ type: 'location', heading: 'Map', mapEmbedUrl: 'https://attacker.test' }] },
-    { items: [{ question: 'Missing answer' }] },
     { volunteerRoles: [{ title: 'Missing summary' }] },
     { teamMembers: [{ name: 'Name', role: 'Role' }] },
     { items: [{ question: 'Valid?', answer: 'Yes', trackingCode: 'not-allowed' }] },

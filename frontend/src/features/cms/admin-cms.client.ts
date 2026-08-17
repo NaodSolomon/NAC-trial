@@ -88,7 +88,6 @@ export function editorValuesFromPage(page?: AdminCmsPage): CmsEditorValues {
   const services = objectSection(sections, 'services');
   const location = objectSection(sections, 'location');
   const cta = objectSection(sections, 'callToAction');
-  const faqItems = Array.isArray(metadata.items) ? metadata.items : [];
   const about = objectValue(metadata.about);
   const mission = objectValue(about.mission);
   const history = objectValue(about.history);
@@ -97,12 +96,10 @@ export function editorValuesFromPage(page?: AdminCmsPage): CmsEditorValues {
   const teamMembers = arrayValue(metadata.teamMembers);
   const contentType = sections.length
     ? 'homepage'
-    : faqItems.length
-      ? 'faq'
-      : Object.keys(about).length
-        ? 'about'
-        : volunteerRoles.length
-          ? 'volunteer'
+    : Object.keys(about).length
+      ? 'about'
+      : volunteerRoles.length
+        ? 'volunteer'
           : teamMembers.length
             ? 'team'
             : 'generic';
@@ -133,10 +130,6 @@ export function editorValuesFromPage(page?: AdminCmsPage): CmsEditorValues {
       ctaLabel: stringValue(objectValue(cta.action).label),
       ctaHref: stringValue(objectValue(cta.action).href),
     },
-    faqs: faqItems.map((item) => ({
-      question: stringValue(objectValue(item).question),
-      answer: stringValue(objectValue(item).answer),
-    })),
     about: {
       contentApproved: metadata.contentApproved === true,
       missionHeading: stringValue(mission.heading),
@@ -205,8 +198,6 @@ function editorPayload(values: CmsEditorValues, includeLanguage: boolean) {
               },
             ],
           }
-        : values.contentType === 'faq'
-          ? { items: values.faqs }
           : values.contentType === 'about'
             ? {
                 contentApproved: values.about.contentApproved,

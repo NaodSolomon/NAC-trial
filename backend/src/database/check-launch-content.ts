@@ -1,6 +1,6 @@
 import { and, count, eq } from 'drizzle-orm';
 import { db, pool } from './data-source';
-import { cmsPages, galleryItems, mediaAssets, resources } from './schema';
+import { cmsPages, faqs, galleryItems, mediaAssets, resources } from './schema';
 
 const languages = ['en', 'am'] as const;
 
@@ -14,7 +14,7 @@ async function checkLaunchContent(): Promise<void> {
       .where(and(eq(cmsPages.languageCode, languageCode), eq(cmsPages.status, 'PUBLISHED')));
     const bySlug = new Map(pages.map((page) => [page.slug, page.metadata]));
 
-    for (const slug of ['home', 'about', 'faq', 'contact', 'volunteer', 'team']) {
+    for (const slug of ['home', 'about', 'contact', 'volunteer', 'team']) {
       if (!bySlug.has(slug))
         failures.push(`${languageCode}: published CMS page '${slug}' is missing`);
     }
@@ -58,6 +58,12 @@ async function checkLaunchContent(): Promise<void> {
     ]);
     if (!resourceCount.value) failures.push(`${languageCode}: no published resources exist`);
     if (!galleryCount.value) failures.push(`${languageCode}: no gallery items exist`);
+
+    const [faqCount] = await db
+      .select({ value: count() })
+      .from(faqs)
+      .where(and(eq(faqs.languageCode, languageCode), eq(faqs.status, 'PUBLISHED')));
+    if (!faqCount.value) failures.push(`${languageCode}: no published FAQ entries exist`);
   }
 
   const [{ value: mediaCount }] = await db.select({ value: count() }).from(mediaAssets);

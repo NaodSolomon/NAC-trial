@@ -5,51 +5,85 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import type { FaqComposition } from '@/features/cms';
 import { sanitizeCmsText } from '@/features/cms';
 import { localizedHref, type Language } from '@/lib/i18n';
+import type { FaqCollection, FaqItem } from '../faq.schemas';
+
+const copy = {
+  en: {
+    title: 'Frequently Asked Questions',
+    home: 'Home',
+    intro: 'Answers about the center, our services and how families can reach us.',
+    uncategorised: 'General',
+    empty: 'Questions will be added soon',
+  },
+  am: {
+    title: 'ተደጋጋሚ ጥያቄዎች',
+    home: 'መነሻ',
+    intro: 'ስለ ማዕከሉ፣ አገልግሎቶቻችንና ቤተሰቦች እንዴት እንደሚያገኙን መልሶች።',
+    uncategorised: 'አጠቃላይ',
+    empty: 'ጥያቄዎች በቅርቡ ይታከላሉ',
+  },
+} as const;
+
+function groupByCategory(items: FaqItem[], fallback: string) {
+  const groups = new Map<string, FaqItem[]>();
+  for (const item of items) {
+    const key = item.category?.trim() || fallback;
+    groups.set(key, [...(groups.get(key) ?? []), item]);
+  }
+  return [...groups.entries()];
+}
 
 export default function FaqPage({
   content,
   language,
 }: {
-  content: FaqComposition;
+  content: FaqCollection;
   language: Language;
 }) {
+  const text = copy[language];
+  const groups = groupByCategory(content.items, text.uncategorised);
+  const showGroupHeadings = groups.length > 1;
+
   return (
     <>
       <PageBanner
-        title={content.title}
+        title={text.title}
         breadcrumbs={[
-          { label: language === 'am' ? 'መነሻ' : 'Home', href: localizedHref('/', language) },
-          { label: content.title },
+          { label: text.home, href: localizedHref('/', language) },
+          { label: text.title },
         ]}
       />
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-4xl px-4">
-          {content.body && (
-            <p className="text-foreground mx-auto mb-10 max-w-2xl text-center text-lg">
-              {sanitizeCmsText(content.body)}
-            </p>
-          )}
+          <p className="text-foreground mx-auto mb-10 max-w-2xl text-center text-lg">
+            {text.intro}
+          </p>
+
           {content.items.length ? (
-            <Accordion type="single" collapsible className="w-full">
-              {content.items.map((item, index) => (
-                <AccordionItem key={`${item.question}-${index}`} value={`faq-${index}`}>
-                  <AccordionTrigger className="text-heading text-base font-semibold sm:text-lg">
-                    {sanitizeCmsText(item.question)}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-foreground text-base leading-7">
-                    {sanitizeCmsText(item.answer)}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+            groups.map(([category, items]) => (
+              <div key={category} className="mb-10 last:mb-0">
+                {showGroupHeadings && (
+                  <h2 className="text-heading mb-4 text-xl font-semibold">{category}</h2>
+                )}
+                <Accordion type="single" collapsible className="w-full">
+                  {items.map((item) => (
+                    <AccordionItem key={item.id} value={item.id}>
+                      <AccordionTrigger className="text-heading text-base font-semibold sm:text-lg">
+                        {sanitizeCmsText(item.question)}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-foreground text-base leading-7">
+                        {sanitizeCmsText(item.answer)}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </div>
+            ))
           ) : (
             <div role="status" className="bg-secondary-bg rounded-xl border p-10 text-center">
-              <h2 className="text-heading text-2xl font-semibold">
-                {language === 'am' ? 'ጥያቄዎች በቅርቡ ይታከላሉ' : 'Questions will be added soon'}
-              </h2>
+              <h2 className="text-heading text-2xl font-semibold">{text.empty}</h2>
             </div>
           )}
         </div>

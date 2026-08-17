@@ -9,7 +9,14 @@ const sourcePath = path.resolve(frontendDirectory, '../backend/dist/openapi.json
 const snapshotPath = path.resolve(scriptDirectory, 'openapi.json');
 const generatedPath = path.resolve(frontendDirectory, 'src/lib/api/generated.ts');
 
-const source = JSON.parse(await readFile(sourcePath, 'utf8'));
+const source = JSON.parse(
+  await readFile(sourcePath, 'utf8').catch(() => {
+    throw new Error(
+      `Backend contract not found at ${sourcePath}.\n` +
+        'Generate it first: pnpm --prefix backend openapi:generate',
+    );
+  }),
+);
 const normalizedContract = `${JSON.stringify(source, null, 2)}\n`;
 const ast = await openapiTS(source, { alphabetize: true });
 const generated = [

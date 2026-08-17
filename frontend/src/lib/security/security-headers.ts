@@ -75,6 +75,10 @@ export function frontendSecurityHeaders(
   return headers;
 }
 
+export function withheldRouteHeaders(): Array<{ key: string; value: string }> {
+  return [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }];
+}
+
 function approvedOrigins(values: Array<string | undefined>): string[] {
   return [
     ...new Set(

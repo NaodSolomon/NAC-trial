@@ -73,7 +73,7 @@ test('publishing and local scheduling are separate explicit workflows', async ({
   expect(api.lastSchedule).toMatch(/^2030-01-02T\d{2}:30:00\.000Z$/);
 });
 
-test('homepage and FAQ editors create structured metadata and preview generic content safely', async ({
+test('homepage editor creates structured metadata and previews generic content safely', async ({
   page,
 }) => {
   const api = await mockCmsApi(page);
@@ -109,12 +109,8 @@ test('homepage and FAQ editors create structured metadata and preview generic co
   });
 
   await page.goto('/admin/content/new');
-  await fillBaseEditor(page, 'faq-demo');
-  await page.getByLabel('Content structure').selectOption('faq');
-  await page.getByRole('button', { name: 'Add FAQ' }).click();
-  await page.getByLabel('Question').fill('How can families get help?');
-  await page.getByLabel('Answer').fill('Contact our support team.');
-  await expect(page.getByText('FAQ 1')).toBeVisible();
+  await fillBaseEditor(page, 'generic-demo');
+  await expect(page.getByLabel('Content structure')).not.toContainText('FAQ collection');
 
   await page.getByLabel('Content structure').selectOption('generic');
   await page

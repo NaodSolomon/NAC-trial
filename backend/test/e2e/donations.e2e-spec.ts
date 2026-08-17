@@ -28,6 +28,7 @@ describe('Donations in simulated mode (e2e)', () => {
     editor = await authenticatedSession(context.app, context.actors.editor.email, E2E_PASSWORD);
     finance = await authenticatedSession(context.app, context.actors.finance.email, E2E_PASSWORD);
   });
+  beforeEach(() => context.resetRateLimits());
   afterAll(async () => closeE2eTestContext(context));
 
   it('initiates, reads, and cancels a donation without a payment network', async () => {

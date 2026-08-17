@@ -15,3 +15,4 @@ export * from './gallery.schema';
 export * from './analytics.schema';
 export * from './blog.schema';
 export * from './resource.schema';
+export * from './faq.schema';

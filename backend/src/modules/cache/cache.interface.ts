@@ -9,6 +9,7 @@ export const PUBLIC_CACHE_NAMESPACES = [
   'events',
   'gallery',
   'analytics',
+  'faq',
 ] as const;
 
 export type PublicCacheNamespace = (typeof PUBLIC_CACHE_NAMESPACES)[number];

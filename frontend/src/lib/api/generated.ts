@@ -436,6 +436,94 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/faqs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List every FAQ entry regardless of status */
+        get: operations["AdminFaqController_list"];
+        put?: never;
+        /** Create a draft FAQ entry */
+        post: operations["AdminFaqController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/faqs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get admin/faqs/id */
+        get: operations["AdminFaqController_findOne"];
+        put?: never;
+        post?: never;
+        /** Delete admin/faqs/id */
+        delete: operations["AdminFaqController_remove"];
+        options?: never;
+        head?: never;
+        /** Update admin/faqs/id */
+        patch: operations["AdminFaqController_update"];
+        trace?: never;
+    };
+    "/api/v1/admin/faqs/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create or execute admin/faqs/id/publish */
+        post: operations["AdminFaqController_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/faqs/{id}/unpublish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create or execute admin/faqs/id/unpublish */
+        post: operations["AdminFaqController_unpublish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/faqs/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply a new display order to existing FAQ entries */
+        post: operations["AdminFaqController_reorder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/gallery": {
         parameters: {
             query?: never;
@@ -1059,23 +1147,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/public/content/faqs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get FAQ items from the published FAQ CMS page */
-        get: operations["PublicCompositionController_faqs"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/public/content/homepage": {
         parameters: {
             query?: never;
@@ -1238,6 +1309,40 @@ export interface paths {
         };
         /** Get public/events/slug/calendar.ics */
         get: operations["PublicEventsController_calendar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/faqs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List published FAQ entries in display order */
+        get: operations["PublicFaqController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/faqs/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List categories that have published FAQ entries */
+        get: operations["PublicFaqController_categories"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1665,7 +1770,6 @@ export interface components {
         CmsPageMetadataDto: {
             about?: components["schemas"]["AboutMetadataDto"];
             contentApproved?: boolean;
-            items?: components["schemas"]["FaqItemDto"][];
             /** Format: uri */
             mapEmbedUrl?: string;
             sections?: components["schemas"]["HomepageSectionDto"][];
@@ -1764,6 +1868,21 @@ export interface components {
             /** Format: uuid */
             translationKey?: string;
         };
+        CreateFaqDto: {
+            /** @example We provide autism support for children and families. */
+            answer: string;
+            /** @example Services */
+            category?: string;
+            /**
+             * @default en
+             * @enum {string}
+             */
+            languageCode: "en" | "am";
+            /** @example What does the center do? */
+            question: string;
+            /** @example what-does-the-center-do */
+            translationKey: string;
+        };
         CreateNavigationItemDto: {
             /** @example About us */
             label: string;
@@ -1839,10 +1958,6 @@ export interface components {
             amount: string;
             /** @enum {string} */
             currency: "USD" | "ETB";
-        };
-        FaqItemDto: {
-            answer: string;
-            question: string;
         };
         FormSummaryDto: {
             /** @example 10 */
@@ -1942,6 +2057,15 @@ export interface components {
         RefreshTokenDto: {
             /** @description Opaque JWT refresh token */
             refreshToken: string;
+        };
+        ReorderFaqDto: {
+            entries: components["schemas"]["ReorderFaqEntryDto"][];
+        };
+        ReorderFaqEntryDto: {
+            /** Format: uuid */
+            id: string;
+            /** @example 0 */
+            sortOrder: number;
         };
         ResourceAnalyticsDto: {
             topCountries: components["schemas"]["ResourceCountryDto"][];
@@ -2101,6 +2225,11 @@ export interface components {
             /** @enum {string} */
             status?: "DRAFT" | "PUBLISHED";
             title?: string;
+        };
+        UpdateFaqDto: {
+            answer?: string;
+            category?: string;
+            question?: string;
         };
         UpdateGalleryItemDto: {
             altText?: string;
@@ -3912,6 +4041,452 @@ export interface operations {
                     "application/json": {
                         data: unknown;
                         /** @example 200 */
+                        statusCode: number;
+                        /** @enum {boolean} */
+                        success: true;
+                        /** Format: date-time */
+                        timestamp: string;
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Insufficient role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminFaqController_list: {
+        parameters: {
+            query?: {
+                category?: string;
+                languageCode?: "en" | "am";
+                limit?: components["schemas"]["Object"];
+                page?: components["schemas"]["Object"];
+                /** @description Repository-supported field used for sorting */
+                sortBy?: string;
+                sortOrder?: "asc" | "desc";
+                status?: "DRAFT" | "SCHEDULED" | "PUBLISHED";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Insufficient role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminFaqController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFaqDto"];
+            };
+        };
+        responses: {
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Insufficient role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Translation already exists for this language */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminFaqController_findOne: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: unknown;
+                        /** @example 200 */
+                        statusCode: number;
+                        /** @enum {boolean} */
+                        success: true;
+                        /** Format: date-time */
+                        timestamp: string;
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Insufficient role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminFaqController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: unknown;
+                        /** @example 200 */
+                        statusCode: number;
+                        /** @enum {boolean} */
+                        success: true;
+                        /** Format: date-time */
+                        timestamp: string;
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Insufficient role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminFaqController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateFaqDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: unknown;
+                        /** @example 200 */
+                        statusCode: number;
+                        /** @enum {boolean} */
+                        success: true;
+                        /** Format: date-time */
+                        timestamp: string;
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Insufficient role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminFaqController_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: unknown;
+                        /** @example 201 */
+                        statusCode: number;
+                        /** @enum {boolean} */
+                        success: true;
+                        /** Format: date-time */
+                        timestamp: string;
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Insufficient role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminFaqController_unpublish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: unknown;
+                        /** @example 201 */
+                        statusCode: number;
+                        /** @enum {boolean} */
+                        success: true;
+                        /** Format: date-time */
+                        timestamp: string;
+                    };
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Insufficient role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminFaqController_reorder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderFaqDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: unknown;
+                        /** @example 201 */
                         statusCode: number;
                         /** @enum {boolean} */
                         success: true;
@@ -6429,44 +7004,6 @@ export interface operations {
             };
         };
     };
-    PublicCompositionController_faqs: {
-        parameters: {
-            query: {
-                languageCode: "en" | "am";
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: unknown;
-                        /** @example 200 */
-                        statusCode: number;
-                        /** @enum {boolean} */
-                        success: true;
-                        /** Format: date-time */
-                        timestamp: string;
-                    };
-                };
-            };
-            /** @description Rate limit exceeded */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-        };
-    };
     PublicCompositionController_homepage: {
         parameters: {
             query: {
@@ -6822,6 +7359,85 @@ export interface operations {
             path: {
                 slug: string;
             };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: unknown;
+                        /** @example 200 */
+                        statusCode: number;
+                        /** @enum {boolean} */
+                        success: true;
+                        /** Format: date-time */
+                        timestamp: string;
+                    };
+                };
+            };
+            /** @description Rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
+    };
+    PublicFaqController_list: {
+        parameters: {
+            query?: {
+                category?: string;
+                languageCode?: "en" | "am";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Published FAQ entries for the requested language */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: unknown;
+                        /** @example 200 */
+                        statusCode: number;
+                        /** @enum {boolean} */
+                        success: true;
+                        /** Format: date-time */
+                        timestamp: string;
+                    };
+                };
+            };
+            /** @description Rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
+    };
+    PublicFaqController_categories: {
+        parameters: {
+            query?: {
+                category?: string;
+                languageCode?: "en" | "am";
+            };
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;

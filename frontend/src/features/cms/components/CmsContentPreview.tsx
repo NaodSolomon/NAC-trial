@@ -46,18 +46,6 @@ export function CmsContentPreview({ values }: { values: CmsEditorValues }) {
           </section>
         </div>
       )}
-      {values.contentType === 'faq' && (
-        <div className="mt-8 space-y-3 border-t pt-6">
-          {values.faqs.map((faq, index) => (
-            <details key={index} className="rounded-lg border p-4">
-              <summary className="text-heading cursor-pointer font-semibold">
-                {faq.question}
-              </summary>
-              <p className="text-foreground mt-3">{faq.answer}</p>
-            </details>
-          ))}
-        </div>
-      )}
     </section>
   );
 }

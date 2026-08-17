@@ -22,7 +22,6 @@ import { CmsContentPreview } from './CmsContentPreview';
 import { CmsStatusBadge } from './CmsStatusBadge';
 import {
   AboutEditor,
-  FaqEditor,
   HomepageEditor,
   TeamMembersEditor,
   VolunteerRolesEditor,
@@ -284,7 +283,6 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
             >
               <option value="generic">Generic page</option>
               <option value="homepage">Homepage composition</option>
-              <option value="faq">FAQ collection</option>
               <option value="about">About: mission, history and services</option>
               <option value="volunteer">Volunteer role listings</option>
               <option value="team">Approved team biographies</option>
@@ -308,9 +306,6 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
               value={values.homepage}
               onChange={(homepage) => setValues({ ...values, homepage })}
             />
-          )}
-          {values.contentType === 'faq' && (
-            <FaqEditor value={values.faqs} onChange={(faqs) => setValues({ ...values, faqs })} />
           )}
           {values.contentType === 'about' && (
             <AboutEditor

@@ -62,7 +62,7 @@ export const cmsEditorSchema = z
     title: z.string().trim().min(1).max(255),
     content: z.string().min(1).max(200_000),
     translationKey: z.string().uuid().or(z.literal('')),
-    contentType: z.enum(['generic', 'homepage', 'faq', 'about', 'volunteer', 'team']),
+    contentType: z.enum(['generic', 'homepage', 'about', 'volunteer', 'team']),
     homepage: z.object({
       heroHeading: z.string().trim().max(180),
       heroBody: z.string().trim().max(1_000),
@@ -78,14 +78,6 @@ export const cmsEditorSchema = z
       ctaLabel: z.string().trim().max(80),
       ctaHref: z.string().trim().max(2_048),
     }),
-    faqs: z
-      .array(
-        z.object({
-          question: z.string().trim().min(2).max(300),
-          answer: z.string().trim().min(1).max(2_000),
-        }),
-      )
-      .max(50),
     about: z.object({
       contentApproved: z.boolean(),
       missionHeading: z.string().trim().max(180),
@@ -133,9 +125,6 @@ export const cmsEditorSchema = z
         issue(context, ['homepage', 'ctaLabel'], 'Call-to-action label is required.');
       if (!homepage.ctaHref)
         issue(context, ['homepage', 'ctaHref'], 'Call-to-action link is required.');
-    }
-    if (value.contentType === 'faq' && !value.faqs.length) {
-      issue(context, ['faqs'], 'Add at least one FAQ item.');
     }
     if (value.contentType === 'about') {
       if (!value.about.missionHeading || !value.about.missionBody)
