@@ -1,9 +1,16 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarPlus, Download, FilePlus2, Save, Trash2, Users } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
+import {
+  AdminFormField,
+  AdminFormSelect,
+  AdminFormTextarea,
+} from '@/components/admin/AdminFormField';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
@@ -30,7 +37,6 @@ import {
 export function EventAdmin() {
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [selected, setSelected] = useState<AdminEvent | null>(null);
-  const [values, setValues] = useState<EventEditorValues>(emptyEventEditor);
   const [rsvps, setRsvps] = useState<EventRsvp[]>([]);
   const [rsvpPages, setRsvpPages] = useState(1);
   const [rsvpPage, setRsvpPage] = useState(1);
@@ -41,11 +47,19 @@ export function EventAdmin() {
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const role = useAuthStore((state) => state.user?.role);
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<EventEditorValues>({
+    resolver: zodResolver(eventEditorSchema),
+    defaultValues: emptyEventEditor,
+  });
   const load = useCallback(
     async (signal?: AbortSignal) => {
       setLoading(true);
@@ -91,7 +105,7 @@ export function EventAdmin() {
   }
   function choose(event: AdminEvent | null) {
     setSelected(event);
-    setValues(
+    reset(
       event
         ? eventEditorFromEvent(event)
         : { ...emptyEventEditor, languageCode: language === 'am' ? 'am' : 'en' },
@@ -101,26 +115,20 @@ export function EventAdmin() {
     setRsvpPage(1);
     setError('');
   }
-  async function save() {
-    const parsed = eventEditorSchema.safeParse(values);
-    if (!parsed.success)
-      return setError([...new Set(parsed.error.issues.map((issue) => issue.message))].join(' '));
-    setSaving(true);
+  async function onSubmit(values: EventEditorValues) {
     setError('');
     try {
       const saved = selected
-        ? await updateEvent(selected.id, parsed.data)
-        : await createEvent(parsed.data);
+        ? await updateEvent(selected.id, values)
+        : await createEvent(values);
       setSelected(saved);
-      setValues(eventEditorFromEvent(saved));
+      reset(eventEditorFromEvent(saved));
       await refresh();
       notify({ title: selected ? 'Event updated' : 'Event created', message: saved.title });
     } catch (saveError) {
       setError(
         `${getApiErrorMessageWithDetails(saveError)} Your unsaved event remains in the editor.`,
       );
-    } finally {
-      setSaving(false);
     }
   }
   async function remove(event: AdminEvent) {
@@ -246,11 +254,9 @@ export function EventAdmin() {
         </aside>
         <div className="space-y-6">
           <form
+            noValidate
             className="bg-card space-y-5 rounded-xl border p-6 shadow-sm"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void save();
-            }}
+            onSubmit={handleSubmit(onSubmit)}
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-heading font-serif text-2xl font-semibold">
@@ -259,89 +265,76 @@ export function EventAdmin() {
               {selected && <AdminStatusBadge status={selected.status} />}
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <Field
+              <AdminFormField
                 label="Slug"
-                value={values.slug}
                 maxLength={180}
-                onChange={(slug) => setValues({ ...values, slug })}
-              />
-              <label>
-                <span className="text-heading mb-2 block text-sm font-semibold">Language</span>
-                <select
-                  value={values.languageCode}
-                  disabled={Boolean(selected)}
-                  onChange={(event) =>
-                    setValues({ ...values, languageCode: event.target.value as 'en' | 'am' })
-                  }
-                  className="min-h-11 w-full rounded-lg border bg-white px-3"
-                >
-                  <option value="en">English</option>
-                  <option value="am">Amharic</option>
-                </select>
-              </label>
-              <Field
+                error={errors.slug?.message}
+                {...register('slug')}
+                />
+              <AdminFormSelect
+                label="Language"
+                disabled={Boolean(selected)}
+                error={errors.languageCode?.message}
+                {...register('languageCode')}
+              >
+                <option value="en">English</option>
+                <option value="am">Amharic</option>
+              </AdminFormSelect>
+              <AdminFormField
                 label="Title"
-                value={values.title}
                 maxLength={255}
-                onChange={(title) => setValues({ ...values, title })}
-              />
-              <Field
+                error={errors.title?.message}
+                {...register('title')}
+                />
+              <AdminFormField
                 label="Location"
-                value={values.location}
                 maxLength={500}
-                onChange={(location) => setValues({ ...values, location })}
-              />
-              <DateField
+                error={errors.location?.message}
+                {...register('location')}
+                />
+              <AdminFormField
                 label="Start date and time"
-                value={values.startDate}
-                onChange={(startDate) => setValues({ ...values, startDate })}
-              />
-              <DateField
+                type="datetime-local"
+                error={errors.startDate?.message}
+                {...register('startDate')}
+                />
+              <AdminFormField
                 label="End date and time"
-                value={values.endDate}
-                onChange={(endDate) => setValues({ ...values, endDate })}
-              />
+                type="datetime-local"
+                error={errors.endDate?.message}
+                {...register('endDate')}
+                />
             </div>
-            <label>
-              <span className="text-heading mb-2 block text-sm font-semibold">Description</span>
-              <textarea
-                value={values.description}
-                maxLength={10000}
-                rows={8}
-                onChange={(event) => setValues({ ...values, description: event.target.value })}
-                className="w-full rounded-lg border p-3"
-              />
-            </label>
+            <AdminFormTextarea
+              label="Description"
+              maxLength={10000}
+              rows={8}
+              error={errors.description?.message}
+              {...register('description')}
+            />
             <div className="grid gap-4 md:grid-cols-2">
-              <label>
-                <span className="text-heading mb-2 block text-sm font-semibold">
-                  Publication status
-                </span>
-                <select
-                  value={values.status}
-                  onChange={(event) =>
-                    setValues({ ...values, status: event.target.value as 'DRAFT' | 'PUBLISHED' })
-                  }
-                  className="min-h-11 w-full rounded-lg border bg-white px-3"
-                >
-                  <option value="DRAFT">Draft</option>
-                  <option value="PUBLISHED">Published</option>
-                </select>
-              </label>
-              <label className="flex min-h-11 items-center gap-3 self-end">
+              <AdminFormSelect
+                label="Publication status"
+                error={errors.status?.message}
+                {...register('status')}
+              >
+                <option value="DRAFT">Draft</option>
+                <option value="PUBLISHED">Published</option>
+              </AdminFormSelect>
+              <label htmlFor="rsvpEnabled" className="flex min-h-11 items-center gap-3 self-end">
                 <input
+                  id="rsvpEnabled"
                   type="checkbox"
-                  checked={values.rsvpEnabled}
-                  onChange={(event) => setValues({ ...values, rsvpEnabled: event.target.checked })}
                   className="size-5"
+                  {...register('rsvpEnabled')}
                 />{' '}
                 Enable public RSVP
               </label>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button type="submit" disabled={saving}>
+              <Button type="submit" disabled={isSubmitting}>
                 <Save aria-hidden="true" />
-                {saving ? 'Saving…' : selected ? 'Save event' : 'Create event'}
+                {isSubmitting ? 'Saving…' : selected ? 'Save event' : 'Create event'}
               </Button>
               {selected?.status === 'PUBLISHED' && (
                 <a
@@ -450,50 +443,6 @@ export function EventAdmin() {
         </div>
       </div>
     </section>
-  );
-}
-function Field({
-  label,
-  value,
-  maxLength,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  maxLength: number;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label>
-      <span className="text-heading mb-2 block text-sm font-semibold">{label}</span>
-      <input
-        value={value}
-        maxLength={maxLength}
-        onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 w-full rounded-lg border px-3"
-      />
-    </label>
-  );
-}
-function DateField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label>
-      <span className="text-heading mb-2 block text-sm font-semibold">{label}</span>
-      <input
-        type="datetime-local"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 w-full rounded-lg border px-3"
-      />
-    </label>
   );
 }
 function Filter({
