@@ -4,7 +4,7 @@ import { TrialModeBanner } from '@/components/shared/TrialModeBanner';
 import { DonationForm } from '@/features/donations/components/DonationForm';
 import { DonationUnavailable } from '@/features/donations/components/DonationUnavailable';
 import { loadDonationCapabilities } from '@/features/donations/donation.server';
-import { localizedHref } from '@/lib/i18n';
+import { localizedHref, translate } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 import { buildLocalizedMetadata } from '@/lib/seo/site';
 
@@ -40,7 +40,7 @@ export default async function DonatePage({
       <PageBanner
         title={language === 'am' ? 'ይለግሱ' : 'Make a Donation'}
         breadcrumbs={[
-          { label: language === 'am' ? 'መነሻ' : 'Home', href: localizedHref('/', language) },
+          { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: language === 'am' ? 'ይለግሱ' : 'Donate' },
         ]}
       />

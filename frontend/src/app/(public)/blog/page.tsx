@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import PageBanner from '@/components/common/PageBanner';
 import { BlogList, loadPublishedBlogs, parseBlogPage } from '@/features/blog';
-import { localizedHref } from '@/lib/i18n';
+import { localizedHref, translate } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 
 import { buildLocalizedMetadata } from '@/lib/seo/site';
@@ -33,7 +33,7 @@ export default async function BlogPage({ searchParams }: BlogRouteProps) {
       <PageBanner
         title={title}
         breadcrumbs={[
-          { label: language === 'am' ? 'መነሻ' : 'Home', href: localizedHref('/', language) },
+          { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: language === 'am' ? 'ብሎግ' : 'Blog' },
         ]}
         backgroundImage="/images/blog_1.jpg"

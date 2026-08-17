@@ -5,6 +5,7 @@ import { SearchResults, loadPublicSearch, validateSearchTerm } from '@/features/
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 
 import { buildLocalizedMetadata } from '@/lib/seo/site';
+import { translate } from '@/lib/i18n';
 
 interface SearchRouteProps {
   searchParams: Promise<{ q?: string; lang?: string }>;
@@ -36,7 +37,7 @@ export default async function SearchPage({ searchParams }: SearchRouteProps) {
       <PageBanner
         title={title}
         breadcrumbs={[
-          { label: language === 'am' ? 'መነሻ' : 'Home', href: '/?lang=' + language },
+          { label: translate(language, 'home'), href: '/?lang=' + language },
           { label: title },
         ]}
       />

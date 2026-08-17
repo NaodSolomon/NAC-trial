@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import PageBanner from '@/components/common/PageBanner';
 import { CmsArticle } from '@/features/cms/components/CmsArticle';
-import { localizedHref, type Language } from '@/lib/i18n';
+import { localizedHref, translate, type Language } from '@/lib/i18n';
 import { loadPublishedTestimonials, loadPublicVolunteer } from '../engagement.server';
 import { NewsletterSignup } from './NewsletterSignup';
 import { PublishedTestimonials } from './PublishedTestimonials';
@@ -15,7 +15,7 @@ export async function VolunteerPage({ language }: { language: Language }) {
       <PageBanner
         title={content.title}
         breadcrumbs={[
-          { label: language === 'am' ? 'መነሻ' : 'Home', href: localizedHref('/', language) },
+          { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: content.title },
         ]}
         backgroundImage="/images/volunteers.jpg"

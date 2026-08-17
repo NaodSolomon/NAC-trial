@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import PageBanner from '@/components/common/PageBanner';
 import { ResourceExplorer, loadPublicResources } from '@/features/resources';
-import { localizedHref } from '@/lib/i18n';
+import { localizedHref, translate } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 
 import { buildLocalizedMetadata } from '@/lib/seo/site';
@@ -32,7 +32,7 @@ export default async function Page({ searchParams }: ResourcesRouteProps) {
         title={title}
         breadcrumbs={[
           {
-            label: language === 'am' ? 'መነሻ' : 'Home',
+            label: translate(language, 'home'),
             href: localizedHref('/', language),
           },
           { label: title },

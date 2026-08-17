@@ -2,7 +2,7 @@ import { Clock, Mail, MapPin, Phone } from 'lucide-react';
 import PageBanner from '@/components/common/PageBanner';
 import { CmsArticle } from '@/features/cms/components/CmsArticle';
 import { loadPublicContact, type PublicContactPage } from '@/features/engagement';
-import { localizedHref, type Language } from '@/lib/i18n';
+import { localizedHref, translate, type Language } from '@/lib/i18n';
 import { ContactForm } from './ContactForm';
 import { SecureMapEmbed } from './SecureMapEmbed';
 
@@ -13,7 +13,7 @@ export default async function ContactPage({ language }: { language: Language }) 
       <PageBanner
         title={content.title}
         breadcrumbs={[
-          { label: language === 'am' ? 'መነሻ' : 'Home', href: localizedHref('/', language) },
+          { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: content.title },
         ]}
         backgroundImage="/images/header-bg.jpg"

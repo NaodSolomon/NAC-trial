@@ -1,11 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowDown, ArrowUp, FilePlus2, Save, Send, Trash2, Undo2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
+import {
+  AdminFormField,
+  AdminFormSelect,
+  AdminFormTextarea,
+} from '@/components/admin/AdminFormField';
 import { Button } from '@/components/ui/button';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
@@ -22,7 +29,7 @@ import {
 import {
   emptyFaqEditor,
   faqEditorFromEntry,
-  firstFaqEditorError,
+  faqEditorSchema,
   type AdminFaq,
   type FaqEditorValues,
 } from './faq-admin.schemas';
@@ -30,15 +37,23 @@ import {
 export function FaqAdmin() {
   const [entries, setEntries] = useState<AdminFaq[]>([]);
   const [selected, setSelected] = useState<AdminFaq | null>(null);
-  const [values, setValues] = useState<FaqEditorValues>(emptyFaqEditor);
   const [language, setLanguage] = useState('en');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const role = useAuthStore((state) => state.user?.role);
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FaqEditorValues>({
+    resolver: zodResolver(faqEditorSchema),
+    defaultValues: emptyFaqEditor,
+  });
 
   const load = useCallback(
     async (signal?: AbortSignal) => {
@@ -68,7 +83,7 @@ export function FaqAdmin() {
 
   function choose(entry: AdminFaq | null) {
     setSelected(entry);
-    setValues(
+    reset(
       entry
         ? faqEditorFromEntry(entry)
         : { ...emptyFaqEditor, languageCode: language === 'am' ? 'am' : 'en' },
@@ -76,16 +91,12 @@ export function FaqAdmin() {
     setError('');
   }
 
-  async function save() {
-    const message = firstFaqEditorError(values);
-    if (message) return setError(message);
-
-    setSaving(true);
+  async function onSubmit(values: FaqEditorValues) {
     setError('');
     try {
       const saved = selected ? await updateFaq(selected.id, values) : await createFaq(values);
       setSelected(saved);
-      setValues(faqEditorFromEntry(saved));
+      reset(faqEditorFromEntry(saved));
       await refresh();
       notify({
         title: selected ? 'FAQ entry saved' : 'FAQ draft created',
@@ -95,8 +106,6 @@ export function FaqAdmin() {
       setError(
         `${getApiErrorMessageWithDetails(saveError)} Your unsaved answer remains in the editor.`,
       );
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -106,7 +115,7 @@ export function FaqAdmin() {
         entry.status === 'PUBLISHED' ? await unpublishFaq(entry.id) : await publishFaq(entry.id);
       if (selected?.id === entry.id) {
         setSelected(next);
-        setValues(faqEditorFromEntry(next));
+        reset(faqEditorFromEntry(next));
       }
       await refresh();
       notify({
@@ -138,7 +147,9 @@ export function FaqAdmin() {
     setEntries(reordered);
 
     try {
-      await reorderFaqs(reordered.map((entry, position) => ({ id: entry.id, sortOrder: position })));
+      await reorderFaqs(
+        reordered.map((entry, position) => ({ id: entry.id, sortOrder: position })),
+      );
       await refresh();
       notify({ title: 'FAQ order updated', message: reordered[target].question });
     } catch (moveError) {
@@ -252,82 +263,68 @@ export function FaqAdmin() {
           )}
         </aside>
 
-        <div className="bg-card rounded-xl border p-5 shadow-sm">
+        <form
+          noValidate
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-card rounded-xl border p-5 shadow-sm"
+        >
           <h2 className="text-heading font-semibold">
             {selected ? 'Edit question' : 'New question'}
           </h2>
 
           <div className="mt-4 grid gap-4">
-            <label className="block">
-              <span className="text-heading mb-2 block font-semibold">Translation key</span>
-              <input
-                value={values.translationKey}
-                disabled={Boolean(selected)}
-                onChange={(event) => setValues({ ...values, translationKey: event.target.value })}
-                placeholder="what-does-the-center-do"
-                className="border-input min-h-12 w-full rounded-lg border bg-white px-4 disabled:bg-slate-100"
-              />
-              <span className="text-foreground mt-1 block text-xs">
-                Shared across languages so English and Amharic answers stay paired. It cannot change
-                after creation.
-              </span>
-            </label>
+            <AdminFormField
+              label="Translation key"
+              placeholder="what-does-the-center-do"
+              disabled={Boolean(selected)}
+              error={errors.translationKey?.message}
+              hint="Shared across languages so English and Amharic answers stay paired. It cannot change after creation."
+              {...register('translationKey')}
+            />
 
-            <label className="block">
-              <span className="text-heading mb-2 block font-semibold">Language</span>
-              <select
-                value={values.languageCode}
-                disabled={Boolean(selected)}
-                onChange={(event) =>
-                  setValues({ ...values, languageCode: event.target.value as 'en' | 'am' })
-                }
-                className="border-input min-h-12 w-full rounded-lg border bg-white px-4 disabled:bg-slate-100"
-              >
-                <option value="en">English</option>
-                <option value="am">Amharic</option>
-              </select>
-            </label>
+            <AdminFormSelect
+              label="Language"
+              disabled={Boolean(selected)}
+              error={errors.languageCode?.message}
+              {...register('languageCode')}
+            >
+              <option value="en">English</option>
+              <option value="am">Amharic</option>
+            </AdminFormSelect>
 
-            <label className="block">
-              <span className="text-heading mb-2 block font-semibold">Category</span>
-              <input
-                value={values.category}
-                onChange={(event) => setValues({ ...values, category: event.target.value })}
-                placeholder="Services"
-                className="border-input min-h-12 w-full rounded-lg border bg-white px-4"
-              />
-              <span className="text-foreground mt-1 block text-xs">
-                Optional. Questions sharing a category are grouped on the public page.
-              </span>
-            </label>
+            <AdminFormField
+              label="Category"
+              placeholder="Services"
+              error={errors.category?.message}
+              hint="Optional. Questions sharing a category are grouped on the public page."
+              {...register('category')}
+            />
 
-            <label className="block">
-              <span className="text-heading mb-2 block font-semibold">Question</span>
-              <input
-                value={values.question}
-                onChange={(event) => setValues({ ...values, question: event.target.value })}
-                className="border-input min-h-12 w-full rounded-lg border bg-white px-4"
-              />
-            </label>
+            <AdminFormField
+              label="Question"
+              error={errors.question?.message}
+              {...register('question')}
+            />
 
-            <label className="block">
-              <span className="text-heading mb-2 block font-semibold">Answer</span>
-              <textarea
-                value={values.answer}
-                rows={8}
-                onChange={(event) => setValues({ ...values, answer: event.target.value })}
-                className="border-input w-full rounded-lg border bg-white p-4"
-              />
-            </label>
+            <AdminFormTextarea
+              label="Answer"
+              rows={8}
+              error={errors.answer?.message}
+              {...register('answer')}
+            />
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button type="button" onClick={() => void save()} disabled={saving}>
-              <Save aria-hidden="true" /> {saving ? 'Saving…' : 'Save'}
+            <Button type="submit" disabled={isSubmitting}>
+              <Save aria-hidden="true" /> {isSubmitting ? 'Saving…' : 'Save'}
             </Button>
 
             {selected && (
-              <Button type="button" variant="outline" onClick={() => void togglePublication(selected)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void togglePublication(selected)}
+              >
                 {selected.status === 'PUBLISHED' ? (
                   <>
                     <Undo2 aria-hidden="true" /> Return to draft
@@ -351,7 +348,7 @@ export function FaqAdmin() {
               </ConfirmedActionButton>
             )}
           </div>
-        </div>
+        </form>
       </div>
     </section>
   );

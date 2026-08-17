@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import PageBanner from '@/components/common/PageBanner';
 import { aboutMetadataSchema, CmsArticle, type PublishedCmsPage } from '@/features/cms';
-import { localizedHref, type Language } from '@/lib/i18n';
+import { localizedHref, translate, type Language } from '@/lib/i18n';
 
 export default function AboutPage({
   page,
@@ -17,7 +17,7 @@ export default function AboutPage({
       <PageBanner
         title={page.title}
         breadcrumbs={[
-          { label: language === 'am' ? 'መነሻ' : 'Home', href: localizedHref('/', language) },
+          { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: page.title },
         ]}
         backgroundImage="/images/about-us.jpg"
