@@ -10,6 +10,8 @@ interface CommonProps {
   name: string;
   error?: string;
   hint?: ReactNode;
+  /** Current value length, shown against maxLength so editors can see remaining room. */
+  counted?: string;
 }
 
 const controlClass =
@@ -20,12 +22,20 @@ function FieldShell({
   name,
   error,
   hint,
+  counted,
+  maxLength,
   children,
-}: CommonProps & { children: ReactNode }) {
+}: CommonProps & { maxLength?: number; children: ReactNode }) {
+  const showCounter = counted !== undefined && maxLength !== undefined;
   return (
     <div>
-      <label htmlFor={name} className="text-heading mb-2 block font-semibold">
-        {label}
+      <label htmlFor={name} className="text-heading mb-2 flex justify-between font-semibold">
+        <span>{label}</span>
+        {showCounter && (
+          <span className="text-foreground font-normal">
+            {counted.length}/{maxLength}
+          </span>
+        )}
       </label>
       {children}
       {hint && !error && (
@@ -52,11 +62,19 @@ export function AdminFormField({
   name,
   error,
   hint,
+  counted,
   className,
   ...props
 }: CommonProps & InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <FieldShell label={label} name={name} error={error} hint={hint}>
+    <FieldShell
+      label={label}
+      name={name}
+      error={error}
+      hint={hint}
+      counted={counted}
+      maxLength={props.maxLength}
+    >
       <input
         {...props}
         id={name}
@@ -74,11 +92,19 @@ export function AdminFormTextarea({
   name,
   error,
   hint,
+  counted,
   className,
   ...props
 }: CommonProps & TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
-    <FieldShell label={label} name={name} error={error} hint={hint}>
+    <FieldShell
+      label={label}
+      name={name}
+      error={error}
+      hint={hint}
+      counted={counted}
+      maxLength={props.maxLength}
+    >
       <textarea
         {...props}
         id={name}
