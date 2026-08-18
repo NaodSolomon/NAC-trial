@@ -19,17 +19,17 @@ const controlClass =
 
 function FieldShell({
   label,
-  name,
+  fieldId,
   error,
   hint,
   counted,
   maxLength,
   children,
-}: CommonProps & { maxLength?: number; children: ReactNode }) {
+}: Omit<CommonProps, 'name'> & { fieldId: string; maxLength?: number; children: ReactNode }) {
   const showCounter = counted !== undefined && maxLength !== undefined;
   return (
     <div>
-      <label htmlFor={name} className="text-heading mb-2 flex justify-between font-semibold">
+      <label htmlFor={fieldId} className="text-heading mb-2 flex justify-between font-semibold">
         <span>{label}</span>
         {showCounter && (
           <span className="text-foreground font-normal">
@@ -39,12 +39,12 @@ function FieldShell({
       </label>
       {children}
       {hint && !error && (
-        <p id={`${name}-hint`} className="text-foreground mt-1 text-xs">
+        <p id={`${fieldId}-hint`} className="text-foreground mt-1 text-xs">
           {hint}
         </p>
       )}
       {error && (
-        <p id={`${name}-error`} role="alert" className="text-destructive mt-1 text-sm">
+        <p id={`${fieldId}-error`} role="alert" className="text-destructive mt-1 text-sm">
           {error}
         </p>
       )}
@@ -52,9 +52,9 @@ function FieldShell({
   );
 }
 
-function describedBy(name: string, error?: string, hint?: ReactNode) {
-  if (error) return `${name}-error`;
-  return hint ? `${name}-hint` : undefined;
+function describedBy(fieldId: string, error?: string, hint?: ReactNode) {
+  if (error) return `${fieldId}-error`;
+  return hint ? `${fieldId}-hint` : undefined;
 }
 
 export function AdminFormField({
@@ -62,6 +62,7 @@ export function AdminFormField({
   name,
   error,
   hint,
+  id,
   counted,
   className,
   ...props
@@ -69,7 +70,7 @@ export function AdminFormField({
   return (
     <FieldShell
       label={label}
-      name={name}
+      fieldId={id ?? name}
       error={error}
       hint={hint}
       counted={counted}
@@ -77,10 +78,10 @@ export function AdminFormField({
     >
       <input
         {...props}
-        id={name}
+        id={id ?? name}
         name={name}
         aria-invalid={Boolean(error)}
-        aria-describedby={describedBy(name, error, hint)}
+        aria-describedby={describedBy(id ?? name, error, hint)}
         className={className ?? `${controlClass} min-h-12 px-4`}
       />
     </FieldShell>
@@ -92,6 +93,7 @@ export function AdminFormTextarea({
   name,
   error,
   hint,
+  id,
   counted,
   className,
   ...props
@@ -99,7 +101,7 @@ export function AdminFormTextarea({
   return (
     <FieldShell
       label={label}
-      name={name}
+      fieldId={id ?? name}
       error={error}
       hint={hint}
       counted={counted}
@@ -107,10 +109,10 @@ export function AdminFormTextarea({
     >
       <textarea
         {...props}
-        id={name}
+        id={id ?? name}
         name={name}
         aria-invalid={Boolean(error)}
-        aria-describedby={describedBy(name, error, hint)}
+        aria-describedby={describedBy(id ?? name, error, hint)}
         className={className ?? `${controlClass} resize-y p-4`}
       />
     </FieldShell>
@@ -122,18 +124,19 @@ export function AdminFormSelect({
   name,
   error,
   hint,
+  id,
   className,
   children,
   ...props
 }: CommonProps & SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <FieldShell label={label} name={name} error={error} hint={hint}>
+    <FieldShell label={label} fieldId={id ?? name} error={error} hint={hint}>
       <select
         {...props}
-        id={name}
+        id={id ?? name}
         name={name}
         aria-invalid={Boolean(error)}
-        aria-describedby={describedBy(name, error, hint)}
+        aria-describedby={describedBy(id ?? name, error, hint)}
         className={className ?? `${controlClass} min-h-12 px-4`}
       >
         {children}

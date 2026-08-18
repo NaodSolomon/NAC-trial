@@ -1,13 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowDown, ArrowUp, Eye, EyeOff, Plus, Save, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { AdminAccessDenied } from '@/components/admin/AdminAccessDenied';
+import { AdminFormField } from '@/components/admin/AdminFormField';
+import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { useAuthStore } from '@/store/auth.store';
-import { getApiErrorMessage, isApiRequestError } from '@/lib/api/errors';
+import { getApiErrorMessageWithDetails, isApiRequestError } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
 import {
   createNavigationItem,
@@ -24,12 +28,11 @@ import {
 } from './admin-navigation.schemas';
 
 const emptyEditor: NavigationEditorValues = { label: '', url: '' };
+const destinationHint = 'An internal path such as /about, or a full https:// address.';
 
 export function NavigationAdmin() {
   const [language, setLanguage] = useState<NavigationLanguage>('en');
   const [items, setItems] = useState<NavigationItem[]>([]);
-  const [drafts, setDrafts] = useState<Record<string, NavigationEditorValues>>({});
-  const [newItem, setNewItem] = useState(emptyEditor);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
@@ -38,19 +41,29 @@ export function NavigationAdmin() {
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
 
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<NavigationEditorValues>({
+    resolver: zodResolver(navigationEditorSchema),
+    defaultValues: emptyEditor,
+  });
+
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError('');
     void listNavigation(language, controller.signal)
       .then((result) => {
+        if (controller.signal.aborted) return;
         setItems(result.data);
-        setDrafts(Object.fromEntries(result.data.map((item) => [item.id, pickEditor(item)])));
       })
       .catch((loadError: unknown) => {
         if (controller.signal.aborted) return;
         if (isApiRequestError(loadError) && loadError.status === 403) setForbidden(true);
-        else setError(getApiErrorMessage(loadError));
+        else setError(getApiErrorMessageWithDetails(loadError));
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -58,65 +71,76 @@ export function NavigationAdmin() {
     return () => controller.abort();
   }, [language]);
 
-  async function refreshPublicNavigation() {
+  const refreshPublicNavigation = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.navigation.all });
     await queryClient.refetchQueries({ queryKey: queryKeys.navigation.all, type: 'active' });
-  }
+  }, [queryClient]);
 
-  async function createItem() {
-    const parsed = navigationEditorSchema.safeParse(newItem);
-    if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? 'Check the new item.');
-    setBusy('create');
+  const replaceItem = useCallback((updated: NavigationItem) => {
+    setItems((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+  }, []);
+
+  async function createItem(values: NavigationEditorValues) {
     setError('');
     try {
       const order = items.length
         ? Math.min(10_000, Math.max(...items.map((item) => item.order)) + 10)
         : 0;
-      const created = await createNavigationItem(language, parsed.data, order);
+      const created = await createNavigationItem(language, values, order);
       setItems((current) => [...current, created]);
-      setDrafts((current) => ({ ...current, [created.id]: pickEditor(created) }));
-      setNewItem(emptyEditor);
+      reset(emptyEditor);
       await refreshPublicNavigation();
       notify({
         title: 'Navigation item created',
         message: `${created.label} was added to ${language.toUpperCase()}.`,
       });
     } catch (createError) {
-      setError(getApiErrorMessage(createError));
-    } finally {
-      setBusy('');
+      setError(getApiErrorMessageWithDetails(createError));
     }
   }
 
-  async function saveItem(item: NavigationItem) {
-    const parsed = navigationEditorSchema.safeParse(drafts[item.id]);
-    if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? 'Check this item.');
-    setBusy(item.id);
-    setError('');
-    try {
-      const updated = await updateNavigationItem(item.id, parsed.data);
-      replaceItem(updated);
-      await refreshPublicNavigation();
-      notify({ title: 'Navigation item saved', message: updated.label });
-    } catch (saveError) {
-      setError(`${getApiErrorMessage(saveError)} Your unsaved fields remain unchanged.`);
-    } finally {
-      setBusy('');
-    }
-  }
+  const saveItem = useCallback(
+    async (item: NavigationItem, values: NavigationEditorValues) => {
+      setBusy(item.id);
+      try {
+        const updated = await updateNavigationItem(item.id, values);
+        replaceItem(updated);
+        await refreshPublicNavigation();
+        notify({ title: 'Navigation item saved', message: updated.label });
+      } finally {
+        setBusy('');
+      }
+    },
+    [notify, refreshPublicNavigation, replaceItem],
+  );
 
-  async function toggleVisibility(item: NavigationItem) {
-    setBusy(item.id);
-    setError('');
-    try {
-      replaceItem(await updateNavigationItem(item.id, { isVisible: !item.isVisible }));
-      await refreshPublicNavigation();
-    } catch (toggleError) {
-      setError(getApiErrorMessage(toggleError));
-    } finally {
-      setBusy('');
-    }
-  }
+  const toggleVisibility = useCallback(
+    async (item: NavigationItem) => {
+      setBusy(item.id);
+      try {
+        replaceItem(await updateNavigationItem(item.id, { isVisible: !item.isVisible }));
+        await refreshPublicNavigation();
+      } finally {
+        setBusy('');
+      }
+    },
+    [refreshPublicNavigation, replaceItem],
+  );
+
+  const removeItem = useCallback(
+    async (item: NavigationItem) => {
+      setBusy(item.id);
+      try {
+        await deleteNavigationItem(item.id);
+        setItems((current) => current.filter(({ id }) => id !== item.id));
+        await refreshPublicNavigation();
+        notify({ title: 'Navigation item deleted', message: item.label });
+      } finally {
+        setBusy('');
+      }
+    },
+    [notify, refreshPublicNavigation],
+  );
 
   async function move(index: number, direction: -1 | 1) {
     const otherIndex = index + direction;
@@ -132,31 +156,18 @@ export function NavigationAdmin() {
       });
       await refreshPublicNavigation();
     } catch (reorderError) {
-      setError(`${getApiErrorMessage(reorderError)} The authoritative order will be reloaded.`);
-      const result = await listNavigation(language);
-      setItems(result.data);
+      setError(`${getApiErrorMessageWithDetails(reorderError)} The saved order will be reloaded.`);
+      try {
+        const result = await listNavigation(language);
+        setItems(result.data);
+      } catch {
+        setError(
+          'The order could not be changed, and the saved order could not be reloaded. Reload the page before editing further.',
+        );
+      }
     } finally {
       setBusy('');
     }
-  }
-
-  async function remove(item: NavigationItem) {
-    if (!window.confirm(`Delete “${item.label}”? This cannot be undone.`)) return;
-    setBusy(item.id);
-    try {
-      await deleteNavigationItem(item.id);
-      setItems((current) => current.filter(({ id }) => id !== item.id));
-      await refreshPublicNavigation();
-      notify({ title: 'Navigation item deleted', message: item.label });
-    } catch (deleteError) {
-      setError(getApiErrorMessage(deleteError));
-    } finally {
-      setBusy('');
-    }
-  }
-
-  function replaceItem(updated: NavigationItem) {
-    setItems((current) => current.map((item) => (item.id === updated.id ? updated : item)));
   }
 
   if (forbidden) return <AdminAccessDenied />;
@@ -194,24 +205,28 @@ export function NavigationAdmin() {
       </div>
 
       <form
-        className="bg-card mt-6 grid gap-4 rounded-xl border p-5 shadow-sm md:grid-cols-[1fr_1fr_auto]"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void createItem();
-        }}
+        noValidate
+        aria-label="Add navigation item"
+        className="bg-card mt-6 grid items-start gap-4 rounded-xl border p-5 shadow-sm md:grid-cols-[1fr_1fr_auto]"
+        onSubmit={handleSubmit(createItem)}
       >
-        <Field
+        <AdminFormField
           label="New label"
-          value={newItem.label}
-          onChange={(label) => setNewItem({ ...newItem, label })}
+          id="new-navigation-label"
+          maxLength={100}
+          error={errors.label?.message}
+          {...register('label')}
         />
-        <Field
+        <AdminFormField
           label="New destination"
-          value={newItem.url}
+          id="new-navigation-url"
           placeholder="/about"
-          onChange={(url) => setNewItem({ ...newItem, url })}
+          maxLength={500}
+          hint={destinationHint}
+          error={errors.url?.message}
+          {...register('url')}
         />
-        <Button className="self-end" type="submit" disabled={busy === 'create'}>
+        <Button className="mt-9" type="submit" disabled={isSubmitting}>
           <Plus aria-hidden="true" /> Add item
         </Button>
       </form>
@@ -236,105 +251,153 @@ export function NavigationAdmin() {
         </p>
       ) : (
         <ol className="mt-6 space-y-3">
-          {items.map((item, index) => {
-            const draft = drafts[item.id] ?? pickEditor(item);
-            return (
-              <li
-                key={item.id}
-                className="bg-card grid gap-4 rounded-xl border p-5 shadow-sm lg:grid-cols-[auto_1fr_1fr_auto]"
-              >
-                <div className="flex gap-1">
-                  <button
-                    type="button"
-                    aria-label={`Move ${item.label} up`}
-                    disabled={index === 0 || busy === 'reorder'}
-                    onClick={() => void move(index, -1)}
-                    className="min-h-11 min-w-11 rounded-md border p-2 disabled:opacity-40"
-                  >
-                    <ArrowUp aria-hidden="true" className="size-4" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={`Move ${item.label} down`}
-                    disabled={index === items.length - 1 || busy === 'reorder'}
-                    onClick={() => void move(index, 1)}
-                    className="min-h-11 min-w-11 rounded-md border p-2 disabled:opacity-40"
-                  >
-                    <ArrowDown aria-hidden="true" className="size-4" />
-                  </button>
-                </div>
-                <Field
-                  label="Label"
-                  value={draft.label}
-                  onChange={(label) => setDrafts({ ...drafts, [item.id]: { ...draft, label } })}
-                />
-                <Field
-                  label="Destination"
-                  value={draft.url}
-                  onChange={(url) => setDrafts({ ...drafts, [item.id]: { ...draft, url } })}
-                />
-                <div className="flex flex-wrap items-end gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={busy === item.id}
-                    onClick={() => void toggleVisibility(item)}
-                  >
-                    {item.isVisible ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}
-                    {item.isVisible ? 'Visible' : 'Hidden'}
-                  </Button>
-                  <Button
-                    type="button"
-                    disabled={busy === item.id}
-                    onClick={() => void saveItem(item)}
-                  >
-                    <Save aria-hidden="true" /> Save
-                  </Button>
-                  {role === 'SUPER_ADMIN' && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={busy === item.id}
-                      onClick={() => void remove(item)}
-                    >
-                      <Trash2 aria-hidden="true" /> Delete
-                    </Button>
-                  )}
-                </div>
-              </li>
-            );
-          })}
+          {items.map((item, index) => (
+            <li key={item.id}>
+              <NavigationItemRow
+                item={item}
+                canDelete={role === 'SUPER_ADMIN'}
+                busy={busy === item.id}
+                reordering={busy === 'reorder'}
+                isFirst={index === 0}
+                isLast={index === items.length - 1}
+                onMove={(direction) => move(index, direction)}
+                onSave={saveItem}
+                onToggleVisibility={toggleVisibility}
+                onDelete={removeItem}
+              />
+            </li>
+          ))}
         </ol>
       )}
     </section>
   );
 }
 
-function Field({
-  label,
-  value,
-  placeholder,
-  onChange,
+function NavigationItemRow({
+  item,
+  canDelete,
+  busy,
+  reordering,
+  isFirst,
+  isLast,
+  onMove,
+  onSave,
+  onToggleVisibility,
+  onDelete,
 }: {
-  label: string;
-  value: string;
-  placeholder?: string;
-  onChange: (value: string) => void;
+  item: NavigationItem;
+  canDelete: boolean;
+  busy: boolean;
+  reordering: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  onMove: (direction: -1 | 1) => void | Promise<void>;
+  onSave: (item: NavigationItem, values: NavigationEditorValues) => Promise<void>;
+  onToggleVisibility: (item: NavigationItem) => Promise<void>;
+  onDelete: (item: NavigationItem) => Promise<void>;
 }) {
-  return (
-    <label className="block">
-      <span className="text-heading mb-2 block text-sm font-semibold">{label}</span>
-      <input
-        value={value}
-        placeholder={placeholder}
-        maxLength={500}
-        onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 w-full rounded-lg border px-3"
-      />
-    </label>
-  );
-}
+  const [rowError, setRowError] = useState('');
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<NavigationEditorValues>({
+    resolver: zodResolver(navigationEditorSchema),
+    defaultValues: { label: item.label, url: item.url },
+  });
 
-function pickEditor(item: NavigationItem): NavigationEditorValues {
-  return { label: item.label, url: item.url };
+  useEffect(() => {
+    reset({ label: item.label, url: item.url });
+  }, [item.label, item.url, reset]);
+
+  async function submit(values: NavigationEditorValues) {
+    setRowError('');
+    try {
+      await onSave(item, values);
+    } catch (saveError) {
+      setRowError(`${getApiErrorMessageWithDetails(saveError)} Your edits are still on screen.`);
+    }
+  }
+
+  async function toggle() {
+    setRowError('');
+    try {
+      await onToggleVisibility(item);
+    } catch (toggleError) {
+      setRowError(getApiErrorMessageWithDetails(toggleError));
+    }
+  }
+
+  return (
+    <form
+      noValidate
+      aria-label={`Edit ${item.label}`}
+      onSubmit={handleSubmit(submit)}
+      className="bg-card grid items-start gap-4 rounded-xl border p-5 shadow-sm lg:grid-cols-[auto_1fr_1fr_auto]"
+    >
+      <div className="mt-9 flex gap-1">
+        <button
+          type="button"
+          aria-label={`Move ${item.label} up`}
+          disabled={isFirst || reordering}
+          onClick={() => void onMove(-1)}
+          className="min-h-11 min-w-11 rounded-md border p-2 disabled:opacity-40"
+        >
+          <ArrowUp aria-hidden="true" className="size-4" />
+        </button>
+        <button
+          type="button"
+          aria-label={`Move ${item.label} down`}
+          disabled={isLast || reordering}
+          onClick={() => void onMove(1)}
+          className="min-h-11 min-w-11 rounded-md border p-2 disabled:opacity-40"
+        >
+          <ArrowDown aria-hidden="true" className="size-4" />
+        </button>
+      </div>
+      <AdminFormField
+        label="Label"
+        id={`navigation-label-${item.id}`}
+        maxLength={100}
+        error={errors.label?.message}
+        {...register('label')}
+      />
+      <AdminFormField
+        label="Destination"
+        id={`navigation-url-${item.id}`}
+        maxLength={500}
+        error={errors.url?.message}
+        {...register('url')}
+      />
+      <div className="mt-9 flex flex-wrap items-start gap-2">
+        <Button type="button" variant="outline" disabled={busy} onClick={() => void toggle()}>
+          {item.isVisible ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}
+          {item.isVisible ? 'Visible' : 'Hidden'}
+        </Button>
+        <Button type="submit" disabled={busy}>
+          <Save aria-hidden="true" /> Save
+        </Button>
+        {canDelete && (
+          <ConfirmedActionButton
+            title="Delete navigation item?"
+            description={`“${item.label}” will be removed from the ${item.languageCode.toUpperCase()} header and footer. This cannot be undone.`}
+            confirmLabel="Delete item"
+            disabled={busy}
+            onConfirm={() => onDelete(item)}
+          >
+            <Trash2 aria-hidden="true" /> Delete
+          </ConfirmedActionButton>
+        )}
+      </div>
+      {rowError && (
+        <p
+          role="alert"
+          className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-900 lg:col-span-4"
+        >
+          {rowError}
+        </p>
+      )}
+    </form>
+  );
 }

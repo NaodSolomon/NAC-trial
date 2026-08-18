@@ -54,14 +54,26 @@ test('English and Amharic navigation are independent and successful changes reac
   );
 
   await page.goto('/admin/navigation');
-  await expect(page.getByLabel('Label', { exact: true }).first()).toHaveValue('Home');
+  await expect(page.getByRole('form', { name: 'Edit Home' })).toBeVisible();
+  await expect(page.getByLabel('Label', { exact: true })).toHaveCount(2);
+
   await page.getByRole('tab', { name: 'Amharic' }).click();
+  await expect(page.getByRole('form', { name: 'Edit መነሻ' })).toBeVisible();
   await expect(page.getByLabel('Label', { exact: true })).toHaveValue('መነሻ');
+
   await page.getByRole('tab', { name: 'English' }).click();
-  await page.getByLabel('Label', { exact: true }).first().fill('Welcome');
-  await page.getByRole('button', { name: 'Save' }).first().click();
+  const homeRow = page.getByRole('form', { name: 'Edit Home' });
+  await expect(homeRow).toBeVisible();
+  await homeRow.getByLabel('Label', { exact: true }).fill('Welcome');
+  await homeRow.getByRole('button', { name: 'Save' }).click();
   await expect(page.getByText('Navigation item saved')).toBeVisible();
+
+  const publicNavigation = page.waitForResponse(
+    (response) =>
+      /\/api\/v1\/navigation\?/.test(response.url()) && response.request().method() === 'GET',
+  );
   await page.goto('/');
+  await publicNavigation;
   await expect(
     page.getByRole('navigation', { name: 'Primary navigation' }).getByText('Welcome'),
   ).toBeVisible();
