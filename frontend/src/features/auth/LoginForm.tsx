@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { AuthFormAlert, AuthFormField } from './AuthFormField';
 import { loginAdministrator } from '@/lib/auth';
 import { useAuthStore } from '@/store/auth.store';
 import { authenticationErrorMessage } from './auth-errors';
@@ -44,33 +44,22 @@ export function LoginForm() {
           Your password was reset. Sign in with your new password.
         </p>
       )}
-      {errors.root?.message && (
-        <p
-          role="alert"
-          className="border-destructive/40 bg-destructive/10 text-destructive rounded border p-3 text-sm"
-        >
-          {errors.root.message}
-        </p>
-      )}
-      <Field label="Email address" error={errors.email?.message}>
-        <Input
-          type="email"
-          autoComplete="username"
-          autoCapitalize="none"
-          className="min-h-11"
-          aria-invalid={Boolean(errors.email)}
-          {...register('email')}
-        />
-      </Field>
-      <Field label="Password" error={errors.password?.message}>
-        <Input
-          type="password"
-          autoComplete="current-password"
-          className="min-h-11"
-          aria-invalid={Boolean(errors.password)}
-          {...register('password')}
-        />
-      </Field>
+      {errors.root?.message && <AuthFormAlert>{errors.root.message}</AuthFormAlert>}
+      <AuthFormField
+        label="Email address"
+        type="email"
+        autoComplete="username"
+        autoCapitalize="none"
+        error={errors.email?.message}
+        {...register('email')}
+      />
+      <AuthFormField
+        label="Password"
+        type="password"
+        autoComplete="current-password"
+        error={errors.password?.message}
+        {...register('password')}
+      />
       <div className="flex justify-end">
         <Link
           href="/admin/forgot-password"
@@ -83,24 +72,6 @@ export function LoginForm() {
         {isSubmitting ? 'Signing in…' : 'Sign In'}
       </Button>
     </form>
-  );
-}
-
-export function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="text-heading block space-y-2 text-sm font-semibold">
-      <span>{label}</span>
-      {children}
-      {error && <span className="text-destructive block font-normal">{error}</span>}
-    </label>
   );
 }
 

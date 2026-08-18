@@ -9,6 +9,9 @@ export const forgotPasswordSchema = z.object({
   email: z.string().trim().email('Enter a valid email address.').max(255),
 });
 
+export const passwordPolicyText =
+  'Use at least 12 characters, including an uppercase letter, a lowercase letter, and a number.';
+
 export const resetPasswordSchema = z
   .object({
     newPassword: z

@@ -5,11 +5,10 @@ import { useForm } from 'react-hook-form';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { browserApiClient } from '@/lib/api/browser-client';
 import { recoveryErrorMessage } from './auth-errors';
-import { Field } from './LoginForm';
-import { resetPasswordSchema, type ResetPasswordValues } from './auth.schemas';
+import { AuthFormAlert, AuthFormField } from './AuthFormField';
+import { passwordPolicyText, resetPasswordSchema, type ResetPasswordValues } from './auth.schemas';
 
 export function ResetPasswordForm() {
   const router = useRouter();
@@ -48,32 +47,22 @@ export function ResetPasswordForm() {
 
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
-      {errors.root?.message && (
-        <p role="alert" className="text-destructive text-sm">
-          {errors.root.message}
-        </p>
-      )}
-      <Field label="New password" error={errors.newPassword?.message}>
-        <Input
-          type="password"
-          autoComplete="new-password"
-          className="min-h-11"
-          aria-invalid={Boolean(errors.newPassword)}
-          {...register('newPassword')}
-        />
-      </Field>
-      <Field label="Confirm new password" error={errors.confirmPassword?.message}>
-        <Input
-          type="password"
-          autoComplete="new-password"
-          className="min-h-11"
-          aria-invalid={Boolean(errors.confirmPassword)}
-          {...register('confirmPassword')}
-        />
-      </Field>
-      <p className="text-foreground text-xs leading-relaxed">
-        Use at least 12 characters with uppercase, lowercase, and numeric characters.
-      </p>
+      {errors.root?.message && <AuthFormAlert>{errors.root.message}</AuthFormAlert>}
+      <AuthFormField
+        label="New password"
+        type="password"
+        autoComplete="new-password"
+        hint={passwordPolicyText}
+        error={errors.newPassword?.message}
+        {...register('newPassword')}
+      />
+      <AuthFormField
+        label="Confirm new password"
+        type="password"
+        autoComplete="new-password"
+        error={errors.confirmPassword?.message}
+        {...register('confirmPassword')}
+      />
       <Button type="submit" size="lg" className="min-h-11 w-full" disabled={isSubmitting}>
         {isSubmitting ? 'Resetting…' : 'Reset password'}
       </Button>
