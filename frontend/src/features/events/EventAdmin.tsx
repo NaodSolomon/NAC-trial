@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarPlus, Download, FilePlus2, Save, Trash2, Users } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
@@ -16,6 +15,7 @@ import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
+import { useAdminActions } from '@/hooks/use-admin-actions';
 import { useAuthStore } from '@/store/auth.store';
 import { useAdminList } from '@/hooks/use-admin-list';
 import { calendarDownloadHref } from './event.utils';
@@ -46,7 +46,6 @@ export function EventAdmin() {
   const [status, setStatus] = useState('');
   const [timeframe, setTimeframe] = useState('all');
   const role = useAuthStore((state) => state.user?.role);
-  const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
   const {
     register,
@@ -87,10 +86,10 @@ export function EventAdmin() {
       });
     return () => controller.abort();
   }, [selected, showRsvps, rsvpPage, setError]);
-  async function refresh() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
-    await load();
-  }
+  const { refresh, run } = useAdminActions({
+    reload: load,
+    queryKey: queryKeys.events.all,
+  });
   function choose(event: AdminEvent | null) {
     setSelected(event);
     reset(
@@ -118,10 +117,13 @@ export function EventAdmin() {
     }
   }
   async function remove(event: AdminEvent) {
-    await deleteEvent(event.id);
-    if (selected?.id === event.id) choose(null);
-    await refresh();
-    notify({ title: 'Event deleted', message: event.title });
+    await run(
+      async () => {
+        await deleteEvent(event.id);
+        if (selected?.id === event.id) choose(null);
+      },
+      { title: 'Event deleted', message: event.title },
+    );
   }
   async function downloadCsv() {
     if (!selected) return;

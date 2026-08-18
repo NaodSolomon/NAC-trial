@@ -4,7 +4,6 @@ import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ExternalLink, FilePlus2, Send, Trash2 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
@@ -17,6 +16,7 @@ import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
+import { useAdminActions } from '@/hooks/use-admin-actions';
 import { useAuthStore } from '@/store/auth.store';
 import { useAdminList } from '@/hooks/use-admin-list';
 import {
@@ -36,7 +36,6 @@ import {
 export function ResourceAdmin() {
   const [language, setLanguage] = useState('');
   const role = useAuthStore((state) => state.user?.role);
-  const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
   const {
     register,
@@ -62,10 +61,10 @@ export function ResourceAdmin() {
       [language],
     ),
   );
-  async function refresh() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.resources.all });
-    await load();
-  }
+  const { refresh, run } = useAdminActions({
+    reload: load,
+    queryKey: queryKeys.resources.all,
+  });
   async function onSubmit(values: ResourceEditorValues) {
     setError('');
     try {
@@ -85,9 +84,10 @@ export function ResourceAdmin() {
     notify({ title: 'Resource published', message: item.title });
   }
   async function remove(item: AdminResource) {
-    await deleteResource(item.id);
-    await refresh();
-    notify({ title: 'Resource deleted', message: item.title });
+    await run(() => deleteResource(item.id), {
+      title: 'Resource deleted',
+      message: item.title,
+    });
   }
   return (
     <section aria-labelledby="resources-admin-heading">

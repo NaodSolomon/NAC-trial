@@ -4,7 +4,6 @@ import { useCallback, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FilePlus2, RotateCcw, Save, Send, Trash2 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
@@ -17,6 +16,7 @@ import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
+import { useAdminActions } from '@/hooks/use-admin-actions';
 import { useAuthStore } from '@/store/auth.store';
 import { useAdminList } from '@/hooks/use-admin-list';
 import {
@@ -38,7 +38,6 @@ export function BlogAdmin() {
   const [selected, setSelected] = useState<AdminBlogPost | null>(null);
   const [language, setLanguage] = useState('');
   const role = useAuthStore((state) => state.user?.role);
-  const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
   const {
     register,
@@ -66,10 +65,10 @@ export function BlogAdmin() {
       [language],
     ),
   );
-  async function refresh() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.blog.all });
-    await load();
-  }
+  const { refresh, run } = useAdminActions({
+    reload: load,
+    queryKey: queryKeys.blog.all,
+  });
   function choose(post: AdminBlogPost | null) {
     setSelected(post);
     reset(
@@ -104,10 +103,13 @@ export function BlogAdmin() {
     notify({ title: 'Blog post published', message: post.title });
   }
   async function remove(post: AdminBlogPost) {
-    await deleteBlog(post.id);
-    if (selected?.id === post.id) choose(null);
-    await refresh();
-    notify({ title: 'Blog post deleted', message: post.title });
+    await run(
+      async () => {
+        await deleteBlog(post.id);
+        if (selected?.id === post.id) choose(null);
+      },
+      { title: 'Blog post deleted', message: post.title },
+    );
   }
   return (
     <section aria-labelledby="blog-admin-heading">

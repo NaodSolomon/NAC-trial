@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowDown, ArrowUp, FilePlus2, Save, Send, Trash2, Undo2 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
@@ -17,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
+import { useAdminActions } from '@/hooks/use-admin-actions';
 import { useAuthStore } from '@/store/auth.store';
 import {
   createFaq,
@@ -43,7 +43,6 @@ export function FaqAdmin() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const role = useAuthStore((state) => state.user?.role);
-  const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
 
   const {
@@ -79,10 +78,10 @@ export function FaqAdmin() {
     return () => controller.abort();
   }, [load]);
 
-  async function refresh() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.faq.all });
-    await load();
-  }
+  const { refresh, run } = useAdminActions({
+    reload: load,
+    queryKey: queryKeys.faq.all,
+  });
 
   function choose(entry: AdminFaq | null) {
     setSelected(entry);
@@ -131,14 +130,13 @@ export function FaqAdmin() {
   }
 
   async function remove(entry: AdminFaq) {
-    try {
-      await deleteFaq(entry.id);
-      if (selected?.id === entry.id) choose(null);
-      await refresh();
-      notify({ title: 'FAQ entry deleted', message: entry.question });
-    } catch (deleteError) {
-      setError(getApiErrorMessageWithDetails(deleteError));
-    }
+    await run(
+      async () => {
+        await deleteFaq(entry.id);
+        if (selected?.id === entry.id) choose(null);
+      },
+      { title: 'FAQ entry deleted', message: entry.question },
+    );
   }
 
   async function move(index: number, direction: -1 | 1) {

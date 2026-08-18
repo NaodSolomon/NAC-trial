@@ -165,3 +165,41 @@ test('hides the delete control from a content editor', async ({ context, page })
   await expect(page.getByRole('heading', { name: 'Edit question' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0);
 });
+
+test('a refused deletion keeps the confirmation open instead of reporting success', async ({
+  context,
+  page,
+}) => {
+  await authenticate(context, page);
+  await page.route('**/api/v1/admin/faqs?**', (route) =>
+    respond(route, { data: [faq], meta: { total: 1, page: 1, limit: 50, totalPages: 1 } }),
+  );
+  await page.route(/\/api\/v1\/admin\/faqs\/[0-9a-f-]+$/, (route) =>
+    route.fulfill({
+      status: 409,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: false,
+        statusCode: 409,
+        message: 'This entry is referenced by a published page.',
+      }),
+    }),
+  );
+
+  await page.goto('/admin/faq');
+  await page.getByRole('button', { name: /^What does the center do/ }).click();
+  await page.getByRole('button', { name: 'Delete' }).click();
+
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('button', { name: 'Delete FAQ entry' }).click();
+
+  // Swallowing the failure used to resolve the confirmation, so the dialog closed as
+  // though the entry had been removed while an error appeared behind it.
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('alert')).toContainText('referenced by a published page');
+
+  // The list is aria-hidden behind the modal, so it can only be checked once the
+  // reader has dismissed the dialog themselves.
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(page.getByRole('button', { name: /^What does the center do/ })).toBeVisible();
+});
