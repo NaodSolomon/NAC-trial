@@ -1,27 +1,21 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Filter as FilterIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
+import { useAdminList } from '@/hooks/use-admin-list';
 import { listAuditLogs } from './system.client';
 import { safeAuditMetadata } from './safe-audit-metadata';
 import type { AuditLog } from './system.schemas';
 
 export function AuditLogsAdmin() {
-  const [records, setRecords] = useState<AuditLog[]>([]);
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
   const [draft, setDraft] = useState({ adminId: '', entityType: '', action: '', from: '', to: '' });
   const [filters, setFilters] = useState(draft);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      setError('');
-      try {
-        const result = await listAuditLogs({
+  const { records, page, setPage, pages, loading, error } = useAdminList<AuditLog>(
+    useCallback(
+      ({ page, signal }) =>
+        listAuditLogs({
           page,
           adminId: filters.adminId.trim(),
           entityType: filters.entityType.trim(),
@@ -29,22 +23,10 @@ export function AuditLogsAdmin() {
           from: toBoundary(filters.from, false),
           to: toBoundary(filters.to, true),
           signal,
-        });
-        setRecords(result.data);
-        setPages(Math.max(1, result.meta.totalPages));
-      } catch (cause) {
-        if (!signal?.aborted) setError(getApiErrorMessageWithDetails(cause));
-      } finally {
-        if (!signal?.aborted) setLoading(false);
-      }
-    },
-    [page, filters],
+        }),
+      [filters],
+    ),
   );
-  useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, [load]);
   return (
     <section aria-labelledby="audit-heading">
       <p className="text-primary text-sm font-semibold tracking-wide uppercase">
@@ -114,10 +96,12 @@ export function AuditLogsAdmin() {
         <p role="status" className="mt-6">
           Loading audit history…
         </p>
-      ) : records.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-dashed p-6 text-center">
-          No audit records match these filters.
-        </p>
+      ) : error ? null : records.length === 0 ? (
+        <AdminEmptyState
+          entity="audit records"
+          filtered={Object.values(filters).some(Boolean)}
+          onClearFilters={() => setFilters(draft)}
+        />
       ) : (
         <ol className="mt-6 space-y-4">
           {records.map((record) => {

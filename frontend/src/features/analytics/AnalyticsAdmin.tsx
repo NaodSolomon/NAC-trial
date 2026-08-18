@@ -45,6 +45,7 @@ export function AnalyticsAdmin() {
           getAnalyticsSummary(signal),
           getAnalyticsTimeline(range, signal),
         ]);
+        if (signal?.aborted) return;
         setSummary(nextSummary);
         setTimeline(nextTimeline);
       } catch (cause) {

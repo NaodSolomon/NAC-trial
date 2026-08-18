@@ -7,6 +7,7 @@ import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { Button } from '@/components/ui/button';
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/store/auth.store';
@@ -57,6 +58,7 @@ export function DonationAdmin() {
           getDonationStats(signal),
           getDonationRuntime(signal),
         ]);
+        if (signal?.aborted) return;
         setRecords(list.data);
         setPages(Math.max(1, list.meta.totalPages));
         setStats(summary);
@@ -242,10 +244,16 @@ export function DonationAdmin() {
         <p role="status" className="mt-6">
           Loading donation records…
         </p>
-      ) : records.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-dashed p-6 text-center">
-          No donation records match these filters.
-        </p>
+      ) : error ? null : records.length === 0 ? (
+        <AdminEmptyState
+          entity="donation records"
+          filtered={Boolean(status || currency || gateway)}
+          onClearFilters={() => {
+            setStatus('');
+            setCurrency('');
+            setGateway('');
+          }}
+        />
       ) : (
         <div className="mt-6 overflow-x-auto rounded-xl border bg-white shadow-sm">
           <table className="w-full text-left text-sm">

@@ -11,7 +11,12 @@ const faq = {
   status: 'DRAFT',
   sortOrder: 0,
 };
-const second = { ...faq, id: '00000000-0000-4000-8000-000000000952', question: 'Second question', sortOrder: 1 };
+const second = {
+  ...faq,
+  id: '00000000-0000-4000-8000-000000000952',
+  question: 'Second question',
+  sortOrder: 1,
+};
 
 function respond(route: Route, data: unknown, status = 200) {
   return route.fulfill({
@@ -26,7 +31,10 @@ function respond(route: Route, data: unknown, status = 200) {
   });
 }
 
-async function authenticate(context: import('@playwright/test').BrowserContext, page: import('@playwright/test').Page) {
+async function authenticate(
+  context: import('@playwright/test').BrowserContext,
+  page: import('@playwright/test').Page,
+) {
   const admin = {
     id: adminId,
     email: 'editor@example.org',
@@ -80,15 +88,19 @@ test('lists FAQ entries, creates one, and reorders without leaving the page', as
   await expect(page.getByText('Second question')).toBeVisible();
   await expect(page.getByRole('alert').filter({ hasText: /went wrong|error/i })).toHaveCount(0);
 
-  await expect(page.getByRole('button', { name: 'Move "What does the center do?" up' })).toBeDisabled();
+  await expect(
+    page.getByRole('button', { name: 'Move "What does the center do?" up' }),
+  ).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Move "Second question" down' })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Move "Second question" up' })).toBeEnabled();
 
   await page.getByRole('button', { name: 'Move "Second question" up' }).click();
-  await expect.poll(() => observed.reordered?.entries).toEqual([
-    { id: '00000000-0000-4000-8000-000000000952', sortOrder: 0 },
-    { id: faq.id, sortOrder: 1 },
-  ]);
+  await expect
+    .poll(() => observed.reordered?.entries)
+    .toEqual([
+      { id: '00000000-0000-4000-8000-000000000952', sortOrder: 0 },
+      { id: faq.id, sortOrder: 1 },
+    ]);
 
   await page.getByRole('button', { name: 'New question' }).click();
   await page.getByLabel('Translation key').fill('is-there-parking');

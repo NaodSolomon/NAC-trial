@@ -14,6 +14,7 @@ import {
   AdminFormTextarea,
 } from '@/components/admin/AdminFormField';
 import { Button } from '@/components/ui/button';
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/store/auth.store';
@@ -58,8 +59,10 @@ export function FaqAdmin() {
   const load = useCallback(
     async (signal?: AbortSignal) => {
       setLoading(true);
+      setError('');
       try {
         const result = await listAdminFaqs({ page: 1, languageCode: language, status, signal });
+        if (signal?.aborted) return;
         setEntries(result.data);
       } catch (loadError) {
         if (!signal?.aborted) setError(getApiErrorMessageWithDetails(loadError));
@@ -215,8 +218,12 @@ export function FaqAdmin() {
             <p role="status" className="mt-4">
               Loading questions…
             </p>
-          ) : entries.length === 0 ? (
-            <p className="mt-4 text-sm">No questions match this language and status.</p>
+          ) : error ? null : entries.length === 0 ? (
+            <AdminEmptyState
+              entity="questions"
+              filtered={Boolean(status)}
+              onClearFilters={() => setStatus('')}
+            />
           ) : (
             <ol className="mt-4 space-y-2">
               {entries.map((entry, index) => (

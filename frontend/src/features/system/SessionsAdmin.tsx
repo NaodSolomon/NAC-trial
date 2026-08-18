@@ -1,46 +1,37 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Ban, ShieldX } from 'lucide-react';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { Button } from '@/components/ui/button';
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
+import { useAdminList } from '@/hooks/use-admin-list';
 import { listAdminSessions, revokeSession } from './system.client';
 import type { AdminSession } from './system.schemas';
 
 export function SessionsAdmin() {
-  const [records, setRecords] = useState<AdminSession[]>([]);
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
   const [status, setStatus] = useState('active');
   const [adminIdInput, setAdminIdInput] = useState('');
   const [adminId, setAdminId] = useState('');
-  const [loading, setLoading] = useState(true);
   const [revoking, setRevoking] = useState(false);
-  const [error, setError] = useState('');
   const { notify } = useAdminFeedback();
-  const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      setError('');
-      try {
-        const result = await listAdminSessions({ page, status, adminId, signal });
-        setRecords(result.data);
-        setPages(Math.max(1, result.meta.totalPages));
-      } catch (cause) {
-        if (!signal?.aborted) setError(getApiErrorMessageWithDetails(cause));
-      } finally {
-        if (!signal?.aborted) setLoading(false);
-      }
-    },
-    [page, status, adminId],
+  const {
+    records,
+    page,
+    setPage,
+    pages,
+    loading,
+    error,
+    setError,
+    reload: load,
+  } = useAdminList<AdminSession>(
+    useCallback(
+      ({ page, signal }) => listAdminSessions({ page, status, adminId, signal }),
+      [status, adminId],
+    ),
   );
-  useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, [load]);
   async function revoke(target: { sessionId: string } | { adminId: string }) {
     if (revoking) return;
     setRevoking(true);
@@ -122,10 +113,16 @@ export function SessionsAdmin() {
         <p role="status" className="mt-6">
           Loading sessions…
         </p>
-      ) : records.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-dashed p-6 text-center">
-          No sessions match these filters.
-        </p>
+      ) : error ? null : records.length === 0 ? (
+        <AdminEmptyState
+          entity="sessions"
+          filtered={Boolean(adminId || status)}
+          onClearFilters={() => {
+            setStatus('active');
+            setAdminIdInput('');
+            setAdminId('');
+          }}
+        />
       ) : (
         <ul className="mt-6 grid gap-4">
           {records.map((session) => (

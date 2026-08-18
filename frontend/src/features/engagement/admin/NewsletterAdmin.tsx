@@ -1,50 +1,28 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
-import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
+import { useAdminList } from '@/hooks/use-admin-list';
 import { deleteNewsletterSubscriber, listNewsletterSubscribers } from './engagement-admin.client';
 import type { NewsletterSubscriber } from './engagement-admin.schemas';
 import { EngagementHeading, LanguageFilter, ListPager, LoadState } from './EngagementAdminParts';
 
 export function NewsletterAdmin() {
-  const [records, setRecords] = useState<NewsletterSubscriber[]>([]);
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
   const [language, setLanguage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
+  const { records, setRecords, page, setPage, pages, loading, error } =
+    useAdminList<NewsletterSubscriber>(
+      useCallback(({ page, signal }) => listNewsletterSubscribers({ page, signal }), []),
+    );
   const visibleRecords = useMemo(
     () => (language ? records.filter((record) => record.languageCode === language) : records),
     [records, language],
   );
-  const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      setError('');
-      try {
-        const result = await listNewsletterSubscribers({ page, signal });
-        setRecords(result.data);
-        setPages(Math.max(1, result.meta.totalPages));
-      } catch (cause) {
-        if (!signal?.aborted) setError(getApiErrorMessageWithDetails(cause));
-      } finally {
-        if (!signal?.aborted) setLoading(false);
-      }
-    },
-    [page],
-  );
-  useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, [load]);
   async function remove(record: NewsletterSubscriber) {
     await deleteNewsletterSubscriber(record.email);
     setRecords((current) => current.filter((item) => item.id !== record.id));
@@ -70,7 +48,14 @@ export function NewsletterAdmin() {
           Language filters the current page; server-side pagination remains authoritative.
         </p>
       </div>
-      <LoadState loading={loading} error={error} empty={visibleRecords.length === 0}>
+      <LoadState
+        loading={loading}
+        error={error}
+        empty={visibleRecords.length === 0}
+        entity="subscribers"
+        filtered={Boolean(language)}
+        onClearFilters={() => setLanguage('')}
+      >
         <div className="mt-6 overflow-x-auto rounded-xl border bg-white shadow-sm">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50">

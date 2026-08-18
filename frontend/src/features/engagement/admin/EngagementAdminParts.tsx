@@ -1,3 +1,4 @@
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { Button } from '@/components/ui/button';
 
 export function EngagementHeading({
@@ -76,11 +77,17 @@ export function LoadState({
   loading,
   error,
   empty,
+  entity,
+  filtered = false,
+  onClearFilters,
   children,
 }: {
   loading: boolean;
   error: string;
   empty: boolean;
+  entity: string;
+  filtered?: boolean;
+  onClearFilters?: () => void;
   children: React.ReactNode;
 }) {
   if (loading)
@@ -96,10 +103,6 @@ export function LoadState({
       </p>
     );
   if (empty)
-    return (
-      <p className="mt-6 rounded-lg border border-dashed p-6 text-center">
-        No records match these filters.
-      </p>
-    );
+    return <AdminEmptyState entity={entity} filtered={filtered} onClearFilters={onClearFilters} />;
   return <>{children}</>;
 }

@@ -89,7 +89,7 @@ async function mockPublicShellApi(page: Page) {
                 { id: 'home-am', label: 'መነሻ', url: '/' },
                 { id: 'about-am', label: 'ስለ እኛ', url: '/about' },
               ]
-              : [
+            : [
                 { id: 'home-en', label: 'Home', url: '/' },
                 { id: 'about-en', label: 'About us', url: '/about' },
                 { id: 'team-en', label: 'Our Team', url: '/team' },

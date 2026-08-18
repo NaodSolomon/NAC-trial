@@ -77,7 +77,6 @@ export function SeoAdmin() {
     return () => controller.abort();
   }, [selectPage]);
 
-
   async function onSubmit(values: SeoEditorValues) {
     if (!selected) return;
     setError('');

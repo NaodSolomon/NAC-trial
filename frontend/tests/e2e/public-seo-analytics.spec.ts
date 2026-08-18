@@ -21,9 +21,7 @@ test('public metadata, structured data, and analytics preserve privacy', async (
     'href',
     'http://localhost:3000/?lang=am',
   );
-  await expect
-    .poll(() => analyticsPayloads.length)
-    .toBeGreaterThan(0);
+  await expect.poll(() => analyticsPayloads.length).toBeGreaterThan(0);
   expect(analyticsPayloads[0]).toEqual({
     eventType: 'page_view',
     pageUrl: '/',

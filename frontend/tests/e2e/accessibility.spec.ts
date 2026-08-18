@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { waitForHydration } from '../helpers/hydration';
+import { adminWorkspaceScreens, mockAdminWorkspace } from '../helpers/admin-workspace';
 
 const localizedRoutes = [
   '/',
@@ -35,6 +36,30 @@ for (const route of routes) {
     await expectNoBlockingViolations(page);
   });
 }
+
+// The authenticated workspace was previously unchecked: the suite could only reach
+// the sign-in pages. These reuse the visual suite's mocked workspace so each screen
+// renders with real content rather than an empty shell that would hide violations.
+test.describe('authenticated administrator workspace', () => {
+  test.beforeEach(async ({ context, page }) => {
+    await mockAdminWorkspace(context, page);
+  });
+
+  test('admin-dashboard has no moderate-or-worse Axe violations', async ({ page }) => {
+    await page.goto('/admin');
+    await expect(page.getByText('Page views')).toBeVisible();
+    await expectNoBlockingViolations(page);
+  });
+
+  for (const screen of adminWorkspaceScreens) {
+    test(`${screen.name} has no moderate-or-worse Axe violations`, async ({ page }) => {
+      await page.goto(screen.path);
+      await expect(page.getByRole('heading', { name: screen.ready })).toBeVisible();
+      await settle(page);
+      await expectNoBlockingViolations(page);
+    });
+  }
+});
 
 // Loading a form proves nothing about the state an editor actually meets when
 // something goes wrong. These cases drive each administrator form into its error
@@ -91,6 +116,14 @@ for (const state of states) {
     await state.arrange(page);
     await expectNoBlockingViolations(page);
   });
+}
+
+// Screens disable their controls while data loads, and a disabled control rendered at
+// half opacity fails a contrast check that WCAG 1.4.3 does not actually apply to
+// inactive components. Waiting for the load to finish checks the state that matters
+// rather than suppressing a rule.
+async function settle(page: Page) {
+  await expect(page.getByText(/^Loading/i)).toHaveCount(0);
 }
 
 async function expectNoBlockingViolations(page: Page) {

@@ -1,59 +1,35 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Search, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { Button } from '@/components/ui/button';
-import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/store/auth.store';
+import { useAdminList } from '@/hooks/use-admin-list';
 import { deleteVolunteerApplication, listVolunteerApplications } from './engagement-admin.client';
 import type { VolunteerApplication } from './engagement-admin.schemas';
 import { EngagementHeading, LanguageFilter, ListPager, LoadState } from './EngagementAdminParts';
 
 export function VolunteerAdmin() {
-  const [records, setRecords] = useState<VolunteerApplication[]>([]);
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
   const [status, setStatus] = useState('');
   const [language, setLanguage] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const role = useAuthStore((state) => state.user?.role);
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
-  const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      setError('');
-      try {
-        const result = await listVolunteerApplications({
-          page,
-          languageCode: language,
-          search,
-          status,
-          signal,
-        });
-        setRecords(result.data);
-        setPages(Math.max(1, result.meta.totalPages));
-      } catch (cause) {
-        if (!signal?.aborted) setError(getApiErrorMessageWithDetails(cause));
-      } finally {
-        if (!signal?.aborted) setLoading(false);
-      }
-    },
-    [page, language, search, status],
-  );
-  useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, [load]);
+  const { records, setRecords, page, setPage, pages, loading, error } =
+    useAdminList<VolunteerApplication>(
+      useCallback(
+        ({ page, signal }) =>
+          listVolunteerApplications({ page, languageCode: language, search, status, signal }),
+        [language, search, status],
+      ),
+    );
   async function remove(id: string) {
     await deleteVolunteerApplication(id);
     setRecords((current) => current.filter((record) => record.id !== id));
@@ -114,7 +90,18 @@ export function VolunteerAdmin() {
           Apply filters
         </Button>
       </form>
-      <LoadState loading={loading} error={error} empty={records.length === 0}>
+      <LoadState
+        loading={loading}
+        error={error}
+        empty={records.length === 0}
+        entity="volunteer applications"
+        filtered={Boolean(language || search || status)}
+        onClearFilters={() => {
+          setLanguage('');
+          setSearch('');
+          setStatus('');
+        }}
+      >
         <ul className="mt-6 grid gap-4 lg:grid-cols-2">
           {records.map((record) => (
             <li key={record.id} className="bg-card rounded-xl border p-5 shadow-sm">

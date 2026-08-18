@@ -94,15 +94,14 @@ test('reports the schema wording beside the field it belongs to', async ({ conte
   const name = page.getByLabel('Name');
   await expect(name).toHaveAttribute('aria-invalid', 'true');
   await expect(name).toHaveAttribute('aria-describedby', 'name-error');
-  await expect(page.locator('#name-error')).toContainText('Name must contain at least 2 characters.');
+  await expect(page.locator('#name-error')).toContainText(
+    'Name must contain at least 2 characters.',
+  );
 
   await expect(page.locator('#text-error')).toContainText(
     'Testimonial must contain at least 10 characters.',
   );
-  await expect(page.locator('#languageCode')).toHaveAttribute(
-    'aria-invalid',
-    'false',
-  );
+  await expect(page.locator('#languageCode')).toHaveAttribute('aria-invalid', 'false');
   expect(observed.created).toBeUndefined();
 });
 
@@ -180,7 +179,10 @@ test('clears a field error once the value becomes valid', async ({ context, page
   await expect.poll(() => observed.created?.name).toBe('A grateful parent');
 });
 
-test('leaves the language unfiltered when every language is selected', async ({ context, page }) => {
+test('leaves the language unfiltered when every language is selected', async ({
+  context,
+  page,
+}) => {
   const observed = await openTestimonialAdmin(context, page);
 
   await expect.poll(() => observed.listUrl).toBeTruthy();
