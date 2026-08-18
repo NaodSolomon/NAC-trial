@@ -1,9 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { FilePlus2, Save, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
+import {
+  AdminFormField,
+  AdminFormSelect,
+  AdminFormTextarea,
+} from '@/components/admin/AdminFormField';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { Button } from '@/components/ui/button';
@@ -26,14 +33,21 @@ import { EngagementHeading, LanguageFilter, ListPager, LoadState } from './Engag
 export function TestimonialAdmin() {
   const [records, setRecords] = useState<Testimonial[]>([]);
   const [selected, setSelected] = useState<Testimonial | null>(null);
-  const [values, setValues] = useState<TestimonialEditorValues>(emptyTestimonial);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [language, setLanguage] = useState('');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<TestimonialEditorValues>({
+    resolver: zodResolver(testimonialEditorSchema),
+    defaultValues: emptyTestimonial,
+  });
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
   const load = useCallback(
@@ -43,7 +57,7 @@ export function TestimonialAdmin() {
       try {
         const result = await listAdminTestimonials({
           page,
-          languageCode: language || 'en',
+          languageCode: language,
           status,
           signal,
         });
@@ -64,7 +78,7 @@ export function TestimonialAdmin() {
   }, [load]);
   function select(record: Testimonial | null) {
     setSelected(record);
-    setValues(
+    reset(
       record
         ? {
             name: record.name,
@@ -81,18 +95,14 @@ export function TestimonialAdmin() {
     await queryClient.invalidateQueries({ queryKey: queryKeys.engagement.testimonials() });
     await load();
   }
-  async function save() {
-    const parsed = testimonialEditorSchema.safeParse(values);
-    if (!parsed.success)
-      return setError([...new Set(parsed.error.issues.map((issue) => issue.message))].join(' '));
-    setSaving(true);
+  async function onSubmit(values: TestimonialEditorValues) {
     setError('');
     try {
       const saved = selected
-        ? await updateTestimonial(selected.id, parsed.data)
-        : await createTestimonial(parsed.data);
+        ? await updateTestimonial(selected.id, values)
+        : await createTestimonial(values);
       setSelected(saved);
-      setValues({
+      reset({
         name: saved.name,
         text: saved.text,
         languageCode: saved.languageCode,
@@ -110,18 +120,21 @@ export function TestimonialAdmin() {
       setError(
         `${getApiErrorMessageWithDetails(cause)} Your unsaved testimonial remains in the editor.`,
       );
-    } finally {
-      setSaving(false);
     }
   }
   async function remove(record: Testimonial) {
-    await deleteTestimonial(record.id);
-    if (selected?.id === record.id) select(null);
-    await refresh();
-    notify({
-      title: 'Testimonial deleted',
-      message: 'The public and administrative caches were refreshed.',
-    });
+    try {
+      await deleteTestimonial(record.id);
+      if (selected?.id === record.id) select(null);
+      await refresh();
+      notify({
+        title: 'Testimonial deleted',
+        message: 'The public and administrative caches were refreshed.',
+      });
+    } catch (cause) {
+      setError(getApiErrorMessageWithDetails(cause));
+      throw cause;
+    }
   }
   return (
     <section aria-labelledby="testimonial-heading">
@@ -176,6 +189,7 @@ export function TestimonialAdmin() {
                   <button
                     type="button"
                     onClick={() => select(record)}
+                    aria-current={selected?.id === record.id ? 'true' : undefined}
                     className={`w-full rounded-lg border p-3 text-left ${selected?.id === record.id ? 'border-primary bg-green-50' : ''}`}
                   >
                     <span className="flex items-center justify-between gap-2">
@@ -190,73 +204,51 @@ export function TestimonialAdmin() {
             <ListPager page={page} pages={pages} onPage={setPage} />
           </LoadState>
         </aside>
-        <div className="bg-card rounded-xl border p-5 shadow-sm">
+        <form
+          noValidate
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-card rounded-xl border p-5 shadow-sm"
+        >
           <h2 className="text-heading text-xl font-semibold">
             {selected ? 'Edit testimonial' : 'New testimonial'}
           </h2>
           <div className="mt-5 grid gap-4">
-            <label>
-              <span className="mb-2 block text-sm font-semibold">Name</span>
-              <input
-                value={values.name}
-                maxLength={100}
-                onChange={(event) =>
-                  setValues((current) => ({ ...current, name: event.target.value }))
-                }
-                className="min-h-11 w-full rounded-lg border px-3"
-              />
-            </label>
-            <label>
-              <span className="mb-2 block text-sm font-semibold">Testimonial</span>
-              <textarea
-                value={values.text}
-                maxLength={2000}
-                rows={8}
-                onChange={(event) =>
-                  setValues((current) => ({ ...current, text: event.target.value }))
-                }
-                className="w-full rounded-lg border p-3"
-              />
-            </label>
+            <AdminFormField
+              label="Name"
+              maxLength={100}
+              error={errors.name?.message}
+              {...register('name')}
+            />
+            <AdminFormTextarea
+              label="Testimonial"
+              maxLength={2000}
+              rows={8}
+              error={errors.text?.message}
+              {...register('text')}
+            />
             <div className="grid gap-4 sm:grid-cols-2">
-              <label>
-                <span className="mb-2 block text-sm font-semibold">Language</span>
-                <select
-                  value={values.languageCode}
-                  disabled={Boolean(selected)}
-                  onChange={(event) =>
-                    setValues((current) => ({
-                      ...current,
-                      languageCode: event.target.value as 'en' | 'am',
-                    }))
-                  }
-                  className="min-h-11 w-full rounded-lg border bg-white px-3"
-                >
-                  <option value="en">English</option>
-                  <option value="am">Amharic</option>
-                </select>
-              </label>
-              <label>
-                <span className="mb-2 block text-sm font-semibold">Visibility</span>
-                <select
-                  value={values.status}
-                  onChange={(event) =>
-                    setValues((current) => ({
-                      ...current,
-                      status: event.target.value as 'DRAFT' | 'PUBLISHED',
-                    }))
-                  }
-                  className="min-h-11 w-full rounded-lg border bg-white px-3"
-                >
-                  <option value="DRAFT">Draft</option>
-                  <option value="PUBLISHED">Published</option>
-                </select>
-              </label>
+              <AdminFormSelect
+                label="Language"
+                disabled={Boolean(selected)}
+                error={errors.languageCode?.message}
+                {...register('languageCode')}
+              >
+                <option value="en">English</option>
+                <option value="am">Amharic</option>
+              </AdminFormSelect>
+              <AdminFormSelect
+                label="Visibility"
+                error={errors.status?.message}
+                {...register('status')}
+              >
+                <option value="DRAFT">Draft</option>
+                <option value="PUBLISHED">Published</option>
+              </AdminFormSelect>
             </div>
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button type="button" disabled={saving} onClick={() => void save()}>
-              <Save aria-hidden="true" /> {saving ? 'Saving…' : 'Save testimonial'}
+            <Button type="submit" disabled={isSubmitting}>
+              <Save aria-hidden="true" /> {isSubmitting ? 'Saving…' : 'Save testimonial'}
             </Button>
             {selected && (
               <ConfirmedActionButton
@@ -269,7 +261,7 @@ export function TestimonialAdmin() {
               </ConfirmedActionButton>
             )}
           </div>
-        </div>
+        </form>
       </div>
     </section>
   );

@@ -60,7 +60,7 @@ export function LanguageFilter({
 }) {
   return (
     <select
-      aria-label="Language"
+      aria-label="Filter by language"
       value={value}
       onChange={(event) => onChange(event.target.value)}
       className="min-h-11 rounded-lg border bg-white px-3"

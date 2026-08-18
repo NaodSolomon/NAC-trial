@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Save, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { AdminAccessDenied } from '@/components/admin/AdminAccessDenied';
+import { AdminFormField, AdminFormTextarea } from '@/components/admin/AdminFormField';
 import { CmsStatusBadge } from '@/features/cms/components/CmsStatusBadge';
 import { listAdminCmsPages } from '@/features/cms/admin-cms.client';
 import type { AdminCmsPage } from '@/features/cms/admin-cms.schemas';
@@ -16,20 +19,44 @@ export function SeoAdmin() {
   const { notify } = useAdminFeedback();
   const [pages, setPages] = useState<AdminCmsPage[]>([]);
   const [selectedId, setSelectedId] = useState('');
-  const [values, setValues] = useState<SeoEditorValues>({
-    languageCode: 'en',
-    title: '',
-    description: '',
-    keywordsText: '',
-    imageUrl: '',
-  });
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [forbidden, setForbidden] = useState(false);
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<SeoEditorValues>({
+    resolver: zodResolver(seoEditorSchema),
+    defaultValues: {
+      languageCode: 'en',
+      title: '',
+      description: '',
+      keywordsText: '',
+      imageUrl: '',
+    },
+  });
+  const watched = useWatch({ control });
   const selected = useMemo(
     () => pages.find((page) => page.id === selectedId) ?? null,
     [pages, selectedId],
+  );
+
+  const selectPage = useCallback(
+    (page: AdminCmsPage) => {
+      setSelectedId(page.id);
+      reset({
+        languageCode: page.languageCode,
+        title: page.seoTitle ?? '',
+        description: page.seoDescription ?? '',
+        keywordsText: page.seoKeywords.join(', '),
+        imageUrl: page.seoImageUrl ?? '',
+      });
+      setError('');
+    },
+    [reset],
   );
 
   useEffect(() => {
@@ -48,38 +75,21 @@ export function SeoAdmin() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, []);
+  }, [selectPage]);
 
-  function selectPage(page: AdminCmsPage) {
-    setSelectedId(page.id);
-    setValues({
-      languageCode: page.languageCode,
-      title: page.seoTitle ?? '',
-      description: page.seoDescription ?? '',
-      keywordsText: page.seoKeywords.join(', '),
-      imageUrl: page.seoImageUrl ?? '',
-    });
-    setError('');
-  }
 
-  async function save() {
+  async function onSubmit(values: SeoEditorValues) {
     if (!selected) return;
-    const parsed = seoEditorSchema.safeParse(values);
-    if (!parsed.success) {
-      setError([...new Set(parsed.error.issues.map((issue) => issue.message))].join(' '));
-      return;
-    }
-    setSaving(true);
     setError('');
     try {
-      const updated = await updateSeoMetadata(selected.slug, parsed.data);
+      const updated = await updateSeoMetadata(selected.slug, values);
       setPages((current) =>
         current.map((page) =>
           page.id === selected.id
             ? {
                 ...page,
-                seoTitle: parsed.data.title || null,
-                seoDescription: parsed.data.description || null,
+                seoTitle: values.title || null,
+                seoDescription: values.description || null,
                 seoKeywords: updated.keywords,
                 seoImageUrl: updated.imageUrl,
               }
@@ -92,8 +102,6 @@ export function SeoAdmin() {
       });
     } catch (saveError) {
       setError(`${getApiErrorMessage(saveError)} Your unsaved SEO fields remain unchanged.`);
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -127,10 +135,7 @@ export function SeoAdmin() {
         <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
           <form
             className="bg-card space-y-6 rounded-xl border p-6 shadow-sm"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void save();
-            }}
+            onSubmit={handleSubmit(onSubmit)}
             noValidate
           >
             <label className="block">
@@ -161,31 +166,35 @@ export function SeoAdmin() {
                 )}
               </div>
             )}
-            <SeoField
+            <AdminFormField
               label="SEO title"
-              value={values.title}
               maxLength={70}
-              onChange={(title) => setValues({ ...values, title })}
+              counted={watched.title ?? ''}
+              error={errors.title?.message}
+              {...register('title')}
             />
-            <SeoTextarea
+            <AdminFormTextarea
               label="SEO description"
-              value={values.description}
               maxLength={160}
               rows={4}
-              onChange={(description) => setValues({ ...values, description })}
+              counted={watched.description ?? ''}
+              error={errors.description?.message}
+              {...register('description')}
             />
-            <SeoTextarea
+            <AdminFormTextarea
               label="Keywords (comma separated, maximum 10)"
-              value={values.keywordsText}
               maxLength={500}
               rows={3}
-              onChange={(keywordsText) => setValues({ ...values, keywordsText })}
+              counted={watched.keywordsText ?? ''}
+              error={errors.keywordsText?.message}
+              {...register('keywordsText')}
             />
-            <SeoField
+            <AdminFormField
               label="Social image URL"
-              value={values.imageUrl}
               maxLength={2_048}
-              onChange={(imageUrl) => setValues({ ...values, imageUrl })}
+              counted={watched.imageUrl ?? ''}
+              error={errors.imageUrl?.message}
+              {...register('imageUrl')}
             />
             {error && (
               <p
@@ -195,8 +204,8 @@ export function SeoAdmin() {
                 {error}
               </p>
             )}
-            <Button type="submit" disabled={saving}>
-              <Save aria-hidden="true" /> {saving ? 'Saving…' : 'Save SEO metadata'}
+            <Button type="submit" disabled={isSubmitting}>
+              <Save aria-hidden="true" /> {isSubmitting ? 'Saving…' : 'Save SEO metadata'}
             </Button>
           </form>
           <aside
@@ -207,75 +216,15 @@ export function SeoAdmin() {
               <Search aria-hidden="true" className="size-4" /> Search preview
             </div>
             <p className="mt-5 text-xl text-blue-800">
-              {values.title || selected?.title || 'Page title fallback'}
+              {watched.title || selected?.title || 'Page title fallback'}
             </p>
             <p className="mt-1 text-sm text-green-800">nehemiah.example/{selected?.slug}</p>
             <p className="text-foreground mt-2 text-sm">
-              {values.description || 'No search description has been configured.'}
+              {watched.description || 'No search description has been configured.'}
             </p>
           </aside>
         </div>
       )}
     </section>
-  );
-}
-
-function SeoField({
-  label,
-  value,
-  maxLength,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  maxLength: number;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="block">
-      <span className="text-heading mb-2 flex justify-between gap-3 text-sm font-semibold">
-        <span>{label}</span>
-        <span className="text-foreground font-normal">
-          {value.length}/{maxLength}
-        </span>
-      </span>
-      <input
-        value={value}
-        maxLength={maxLength}
-        onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 w-full rounded-lg border px-3"
-      />
-    </label>
-  );
-}
-function SeoTextarea({
-  label,
-  value,
-  maxLength,
-  rows,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  maxLength: number;
-  rows: number;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="block">
-      <span className="text-heading mb-2 flex justify-between gap-3 text-sm font-semibold">
-        <span>{label}</span>
-        <span className="text-foreground font-normal">
-          {value.length}/{maxLength}
-        </span>
-      </span>
-      <textarea
-        value={value}
-        maxLength={maxLength}
-        rows={rows}
-        onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-lg border p-3"
-      />
-    </label>
   );
 }

@@ -1,15 +1,34 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ExternalLink, FileUp, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  AdminFormField,
+  AdminFormSelect,
+  AdminFormTextarea,
+} from '@/components/admin/AdminFormField';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { UploadProgress } from '@/components/admin/UploadProgress';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { useAuthStore } from '@/store/auth.store';
 import { deleteMedia, listMedia, uploadMedia } from './media-admin.client';
-import { validateMediaFile, type MediaAsset } from './media-admin.schemas';
+import {
+  allowedMediaMimeTypes,
+  mediaUploadHint,
+  mediaUploadSchema,
+  type MediaAsset,
+  type MediaUploadValues,
+} from './media-admin.schemas';
+
+const emptyUpload = {
+  languageCode: 'en',
+  altText: '',
+  caption: '',
+} as unknown as MediaUploadValues;
 
 export function MediaAdmin() {
   const [items, setItems] = useState<MediaAsset[]>([]);
@@ -19,23 +38,38 @@ export function MediaAdmin() {
   const [search, setSearch] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [languageCode, setLanguageCode] = useState<'en' | 'am'>('en');
-  const [altText, setAltText] = useState('');
-  const [caption, setCaption] = useState('');
   const role = useAuthStore((state) => state.user?.role);
   const { notify } = useAdminFeedback();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<MediaUploadValues>({
+    resolver: zodResolver(mediaUploadSchema),
+    defaultValues: emptyUpload,
+  });
+
+  const fileField = register('file');
+  const fileInput = useRef<HTMLInputElement | null>(null);
 
   const load = useCallback(
     async (signal?: AbortSignal) => {
       setLoading(true);
       try {
         const result = await listMedia({ page, type, search: appliedSearch, signal });
+        if (signal?.aborted) return;
+        const lastPage = Math.max(1, result.meta.totalPages);
+        setPages(lastPage);
+        if (page > lastPage) {
+          setPage(lastPage);
+          return;
+        }
         setItems(result.data);
-        setPages(Math.max(1, result.meta.totalPages));
+        setError('');
       } catch (loadError) {
         if (!signal?.aborted) setError(getApiErrorMessageWithDetails(loadError));
       } finally {
@@ -51,33 +85,26 @@ export function MediaAdmin() {
     return () => controller.abort();
   }, [load]);
 
-  async function submitUpload() {
-    const fileError = validateMediaFile(file);
-    if (fileError) return setError(fileError);
-    if (file!.type.startsWith('image/') && !altText.trim())
-      return setError('Alternative text is required for images.');
-    if (altText.length > 500 || caption.length > 1000)
-      return setError('Alternative text or caption exceeds the allowed length.');
+  async function submitUpload(values: MediaUploadValues) {
+    const chosen = values.file[0];
     const form = new FormData();
-    form.set('file', file!);
-    form.set('languageCode', languageCode);
-    if (altText.trim()) form.set('altText', altText.trim());
-    if (caption.trim()) form.set('caption', caption.trim());
+    form.set('file', chosen);
+    form.set('languageCode', values.languageCode);
+    if (values.altText.trim()) form.set('altText', values.altText.trim());
+    if (values.caption.trim()) form.set('caption', values.caption.trim());
     form.set('folder', 'media');
-    setUploading(true);
     setProgress(0);
     setError('');
     try {
       await uploadMedia(form, setProgress);
-      setFile(null);
-      setAltText('');
-      setCaption('');
+      reset(emptyUpload);
+      // reset() cannot clear a file input, so the chosen filename would
+      // otherwise linger and invite a second upload of a released file.
+      if (fileInput.current) fileInput.current.value = '';
       await load();
-      notify({ title: 'Media uploaded', message: file!.name });
+      notify({ title: 'Media uploaded', message: chosen.name });
     } catch (uploadError) {
       setError(getApiErrorMessageWithDetails(uploadError));
-    } finally {
-      setUploading(false);
     }
   }
 
@@ -101,52 +128,64 @@ export function MediaAdmin() {
         administrators.
       </p>
       <form
+        noValidate
+        aria-label="Upload media"
         className="bg-card mt-8 grid gap-4 rounded-xl border p-6 shadow-sm lg:grid-cols-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void submitUpload();
-        }}
+        onSubmit={handleSubmit(submitUpload)}
       >
-        <label className="block lg:col-span-2">
-          <span className="text-heading mb-2 block text-sm font-semibold">File</span>
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,application/pdf"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-            className="min-h-11 w-full rounded-lg border p-2"
-          />
-        </label>
-        <label>
-          <span className="text-heading mb-2 block text-sm font-semibold">Language</span>
-          <select
-            value={languageCode}
-            onChange={(event) => setLanguageCode(event.target.value as 'en' | 'am')}
-            className="min-h-11 w-full rounded-lg border bg-white px-3"
-          >
-            <option value="en">English</option>
-            <option value="am">Amharic</option>
-          </select>
-        </label>
-        <Field label="Alternative text" value={altText} maxLength={500} onChange={setAltText} />
-        <label className="lg:col-span-2">
-          <span className="text-heading mb-2 block text-sm font-semibold">Caption</span>
-          <textarea
-            value={caption}
-            maxLength={1000}
-            rows={3}
-            onChange={(event) => setCaption(event.target.value)}
-            className="w-full rounded-lg border p-3"
-          />
-        </label>
         <div className="lg:col-span-2">
-          <Button type="submit" disabled={uploading}>
+          <AdminFormField
+            label="File"
+            id="media-file"
+            type="file"
+            accept={allowedMediaMimeTypes.join(',')}
+            className="border-input min-h-12 w-full rounded-lg border bg-white p-2"
+            hint={mediaUploadHint}
+            error={errors.file?.message}
+            {...fileField}
+            ref={(element: HTMLInputElement | null) => {
+              fileField.ref(element);
+              fileInput.current = element;
+            }}
+          />
+        </div>
+        <AdminFormSelect
+          label="Language"
+          id="media-language"
+          error={errors.languageCode?.message}
+          {...register('languageCode')}
+        >
+          <option value="en">English</option>
+          <option value="am">Amharic</option>
+        </AdminFormSelect>
+        <AdminFormField
+          label="Alternative text"
+          id="media-alt-text"
+          maxLength={500}
+          hint="Required for images. Describe what the image shows."
+          error={errors.altText?.message}
+          {...register('altText')}
+        />
+        <div className="lg:col-span-2">
+          <AdminFormTextarea
+            label="Caption"
+            id="media-caption"
+            rows={3}
+            maxLength={1000}
+            error={errors.caption?.message}
+            {...register('caption')}
+          />
+        </div>
+        <div className="lg:col-span-2">
+          <Button type="submit" disabled={isSubmitting}>
             <FileUp aria-hidden="true" />
-            {uploading ? 'Uploading…' : 'Upload media'}
+            {isSubmitting ? 'Uploading…' : 'Upload media'}
           </Button>
-          {uploading && <UploadProgress value={progress} />}
+          {isSubmitting && <UploadProgress value={progress} />}
         </div>
       </form>
       <form
+        aria-label="Filter media"
         className="mt-8 flex flex-wrap gap-3"
         onSubmit={(event) => {
           event.preventDefault();
@@ -154,31 +193,27 @@ export function MediaAdmin() {
           setAppliedSearch(search.trim());
         }}
       >
-        <label>
-          <span className="sr-only">Media type</span>
-          <select
-            value={type}
-            onChange={(event) => {
-              setType(event.target.value);
-              setPage(1);
-            }}
-            className="min-h-11 rounded-lg border bg-white px-3"
-          >
-            <option value="">All types</option>
-            <option value="IMAGE">Images</option>
-            <option value="VIDEO">Videos</option>
-            <option value="DOCUMENT">Documents</option>
-          </select>
-        </label>
-        <label>
-          <span className="sr-only">Search media</span>
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search filenames"
-            className="min-h-11 rounded-lg border px-3"
-          />
-        </label>
+        <select
+          aria-label="Filter by media type"
+          value={type}
+          onChange={(event) => {
+            setType(event.target.value);
+            setPage(1);
+          }}
+          className="min-h-11 rounded-lg border bg-white px-3"
+        >
+          <option value="">All types</option>
+          <option value="IMAGE">Images</option>
+          <option value="VIDEO">Videos</option>
+          <option value="DOCUMENT">Documents</option>
+        </select>
+        <input
+          aria-label="Search media"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search filenames"
+          className="min-h-11 rounded-lg border px-3"
+        />
         <Button type="submit" variant="outline">
           <Search aria-hidden="true" /> Search
         </Button>
@@ -192,7 +227,11 @@ export function MediaAdmin() {
         </p>
       )}
       {loading ? (
-        <div role="status" className="bg-card mt-6 h-48 animate-pulse rounded-xl border" />
+        <div
+          role="status"
+          aria-label="Loading media"
+          className="bg-card mt-6 h-48 animate-pulse rounded-xl border motion-reduce:animate-none"
+        />
       ) : items.length === 0 ? (
         <p role="status" className="bg-card mt-6 rounded-xl border p-8">
           No media matches these filters.
@@ -226,7 +265,7 @@ export function MediaAdmin() {
                 <ConfirmedActionButton
                   className="mt-4"
                   title="Delete media asset?"
-                  description="The object and metadata will be permanently removed. Gallery-linked media may not be safe to delete independently."
+                  description={`${item.originalName} and its metadata will be permanently removed. Gallery-linked media may not be safe to delete independently.`}
                   confirmLabel="Delete media"
                   onConfirm={() => remove(item)}
                 >
@@ -237,7 +276,7 @@ export function MediaAdmin() {
           ))}
         </ul>
       )}
-      <div className="mt-6 flex items-center justify-between">
+      <nav aria-label="Media pagination" className="mt-6 flex items-center justify-between">
         <Button
           type="button"
           variant="outline"
@@ -257,34 +296,11 @@ export function MediaAdmin() {
         >
           Next
         </Button>
-      </div>
+      </nav>
     </section>
   );
 }
 
-function Field({
-  label,
-  value,
-  maxLength,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  maxLength: number;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label>
-      <span className="text-heading mb-2 block text-sm font-semibold">{label}</span>
-      <input
-        value={value}
-        maxLength={maxLength}
-        onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 w-full rounded-lg border px-3"
-      />
-    </label>
-  );
-}
 function formatBytes(value: number) {
   return value < 1_048_576
     ? `${Math.ceil(value / 1024)} KB`

@@ -23,31 +23,41 @@ export const administratorListSchema = z.object({
   meta: pageMeta,
 });
 
+const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
+const passwordLengthMessage = 'Password must contain at least 12 characters.';
+const passwordCharacterMessage =
+  'Password must include uppercase, lowercase and numeric characters.';
+const administratorRoleSchema = z.enum(['SUPER_ADMIN', 'CONTENT_EDITOR', 'FINANCE_VIEWER']);
+const administratorNameSchema = z
+  .string()
+  .trim()
+  .min(2, 'Name must contain at least 2 characters.')
+  .max(150);
+
+export const passwordPolicyHint =
+  'At least 12 characters, including an uppercase letter, a lowercase letter and a number.';
+
 export const administratorEditorSchema = z.object({
-  name: z.string().trim().min(2, 'Name must contain at least 2 characters.').max(150),
+  name: administratorNameSchema,
   email: z.string().trim().email('Enter a valid email address.').max(255),
   password: z
     .string()
-    .min(12, 'Password must contain at least 12 characters.')
+    .min(12, passwordLengthMessage)
     .max(128)
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
-      'Password must include uppercase, lowercase and numeric characters.',
-    ),
-  role: z.enum(['SUPER_ADMIN', 'CONTENT_EDITOR', 'FINANCE_VIEWER']),
+    .regex(passwordPattern, passwordCharacterMessage),
+  role: administratorRoleSchema,
 });
 export const administratorUpdateSchema = z.object({
-  name: z.string().trim().min(2).max(150),
-  role: z.enum(['SUPER_ADMIN', 'CONTENT_EDITOR', 'FINANCE_VIEWER']),
+  name: administratorNameSchema,
+  role: administratorRoleSchema,
   isActive: z.boolean(),
-  password: z.union([
-    z.literal(''),
-    z
-      .string()
-      .min(12)
-      .max(128)
-      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/),
-  ]),
+  // An empty value means "leave the current password alone", so the rules apply
+  // only once something has actually been typed.
+  password: z
+    .string()
+    .max(128)
+    .refine((value) => value === '' || value.length >= 12, passwordLengthMessage)
+    .refine((value) => value === '' || passwordPattern.test(value), passwordCharacterMessage),
 });
 
 export const auditLogSchema = z.object({

@@ -1,17 +1,28 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { FileUp, Save, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { AdminFormField } from '@/components/admin/AdminFormField';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { UploadProgress } from '@/components/admin/UploadProgress';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/store/auth.store';
-import type { GalleryApiItem } from './gallery.schemas';
+import {
+  galleryEditorSchema,
+  galleryMimeTypes,
+  galleryUploadHint,
+  galleryUploadSchema,
+  type GalleryApiItem,
+  type GalleryEditorValues,
+  type GalleryUploadValues,
+} from './gallery.schemas';
 import {
   deleteGallery,
   listAdminGallery,
@@ -19,14 +30,7 @@ import {
   uploadGallery,
 } from './gallery-admin.client';
 
-const galleryMimeTypes = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'video/mp4',
-  'video/webm',
-];
+const emptyUpload = { title: '', altText: '' } as unknown as GalleryUploadValues;
 
 export function GalleryAdmin() {
   const [language, setLanguage] = useState<'en' | 'am'>('en');
@@ -34,11 +38,6 @@ export function GalleryAdmin() {
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [items, setItems] = useState<GalleryApiItem[]>([]);
-  const [drafts, setDrafts] = useState<Record<string, { title: string; altText: string }>>({});
-  const [file, setFile] = useState<File | null>(null);
-  const [title, setTitle] = useState('');
-  const [altText, setAltText] = useState('');
-  const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -46,18 +45,33 @@ export function GalleryAdmin() {
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
 
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<GalleryUploadValues>({
+    resolver: zodResolver(galleryUploadSchema),
+    defaultValues: emptyUpload,
+  });
+
+  const fileField = register('file');
+  const fileInput = useRef<HTMLInputElement | null>(null);
+
   const load = useCallback(
     async (signal?: AbortSignal) => {
       setLoading(true);
       try {
         const result = await listAdminGallery({ page, languageCode: language, type, signal });
+        if (signal?.aborted) return;
+        const lastPage = Math.max(1, result.meta.totalPages);
+        setPages(lastPage);
+        if (page > lastPage) {
+          setPage(lastPage);
+          return;
+        }
         setItems(result.data);
-        setPages(Math.max(1, result.meta.totalPages));
-        setDrafts(
-          Object.fromEntries(
-            result.data.map((item) => [item.id, { title: item.title, altText: item.altText }]),
-          ),
-        );
+        setError('');
       } catch (loadError) {
         if (!signal?.aborted) setError(getApiErrorMessageWithDetails(loadError));
       } finally {
@@ -66,61 +80,56 @@ export function GalleryAdmin() {
     },
     [page, language, type],
   );
+
   useEffect(() => {
     const controller = new AbortController();
     void load(controller.signal);
     return () => controller.abort();
   }, [load]);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.gallery.all });
     await load();
-  }
-  async function upload() {
-    if (!file) return setError('Choose an image or video.');
-    if (file.size > 10_485_760) return setError('The gallery file must be 10 MB or smaller.');
-    if (!galleryMimeTypes.includes(file.type))
-      return setError('Gallery accepts JPEG, PNG, GIF, WebP, MP4, and WebM files.');
-    if (title.trim().length < 2 || altText.trim().length < 2)
-      return setError('Title and alternative text must contain at least two characters.');
+  }, [load, queryClient]);
+
+  async function upload(values: GalleryUploadValues) {
     const form = new FormData();
-    form.set('file', file);
-    form.set('title', title.trim());
-    form.set('altText', altText.trim());
+    form.set('file', values.file[0]);
+    form.set('title', values.title.trim());
+    form.set('altText', values.altText.trim());
     form.set('languageCode', language);
-    setUploading(true);
     setProgress(0);
     setError('');
     try {
       await uploadGallery(form, setProgress);
-      setFile(null);
-      setTitle('');
-      setAltText('');
+      reset(emptyUpload);
+      // reset() cannot clear a file input, so the chosen filename would
+      // otherwise linger and invite a second upload of a released file.
+      if (fileInput.current) fileInput.current.value = '';
       await refresh();
-      notify({ title: 'Gallery item uploaded', message: title });
+      notify({ title: 'Gallery item uploaded', message: values.title.trim() });
     } catch (uploadError) {
       setError(getApiErrorMessageWithDetails(uploadError));
-    } finally {
-      setUploading(false);
     }
   }
-  async function save(item: GalleryApiItem) {
-    const values = drafts[item.id];
-    if (!values || values.title.trim().length < 2 || values.altText.trim().length < 2)
-      return setError('Title and alternative text must contain at least two characters.');
-    try {
+
+  const save = useCallback(
+    async (item: GalleryApiItem, values: GalleryEditorValues) => {
       await updateGallery(item.id, values);
       await refresh();
       notify({ title: 'Gallery item saved', message: values.title });
-    } catch (saveError) {
-      setError(getApiErrorMessageWithDetails(saveError));
-    }
-  }
-  async function remove(item: GalleryApiItem) {
-    await deleteGallery(item.id);
-    await refresh();
-    notify({ title: 'Gallery item deleted', message: item.title });
-  }
+    },
+    [notify, refresh],
+  );
+
+  const remove = useCallback(
+    async (item: GalleryApiItem) => {
+      await deleteGallery(item.id);
+      await refresh();
+      notify({ title: 'Gallery item deleted', message: item.title });
+    },
+    [notify, refresh],
+  );
 
   return (
     <section aria-labelledby="gallery-admin-heading">
@@ -159,7 +168,7 @@ export function GalleryAdmin() {
           ))}
         </div>
         <select
-          aria-label="Gallery type"
+          aria-label="Filter by media type"
           value={type}
           onChange={(event) => {
             setType(event.target.value);
@@ -173,29 +182,48 @@ export function GalleryAdmin() {
         </select>
       </div>
       <form
+        noValidate
+        aria-label="Upload gallery item"
         className="bg-card mt-6 grid gap-4 rounded-xl border p-6 shadow-sm md:grid-cols-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void upload();
-        }}
+        onSubmit={handleSubmit(upload)}
       >
-        <label className="md:col-span-2">
-          <span className="text-heading mb-2 block text-sm font-semibold">Image or video</span>
-          <input
+        <div className="md:col-span-2">
+          <AdminFormField
+            label="Image or video"
+            id="gallery-file"
             type="file"
             accept={galleryMimeTypes.join(',')}
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-            className="min-h-11 w-full rounded-lg border p-2"
+            className="border-input min-h-12 w-full rounded-lg border bg-white p-2"
+            hint={galleryUploadHint}
+            error={errors.file?.message}
+            {...fileField}
+            ref={(element: HTMLInputElement | null) => {
+              fileField.ref(element);
+              fileInput.current = element;
+            }}
           />
-        </label>
-        <Field label="Title" value={title} maxLength={255} onChange={setTitle} />
-        <Field label="Alternative text" value={altText} maxLength={500} onChange={setAltText} />
+        </div>
+        <AdminFormField
+          label="Title"
+          id="gallery-title"
+          maxLength={255}
+          error={errors.title?.message}
+          {...register('title')}
+        />
+        <AdminFormField
+          label="Alternative text"
+          id="gallery-alt-text"
+          maxLength={500}
+          hint="Describe what the image or video shows."
+          error={errors.altText?.message}
+          {...register('altText')}
+        />
         <div className="md:col-span-2">
-          <Button type="submit" disabled={uploading}>
+          <Button type="submit" disabled={isSubmitting}>
             <FileUp aria-hidden="true" />
-            {uploading ? 'Uploading…' : 'Upload gallery item'}
+            {isSubmitting ? 'Uploading…' : 'Upload gallery item'}
           </Button>
-          {uploading && <UploadProgress value={progress} />}
+          {isSubmitting && <UploadProgress value={progress} />}
         </div>
       </form>
       {error && (
@@ -207,70 +235,32 @@ export function GalleryAdmin() {
         </p>
       )}
       {loading ? (
-        <div role="status" className="bg-card mt-6 h-52 animate-pulse rounded-xl border" />
+        <div
+          role="status"
+          aria-label="Loading gallery"
+          className="bg-card mt-6 h-52 animate-pulse rounded-xl border motion-reduce:animate-none"
+        />
       ) : items.length === 0 ? (
         <p role="status" className="bg-card mt-6 rounded-xl border p-8">
           No {language.toUpperCase()} gallery items match this filter.
         </p>
       ) : (
         <ul className="mt-6 grid gap-5 xl:grid-cols-2">
-          {items.map((item) => {
-            const draft = drafts[item.id] ?? { title: item.title, altText: item.altText };
-            return (
-              <li key={item.id} className="bg-card rounded-xl border p-5 shadow-sm">
-                <div className="relative mb-4 aspect-video overflow-hidden rounded-lg bg-slate-100">
-                  {item.type === 'IMAGE' ? (
-                    <Image
-                      src={item.mediaUrl}
-                      alt={item.altText}
-                      fill
-                      sizes="(max-width: 1280px) 100vw, 50vw"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <video src={item.mediaUrl} controls preload="metadata" className="size-full" />
-                  )}
-                </div>
-                <div className="grid gap-4">
-                  <Field
-                    label="Title"
-                    value={draft.title}
-                    maxLength={255}
-                    onChange={(value) =>
-                      setDrafts({ ...drafts, [item.id]: { ...draft, title: value } })
-                    }
-                  />
-                  <Field
-                    label="Alternative text"
-                    value={draft.altText}
-                    maxLength={500}
-                    onChange={(value) =>
-                      setDrafts({ ...drafts, [item.id]: { ...draft, altText: value } })
-                    }
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    <Button type="button" onClick={() => void save(item)}>
-                      <Save aria-hidden="true" /> Save
-                    </Button>
-                    {role === 'SUPER_ADMIN' && (
-                      <ConfirmedActionButton
-                        title="Delete gallery item?"
-                        description="The gallery record and its stored media object will be permanently removed."
-                        confirmLabel="Delete gallery item"
-                        onConfirm={() => remove(item)}
-                      >
-                        <Trash2 aria-hidden="true" /> Delete
-                      </ConfirmedActionButton>
-                    )}
-                  </div>
-                </div>
-              </li>
-            );
-          })}
+          {items.map((item) => (
+            <li key={item.id}>
+              <GalleryItemRow
+                item={item}
+                canDelete={role === 'SUPER_ADMIN'}
+                onSave={save}
+                onDelete={remove}
+              />
+            </li>
+          ))}
         </ul>
       )}
-      <div className="mt-6 flex items-center justify-between">
+      <nav aria-label="Gallery pagination" className="mt-6 flex items-center justify-between">
         <Button
+          type="button"
           variant="outline"
           disabled={page <= 1}
           onClick={() => setPage((value) => value - 1)}
@@ -281,36 +271,113 @@ export function GalleryAdmin() {
           Page {page} of {pages}
         </span>
         <Button
+          type="button"
           variant="outline"
           disabled={page >= pages}
           onClick={() => setPage((value) => value + 1)}
         >
           Next
         </Button>
-      </div>
+      </nav>
     </section>
   );
 }
-function Field({
-  label,
-  value,
-  maxLength,
-  onChange,
+
+function GalleryItemRow({
+  item,
+  canDelete,
+  onSave,
+  onDelete,
 }: {
-  label: string;
-  value: string;
-  maxLength: number;
-  onChange: (value: string) => void;
+  item: GalleryApiItem;
+  canDelete: boolean;
+  onSave: (item: GalleryApiItem, values: GalleryEditorValues) => Promise<void>;
+  onDelete: (item: GalleryApiItem) => Promise<void>;
 }) {
+  const [rowError, setRowError] = useState('');
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<GalleryEditorValues>({
+    resolver: zodResolver(galleryEditorSchema),
+    defaultValues: { title: item.title, altText: item.altText },
+  });
+
+  useEffect(() => {
+    reset({ title: item.title, altText: item.altText });
+  }, [item.title, item.altText, reset]);
+
+  async function submit(values: GalleryEditorValues) {
+    setRowError('');
+    try {
+      await onSave(item, values);
+    } catch (saveError) {
+      setRowError(`${getApiErrorMessageWithDetails(saveError)} Your edits are still on screen.`);
+    }
+  }
+
   return (
-    <label>
-      <span className="text-heading mb-2 block text-sm font-semibold">{label}</span>
-      <input
-        value={value}
-        maxLength={maxLength}
-        onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 w-full rounded-lg border px-3"
-      />
-    </label>
+    <form
+      noValidate
+      aria-label={`Edit ${item.title}`}
+      onSubmit={handleSubmit(submit)}
+      className="bg-card rounded-xl border p-5 shadow-sm"
+    >
+      <div className="relative mb-4 aspect-video overflow-hidden rounded-lg bg-slate-100">
+        {item.type === 'IMAGE' ? (
+          <Image
+            src={item.mediaUrl}
+            alt={item.altText}
+            fill
+            sizes="(max-width: 1280px) 100vw, 50vw"
+            className="object-cover"
+          />
+        ) : (
+          <video src={item.mediaUrl} controls preload="metadata" className="size-full" />
+        )}
+      </div>
+      <div className="grid gap-4">
+        <AdminFormField
+          label="Title"
+          id={`gallery-title-${item.id}`}
+          maxLength={255}
+          error={errors.title?.message}
+          {...register('title')}
+        />
+        <AdminFormField
+          label="Alternative text"
+          id={`gallery-alt-text-${item.id}`}
+          maxLength={500}
+          error={errors.altText?.message}
+          {...register('altText')}
+        />
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" disabled={isSubmitting}>
+            <Save aria-hidden="true" /> {isSubmitting ? 'Saving…' : 'Save'}
+          </Button>
+          {canDelete && (
+            <ConfirmedActionButton
+              title="Delete gallery item?"
+              description={`${item.title} and its stored media object will be permanently removed.`}
+              confirmLabel="Delete gallery item"
+              disabled={isSubmitting}
+              onConfirm={() => onDelete(item)}
+            >
+              <Trash2 aria-hidden="true" /> Delete
+            </ConfirmedActionButton>
+          )}
+        </div>
+        {rowError && (
+          <p
+            role="alert"
+            className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-900"
+          >
+            {rowError}
+          </p>
+        )}
+      </div>
+    </form>
   );
 }

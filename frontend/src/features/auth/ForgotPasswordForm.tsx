@@ -1,20 +1,26 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { browserApiClient } from '@/lib/api/browser-client';
 import { recoveryErrorMessage } from './auth-errors';
-import { Field } from './LoginForm';
+import { AuthFormAlert, AuthFormField } from './AuthFormField';
 import { forgotPasswordSchema, type ForgotPasswordValues } from './auth.schemas';
 
 const genericMessage = 'If the account exists, password reset instructions have been sent.';
 
 export function ForgotPasswordForm() {
   const [message, setMessage] = useState<string>();
+  const confirmation = useRef<HTMLParagraphElement | null>(null);
+
+  // Submitting replaces the form, so the focused control disappears. Without this the
+  // caret falls back to the document and keyboard users lose their place on the page.
+  useEffect(() => {
+    if (message) confirmation.current?.focus();
+  }, [message]);
   const {
     register,
     handleSubmit,
@@ -35,7 +41,9 @@ export function ForgotPasswordForm() {
     return (
       <div className="space-y-5 text-center">
         <p
+          ref={confirmation}
           role="status"
+          tabIndex={-1}
           className="border-primary/40 bg-primary/10 text-heading rounded border p-4 text-sm"
         >
           {message}
@@ -52,21 +60,15 @@ export function ForgotPasswordForm() {
 
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
-      {errors.root?.message && (
-        <p role="alert" className="text-destructive text-sm">
-          {errors.root.message}
-        </p>
-      )}
-      <Field label="Administrator email" error={errors.email?.message}>
-        <Input
-          type="email"
-          autoComplete="email"
-          autoCapitalize="none"
-          className="min-h-11"
-          aria-invalid={Boolean(errors.email)}
-          {...register('email')}
-        />
-      </Field>
+      {errors.root?.message && <AuthFormAlert>{errors.root.message}</AuthFormAlert>}
+      <AuthFormField
+        label="Administrator email"
+        type="email"
+        autoComplete="email"
+        autoCapitalize="none"
+        error={errors.email?.message}
+        {...register('email')}
+      />
       <Button type="submit" size="lg" className="min-h-11 w-full" disabled={isSubmitting}>
         {isSubmitting ? 'Sending…' : 'Send reset instructions'}
       </Button>

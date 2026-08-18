@@ -2,24 +2,47 @@ import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { CmsEditorValues } from '../admin-cms.schemas';
 
+type FieldMessages<T> = Partial<Record<keyof T, string>>;
+
+function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) return null;
+  return (
+    <p id={id} role="alert" className="text-destructive mt-1 text-sm">
+      {message}
+    </p>
+  );
+}
+
 export function HomepageEditor({
   value,
+  errors,
   onChange,
 }: {
   value: CmsEditorValues['homepage'];
+  errors?: FieldMessages<CmsEditorValues['homepage']>;
   onChange: (value: CmsEditorValues['homepage']) => void;
 }) {
-  const field = (name: keyof Omit<typeof value, 'services'>, label: string, maxLength: number) => (
-    <label className="block">
-      <span className="text-heading mb-2 block text-sm font-semibold">{label}</span>
-      <input
-        value={String(value[name])}
-        maxLength={maxLength}
-        onChange={(event) => onChange({ ...value, [name]: event.target.value })}
-        className="min-h-11 w-full rounded-lg border px-3"
-      />
-    </label>
-  );
+  const field = (name: keyof Omit<typeof value, 'services'>, label: string, maxLength: number) => {
+    const id = `homepage-${name}`;
+    const message = errors?.[name];
+    return (
+      <div className="block">
+        <label htmlFor={id} className="text-heading mb-2 block text-sm font-semibold">
+          {label}
+        </label>
+        <input
+          id={id}
+          value={String(value[name])}
+          maxLength={maxLength}
+          aria-invalid={Boolean(message)}
+          aria-describedby={message ? `${id}-error` : undefined}
+          onChange={(event) => onChange({ ...value, [name]: event.target.value })}
+          className="min-h-11 w-full rounded-lg border px-3"
+        />
+        <FieldError id={`${id}-error`} message={message} />
+      </div>
+    );
+  };
   return (
     <fieldset className="space-y-5 rounded-xl border p-5">
       <legend className="text-heading px-2 font-semibold">Homepage composition</legend>
@@ -38,6 +61,7 @@ export function HomepageEditor({
         {field('ctaHref', 'Call-to-action link', 2_048)}
       </div>
       <div>
+        <FieldError id="homepage-services-error" message={errors?.services} />
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-heading font-semibold">Services</h3>
           <Button
@@ -116,9 +140,11 @@ export function HomepageEditor({
 
 export function AboutEditor({
   value,
+  errors,
   onChange,
 }: {
   value: CmsEditorValues['about'];
+  errors?: FieldMessages<CmsEditorValues['about']>;
   onChange: (value: CmsEditorValues['about']) => void;
 }) {
   return (
@@ -137,20 +163,30 @@ export function AboutEditor({
           ['historyBody', 'Approved history content', 5_000],
         ] as const
       ).map(([name, label, maxLength]) => (
-        <label key={name} className="block">
-          <span className="text-heading mb-2 block text-sm font-semibold">{label}</span>
+        <div key={name} className="block">
+          <label
+            htmlFor={`about-${name}`}
+            className="text-heading mb-2 block text-sm font-semibold"
+          >
+            {label}
+          </label>
           <textarea
+            id={`about-${name}`}
             value={value[name]}
             maxLength={maxLength}
             rows={name.endsWith('Body') ? 5 : 2}
+            aria-invalid={Boolean(errors?.[name])}
+            aria-describedby={errors?.[name] ? `about-${name}-error` : undefined}
             onChange={(event) => onChange({ ...value, [name]: event.target.value })}
             className="w-full rounded-lg border p-3"
           />
-        </label>
+          <FieldError id={`about-${name}-error`} message={errors?.[name]} />
+        </div>
       ))}
       <StructuredListEditor
         title="Service overview"
         addLabel="Add service"
+        error={errors?.services}
         value={value.services}
         maxItems={12}
         fields={[
@@ -165,9 +201,11 @@ export function AboutEditor({
 
 export function VolunteerRolesEditor({
   value,
+  error,
   onChange,
 }: {
   value: CmsEditorValues['volunteerRoles'];
+  error?: string;
   onChange: (value: CmsEditorValues['volunteerRoles']) => void;
 }) {
   return (
@@ -176,6 +214,7 @@ export function VolunteerRolesEditor({
       <StructuredListEditor
         title="Published role listings"
         addLabel="Add role"
+        error={error}
         value={value}
         maxItems={20}
         fields={[
@@ -191,11 +230,13 @@ export function VolunteerRolesEditor({
 
 export function TeamMembersEditor({
   value,
+  error,
   onChange,
   approved,
   onApprovalChange,
 }: {
   value: CmsEditorValues['teamMembers'];
+  error?: string;
   onChange: (value: CmsEditorValues['teamMembers']) => void;
   approved: boolean;
   onApprovalChange: (approved: boolean) => void;
@@ -215,6 +256,7 @@ export function TeamMembersEditor({
       <StructuredListEditor
         title="Team members"
         addLabel="Add approved member"
+        error={error}
         value={value}
         maxItems={50}
         fields={[
@@ -256,6 +298,7 @@ function StructuredListEditor<T extends Record<string, string>>({
   value,
   maxItems,
   fields,
+  error,
   onChange,
 }: {
   title: string;
@@ -263,11 +306,13 @@ function StructuredListEditor<T extends Record<string, string>>({
   value: T[];
   maxItems: number;
   fields: Array<{ key: keyof T; label: string; maxLength: number }>;
+  error?: string;
   onChange: (value: T[]) => void;
 }) {
   const empty = () => Object.fromEntries(fields.map((field) => [field.key, ''])) as T;
   return (
     <div>
+      <FieldError id={`${title.replaceAll(' ', '-').toLowerCase()}-error`} message={error} />
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-heading font-semibold">{title}</h3>
         <Button
@@ -322,4 +367,3 @@ function StructuredListEditor<T extends Record<string, string>>({
     </div>
   );
 }
-
