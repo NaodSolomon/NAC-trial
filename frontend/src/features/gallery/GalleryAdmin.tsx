@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FileUp, Save, Trash2 } from 'lucide-react';
@@ -14,6 +14,7 @@ import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/store/auth.store';
+import { useAdminList } from '@/hooks/use-admin-list';
 import {
   galleryEditorSchema,
   galleryMimeTypes,
@@ -35,12 +36,7 @@ const emptyUpload = { title: '', altText: '' } as unknown as GalleryUploadValues
 export function GalleryAdmin() {
   const [language, setLanguage] = useState<'en' | 'am'>('en');
   const [type, setType] = useState('');
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [items, setItems] = useState<GalleryApiItem[]>([]);
   const [progress, setProgress] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const role = useAuthStore((state) => state.user?.role);
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
@@ -55,37 +51,23 @@ export function GalleryAdmin() {
     defaultValues: emptyUpload,
   });
 
-  const fileField = register('file');
-  const fileInput = useRef<HTMLInputElement | null>(null);
+  const [fileFieldKey, setFileFieldKey] = useState(0);
 
-  const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      try {
-        const result = await listAdminGallery({ page, languageCode: language, type, signal });
-        if (signal?.aborted) return;
-        const lastPage = Math.max(1, result.meta.totalPages);
-        setPages(lastPage);
-        if (page > lastPage) {
-          setPage(lastPage);
-          return;
-        }
-        setItems(result.data);
-        setError('');
-      } catch (loadError) {
-        if (!signal?.aborted) setError(getApiErrorMessageWithDetails(loadError));
-      } finally {
-        if (!signal?.aborted) setLoading(false);
-      }
-    },
-    [page, language, type],
+  const {
+    records: items,
+    page,
+    setPage,
+    pages,
+    loading,
+    error,
+    setError,
+    reload: load,
+  } = useAdminList<GalleryApiItem>(
+    useCallback(
+      ({ page, signal }) => listAdminGallery({ page, languageCode: language, type, signal }),
+      [language, type],
+    ),
   );
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, [load]);
 
   const refresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.gallery.all });
@@ -103,9 +85,9 @@ export function GalleryAdmin() {
     try {
       await uploadGallery(form, setProgress);
       reset(emptyUpload);
-      // reset() cannot clear a file input, so the chosen filename would
-      // otherwise linger and invite a second upload of a released file.
-      if (fileInput.current) fileInput.current.value = '';
+      // reset() cannot clear a file input, so the control is remounted instead.
+      // Otherwise the filename lingers and invites a second upload of a released file.
+      setFileFieldKey((value) => value + 1);
       await refresh();
       notify({ title: 'Gallery item uploaded', message: values.title.trim() });
     } catch (uploadError) {
@@ -196,11 +178,8 @@ export function GalleryAdmin() {
             className="border-input min-h-12 w-full rounded-lg border bg-white p-2"
             hint={galleryUploadHint}
             error={errors.file?.message}
-            {...fileField}
-            ref={(element: HTMLInputElement | null) => {
-              fileField.ref(element);
-              fileInput.current = element;
-            }}
+            key={fileFieldKey}
+            {...register('file')}
           />
         </div>
         <AdminFormField

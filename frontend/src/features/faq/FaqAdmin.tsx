@@ -58,8 +58,10 @@ export function FaqAdmin() {
   const load = useCallback(
     async (signal?: AbortSignal) => {
       setLoading(true);
+      setError('');
       try {
         const result = await listAdminFaqs({ page: 1, languageCode: language, status, signal });
+        if (signal?.aborted) return;
         setEntries(result.data);
       } catch (loadError) {
         if (!signal?.aborted) setError(getApiErrorMessageWithDetails(loadError));

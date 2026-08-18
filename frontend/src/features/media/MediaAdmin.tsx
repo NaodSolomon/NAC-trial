@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ExternalLink, FileUp, Search, Trash2 } from 'lucide-react';
@@ -15,6 +15,7 @@ import { UploadProgress } from '@/components/admin/UploadProgress';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { useAuthStore } from '@/store/auth.store';
+import { useAdminList } from '@/hooks/use-admin-list';
 import { deleteMedia, listMedia, uploadMedia } from './media-admin.client';
 import {
   allowedMediaMimeTypes,
@@ -31,15 +32,10 @@ const emptyUpload = {
 } as unknown as MediaUploadValues;
 
 export function MediaAdmin() {
-  const [items, setItems] = useState<MediaAsset[]>([]);
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
   const [type, setType] = useState('');
   const [search, setSearch] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
-  const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
-  const [error, setError] = useState('');
   const role = useAuthStore((state) => state.user?.role);
   const { notify } = useAdminFeedback();
 
@@ -53,37 +49,23 @@ export function MediaAdmin() {
     defaultValues: emptyUpload,
   });
 
-  const fileField = register('file');
-  const fileInput = useRef<HTMLInputElement | null>(null);
+  const [fileFieldKey, setFileFieldKey] = useState(0);
 
-  const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      try {
-        const result = await listMedia({ page, type, search: appliedSearch, signal });
-        if (signal?.aborted) return;
-        const lastPage = Math.max(1, result.meta.totalPages);
-        setPages(lastPage);
-        if (page > lastPage) {
-          setPage(lastPage);
-          return;
-        }
-        setItems(result.data);
-        setError('');
-      } catch (loadError) {
-        if (!signal?.aborted) setError(getApiErrorMessageWithDetails(loadError));
-      } finally {
-        if (!signal?.aborted) setLoading(false);
-      }
-    },
-    [page, type, appliedSearch],
+  const {
+    records: items,
+    page,
+    setPage,
+    pages,
+    loading,
+    error,
+    setError,
+    reload: load,
+  } = useAdminList<MediaAsset>(
+    useCallback(
+      ({ page, signal }) => listMedia({ page, type, search: appliedSearch, signal }),
+      [type, appliedSearch],
+    ),
   );
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, [load]);
 
   async function submitUpload(values: MediaUploadValues) {
     const chosen = values.file[0];
@@ -98,9 +80,9 @@ export function MediaAdmin() {
     try {
       await uploadMedia(form, setProgress);
       reset(emptyUpload);
-      // reset() cannot clear a file input, so the chosen filename would
-      // otherwise linger and invite a second upload of a released file.
-      if (fileInput.current) fileInput.current.value = '';
+      // reset() cannot clear a file input, so the control is remounted instead.
+      // Otherwise the filename lingers and invites a second upload of a released file.
+      setFileFieldKey((value) => value + 1);
       await load();
       notify({ title: 'Media uploaded', message: chosen.name });
     } catch (uploadError) {
@@ -142,11 +124,8 @@ export function MediaAdmin() {
             className="border-input min-h-12 w-full rounded-lg border bg-white p-2"
             hint={mediaUploadHint}
             error={errors.file?.message}
-            {...fileField}
-            ref={(element: HTMLInputElement | null) => {
-              fileField.ref(element);
-              fileInput.current = element;
-            }}
+            key={fileFieldKey}
+            {...register('file')}
           />
         </div>
         <AdminFormSelect

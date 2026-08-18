@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FilePlus2, Save, Trash2 } from 'lucide-react';
@@ -16,6 +16,7 @@ import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { Button } from '@/components/ui/button';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
+import { useAdminList } from '@/hooks/use-admin-list';
 import {
   createTestimonial,
   deleteTestimonial,
@@ -31,14 +32,9 @@ import {
 import { EngagementHeading, LanguageFilter, ListPager, LoadState } from './EngagementAdminParts';
 
 export function TestimonialAdmin() {
-  const [records, setRecords] = useState<Testimonial[]>([]);
   const [selected, setSelected] = useState<Testimonial | null>(null);
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
   const [language, setLanguage] = useState('');
   const [status, setStatus] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const {
     register,
     handleSubmit,
@@ -50,32 +46,21 @@ export function TestimonialAdmin() {
   });
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
-  const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      setError('');
-      try {
-        const result = await listAdminTestimonials({
-          page,
-          languageCode: language,
-          status,
-          signal,
-        });
-        setRecords(result.data);
-        setPages(Math.max(1, result.meta.totalPages));
-      } catch (cause) {
-        if (!signal?.aborted) setError(getApiErrorMessageWithDetails(cause));
-      } finally {
-        if (!signal?.aborted) setLoading(false);
-      }
-    },
-    [page, language, status],
+  const {
+    records,
+    page,
+    setPage,
+    pages,
+    loading,
+    error,
+    setError,
+    reload: load,
+  } = useAdminList<Testimonial>(
+    useCallback(
+      ({ page, signal }) => listAdminTestimonials({ page, languageCode: language, status, signal }),
+      [language, status],
+    ),
   );
-  useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, [load]);
   function select(record: Testimonial | null) {
     setSelected(record);
     reset(

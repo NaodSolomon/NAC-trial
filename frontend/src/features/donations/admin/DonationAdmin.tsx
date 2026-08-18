@@ -57,6 +57,7 @@ export function DonationAdmin() {
           getDonationStats(signal),
           getDonationRuntime(signal),
         ]);
+        if (signal?.aborted) return;
         setRecords(list.data);
         setPages(Math.max(1, list.meta.totalPages));
         setStats(summary);

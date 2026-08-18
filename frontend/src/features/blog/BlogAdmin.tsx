@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useCallback, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FilePlus2, RotateCcw, Save, Send, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -17,6 +17,7 @@ import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/store/auth.store';
+import { useAdminList } from '@/hooks/use-admin-list';
 import {
   createBlog,
   deleteBlog,
@@ -33,13 +34,8 @@ import {
 } from './blog-admin.schemas';
 
 export function BlogAdmin() {
-  const [posts, setPosts] = useState<AdminBlogPost[]>([]);
   const [selected, setSelected] = useState<AdminBlogPost | null>(null);
   const [language, setLanguage] = useState('');
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const role = useAuthStore((state) => state.user?.role);
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
@@ -47,33 +43,28 @@ export function BlogAdmin() {
     register,
     handleSubmit,
     reset,
-    watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<BlogEditorValues>({
     resolver: zodResolver(blogEditorSchema),
     defaultValues: emptyBlogEditor,
   });
-  const watched = watch();
-  const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      try {
-        const result = await listAdminBlog({ page, languageCode: language, signal });
-        setPosts(result.data);
-        setPages(Math.max(1, result.meta.totalPages));
-      } catch (loadError) {
-        if (!signal?.aborted) setError(getApiErrorMessageWithDetails(loadError));
-      } finally {
-        if (!signal?.aborted) setLoading(false);
-      }
-    },
-    [page, language],
+  const watched = useWatch({ control });
+  const {
+    records: posts,
+    page,
+    setPage,
+    pages,
+    loading,
+    error,
+    setError,
+    reload: load,
+  } = useAdminList<AdminBlogPost>(
+    useCallback(
+      ({ page, signal }) => listAdminBlog({ page, languageCode: language, signal }),
+      [language],
+    ),
   );
-  useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, [load]);
   async function refresh() {
     await queryClient.invalidateQueries({ queryKey: queryKeys.blog.all });
     await load();
@@ -90,9 +81,7 @@ export function BlogAdmin() {
   async function onSubmit(values: BlogEditorValues) {
     setError('');
     try {
-      const saved = selected
-        ? await updateBlog(selected.id, values)
-        : await createBlog(values);
+      const saved = selected ? await updateBlog(selected.id, values) : await createBlog(values);
       setSelected(saved);
       reset(blogEditorFromPost(saved));
       await refresh();
@@ -253,7 +242,7 @@ export function BlogAdmin() {
             counted={watched.title ?? ''}
             error={errors.title?.message}
             {...register('title')}
-            />
+          />
           <AdminFormTextarea
             label="Excerpt"
             maxLength={500}
@@ -261,7 +250,7 @@ export function BlogAdmin() {
             counted={watched.excerpt ?? ''}
             error={errors.excerpt?.message}
             {...register('excerpt')}
-            />
+          />
           <AdminFormTextarea
             label="Article content"
             maxLength={200000}
@@ -269,7 +258,7 @@ export function BlogAdmin() {
             counted={watched.content ?? ''}
             error={errors.content?.message}
             {...register('content')}
-            />
+          />
           <fieldset className="grid gap-4 rounded-lg border p-4 md:grid-cols-2">
             <legend className="px-2 font-semibold">SEO</legend>
             <AdminFormField
@@ -278,14 +267,14 @@ export function BlogAdmin() {
               counted={watched.seoTitle ?? ''}
               error={errors.seoTitle?.message}
               {...register('seoTitle')}
-              />
+            />
             <AdminFormField
               label="SEO image URL"
               maxLength={2048}
               counted={watched.seoImageUrl ?? ''}
               error={errors.seoImageUrl?.message}
               {...register('seoImageUrl')}
-              />
+            />
             <div className="md:col-span-2">
               <AdminFormTextarea
                 label="SEO description"
@@ -294,7 +283,7 @@ export function BlogAdmin() {
                 counted={watched.seoDescription ?? ''}
                 error={errors.seoDescription?.message}
                 {...register('seoDescription')}
-                />
+              />
             </div>
           </fieldset>
           <div className="flex flex-wrap gap-2">

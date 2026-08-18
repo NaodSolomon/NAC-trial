@@ -16,6 +16,7 @@ import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/store/auth.store';
+import { useAdminList } from '@/hooks/use-admin-list';
 import { calendarDownloadHref } from './event.utils';
 import {
   createEvent,
@@ -35,7 +36,6 @@ import {
 } from './event-admin.schemas';
 
 export function EventAdmin() {
-  const [events, setEvents] = useState<AdminEvent[]>([]);
   const [selected, setSelected] = useState<AdminEvent | null>(null);
   const [rsvps, setRsvps] = useState<EventRsvp[]>([]);
   const [rsvpPages, setRsvpPages] = useState(1);
@@ -44,10 +44,6 @@ export function EventAdmin() {
   const [language, setLanguage] = useState('');
   const [status, setStatus] = useState('');
   const [timeframe, setTimeframe] = useState('all');
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const role = useAuthStore((state) => state.user?.role);
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
@@ -60,37 +56,28 @@ export function EventAdmin() {
     resolver: zodResolver(eventEditorSchema),
     defaultValues: emptyEventEditor,
   });
-  const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      try {
-        const result = await listAdminEvents({
-          page,
-          languageCode: language,
-          status,
-          timeframe,
-          signal,
-        });
-        setEvents(result.data);
-        setPages(Math.max(1, result.meta.totalPages));
-      } catch (loadError) {
-        if (!signal?.aborted) setError(getApiErrorMessageWithDetails(loadError));
-      } finally {
-        if (!signal?.aborted) setLoading(false);
-      }
-    },
-    [page, language, status, timeframe],
+  const {
+    records: events,
+    page,
+    setPage,
+    pages,
+    loading,
+    error,
+    setError,
+    reload: load,
+  } = useAdminList<AdminEvent>(
+    useCallback(
+      ({ page, signal }) =>
+        listAdminEvents({ page, languageCode: language, status, timeframe, signal }),
+      [language, status, timeframe],
+    ),
   );
-  useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, [load]);
   useEffect(() => {
     if (!selected || !showRsvps) return;
     const controller = new AbortController();
     void listEventRsvps(selected.id, rsvpPage, controller.signal)
       .then((result) => {
+        if (controller.signal.aborted) return;
         setRsvps(result.data);
         setRsvpPages(Math.max(1, result.meta.totalPages));
       })
@@ -98,7 +85,7 @@ export function EventAdmin() {
         if (!controller.signal.aborted) setError(getApiErrorMessageWithDetails(loadError));
       });
     return () => controller.abort();
-  }, [selected, showRsvps, rsvpPage]);
+  }, [selected, showRsvps, rsvpPage, setError]);
   async function refresh() {
     await queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     await load();
@@ -118,9 +105,7 @@ export function EventAdmin() {
   async function onSubmit(values: EventEditorValues) {
     setError('');
     try {
-      const saved = selected
-        ? await updateEvent(selected.id, values)
-        : await createEvent(values);
+      const saved = selected ? await updateEvent(selected.id, values) : await createEvent(values);
       setSelected(saved);
       reset(eventEditorFromEvent(saved));
       await refresh();
@@ -270,7 +255,7 @@ export function EventAdmin() {
                 maxLength={180}
                 error={errors.slug?.message}
                 {...register('slug')}
-                />
+              />
               <AdminFormSelect
                 label="Language"
                 disabled={Boolean(selected)}
@@ -285,25 +270,25 @@ export function EventAdmin() {
                 maxLength={255}
                 error={errors.title?.message}
                 {...register('title')}
-                />
+              />
               <AdminFormField
                 label="Location"
                 maxLength={500}
                 error={errors.location?.message}
                 {...register('location')}
-                />
+              />
               <AdminFormField
                 label="Start date and time"
                 type="datetime-local"
                 error={errors.startDate?.message}
                 {...register('startDate')}
-                />
+              />
               <AdminFormField
                 label="End date and time"
                 type="datetime-local"
                 error={errors.endDate?.message}
                 {...register('endDate')}
-                />
+              />
             </div>
             <AdminFormTextarea
               label="Description"

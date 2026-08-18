@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ExternalLink, FilePlus2, Send, Trash2 } from 'lucide-react';
@@ -17,6 +17,7 @@ import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/store/auth.store';
+import { useAdminList } from '@/hooks/use-admin-list';
 import {
   createResource,
   deleteResource,
@@ -32,12 +33,7 @@ import {
 } from './resource-admin.schemas';
 
 export function ResourceAdmin() {
-  const [items, setItems] = useState<AdminResource[]>([]);
   const [language, setLanguage] = useState('');
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const role = useAuthStore((state) => state.user?.role);
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
@@ -50,26 +46,21 @@ export function ResourceAdmin() {
     resolver: zodResolver(resourceEditorSchema),
     defaultValues: emptyResource,
   });
-  const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      try {
-        const result = await listAdminResources({ page, languageCode: language, signal });
-        setItems(result.data);
-        setPages(Math.max(1, result.meta.totalPages));
-      } catch (loadError) {
-        if (!signal?.aborted) setError(getApiErrorMessageWithDetails(loadError));
-      } finally {
-        if (!signal?.aborted) setLoading(false);
-      }
-    },
-    [page, language],
+  const {
+    records: items,
+    page,
+    setPage,
+    pages,
+    loading,
+    error,
+    setError,
+    reload: load,
+  } = useAdminList<AdminResource>(
+    useCallback(
+      ({ page, signal }) => listAdminResources({ page, languageCode: language, signal }),
+      [language],
+    ),
   );
-  useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, [load]);
   async function refresh() {
     await queryClient.invalidateQueries({ queryKey: queryKeys.resources.all });
     await load();

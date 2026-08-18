@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save, Trash2, UserPlus } from 'lucide-react';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/store/auth.store';
+import { useAdminList } from '@/hooks/use-admin-list';
 import {
   createAdministrator,
   deleteAdministrator,
@@ -49,14 +50,9 @@ function toUpdateValues(record: Administrator): AdministratorUpdate {
 }
 
 export function AdministratorsAdmin() {
-  const [records, setRecords] = useState<Administrator[]>([]);
   const [selected, setSelected] = useState<Administrator | null>(null);
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
   const [roleFilter, setRoleFilter] = useState('');
   const [activeFilter, setActiveFilter] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const currentAdminId = useAuthStore((state) => state.user?.id);
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
@@ -71,39 +67,22 @@ export function AdministratorsAdmin() {
   });
   const { reset: resetUpdateForm } = updateForm;
 
-  const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      setError('');
-      try {
-        const result = await listAdministrators({
-          page,
-          role: roleFilter,
-          isActive: activeFilter,
-          signal,
-        });
-        if (signal?.aborted) return;
-        const lastPage = Math.max(1, result.meta.totalPages);
-        setPages(lastPage);
-        if (page > lastPage) {
-          setPage(lastPage);
-          return;
-        }
-        setRecords(result.data);
-      } catch (cause) {
-        if (!signal?.aborted) setError(getApiErrorMessageWithDetails(cause));
-      } finally {
-        if (!signal?.aborted) setLoading(false);
-      }
-    },
-    [page, roleFilter, activeFilter],
+  const {
+    records,
+    page,
+    setPage,
+    pages,
+    loading,
+    error,
+    setError,
+    reload: load,
+  } = useAdminList<Administrator>(
+    useCallback(
+      ({ page, signal }) =>
+        listAdministrators({ page, role: roleFilter, isActive: activeFilter, signal }),
+      [roleFilter, activeFilter],
+    ),
   );
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, [load]);
 
   const select = useCallback(
     (record: Administrator | null) => {
@@ -111,7 +90,7 @@ export function AdministratorsAdmin() {
       resetUpdateForm(record ? toUpdateValues(record) : emptyUpdate);
       setError('');
     },
-    [resetUpdateForm],
+    [resetUpdateForm, setError],
   );
 
   async function refresh() {

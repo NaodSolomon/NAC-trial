@@ -1,56 +1,33 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Search, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { Button } from '@/components/ui/button';
-import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/store/auth.store';
+import { useAdminList } from '@/hooks/use-admin-list';
 import { deleteContactSubmission, listContactSubmissions } from './engagement-admin.client';
 import type { ContactSubmission } from './engagement-admin.schemas';
 import { EngagementHeading, LanguageFilter, ListPager, LoadState } from './EngagementAdminParts';
 
 export function ContactAdmin() {
-  const [records, setRecords] = useState<ContactSubmission[]>([]);
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
   const [language, setLanguage] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const role = useAuthStore((state) => state.user?.role);
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
-  const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      setError('');
-      try {
-        const result = await listContactSubmissions({
-          page,
-          languageCode: language,
-          search,
-          signal,
-        });
-        setRecords(result.data);
-        setPages(Math.max(1, result.meta.totalPages));
-      } catch (cause) {
-        if (!signal?.aborted) setError(getApiErrorMessageWithDetails(cause));
-      } finally {
-        if (!signal?.aborted) setLoading(false);
-      }
-    },
-    [page, language, search],
-  );
-  useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
-  }, [load]);
+  const { records, setRecords, page, setPage, pages, loading, error } =
+    useAdminList<ContactSubmission>(
+      useCallback(
+        ({ page, signal }) =>
+          listContactSubmissions({ page, languageCode: language, search, signal }),
+        [language, search],
+      ),
+    );
   async function remove(id: string) {
     await deleteContactSubmission(id);
     setRecords((current) => current.filter((record) => record.id !== id));
