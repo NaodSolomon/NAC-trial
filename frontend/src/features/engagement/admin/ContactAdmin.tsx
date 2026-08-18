@@ -2,11 +2,10 @@
 
 import { useCallback, useState } from 'react';
 import { Search, Trash2 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
-import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { Button } from '@/components/ui/button';
 import { queryKeys } from '@/lib/api/query-keys';
+import { useAdminActions } from '@/hooks/use-admin-actions';
 import { useAuthStore } from '@/store/auth.store';
 import { useAdminList } from '@/hooks/use-admin-list';
 import { deleteContactSubmission, listContactSubmissions } from './engagement-admin.client';
@@ -18,21 +17,31 @@ export function ContactAdmin() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const role = useAuthStore((state) => state.user?.role);
-  const queryClient = useQueryClient();
-  const { notify } = useAdminFeedback();
-  const { records, setRecords, page, setPage, pages, loading, error } =
-    useAdminList<ContactSubmission>(
-      useCallback(
-        ({ page, signal }) =>
-          listContactSubmissions({ page, languageCode: language, search, signal }),
-        [language, search],
-      ),
-    );
+  const {
+    records,
+    page,
+    setPage,
+    pages,
+    loading,
+    error,
+    reload: load,
+  } = useAdminList<ContactSubmission>(
+    useCallback(
+      ({ page, signal }) =>
+        listContactSubmissions({ page, languageCode: language, search, signal }),
+      [language, search],
+    ),
+  );
+  const { run } = useAdminActions({
+    reload: load,
+    queryKey: queryKeys.engagement.all,
+  });
+
   async function remove(id: string) {
-    await deleteContactSubmission(id);
-    setRecords((current) => current.filter((record) => record.id !== id));
-    await queryClient.invalidateQueries({ queryKey: queryKeys.engagement.adminContact() });
-    notify({ title: 'Contact submission deleted', message: 'The cached record was removed.' });
+    await run(() => deleteContactSubmission(id), {
+      title: 'Contact submission deleted',
+      message: 'The cached record was removed.',
+    });
   }
   return (
     <section aria-labelledby="contact-admin-heading">
