@@ -1,7 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-
-const apiUrl = 'http://127.0.0.1:4010/api/v1';
-const storageOrigin = 'http://127.0.0.1:4010';
+import { API_ORIGIN, API_URL, APP_URL } from './tests/helpers/test-endpoints';
 
 export default defineConfig({
   testDir: './tests/visual',
@@ -9,7 +7,7 @@ export default defineConfig({
   timeout: 60_000,
   expect: { toHaveScreenshot: { animations: 'disabled', maxDiffPixelRatio: 0.01 } },
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: APP_URL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -32,20 +30,20 @@ export default defineConfig({
   webServer: [
     {
       command: 'node tests/helpers/home-api-server.mjs',
-      url: 'http://127.0.0.1:4010/health',
+      url: `${API_ORIGIN}/health`,
       reuseExistingServer: !process.env.CI,
     },
     {
       command: 'pnpm build && pnpm start',
-      url: 'http://localhost:3000',
+      url: APP_URL,
       timeout: 300_000,
       reuseExistingServer: false,
       env: {
-        API_URL: apiUrl,
-        NEXT_PUBLIC_API_URL: apiUrl,
-        NEXT_PUBLIC_SITE_URL: 'http://localhost:3000',
-        NEXT_PUBLIC_STORAGE_ORIGIN: storageOrigin,
-        MEDIA_IMAGE_ORIGIN: storageOrigin,
+        API_URL,
+        NEXT_PUBLIC_API_URL: API_URL,
+        NEXT_PUBLIC_SITE_URL: APP_URL,
+        NEXT_PUBLIC_STORAGE_ORIGIN: API_ORIGIN,
+        MEDIA_IMAGE_ORIGIN: API_ORIGIN,
       },
     },
   ],

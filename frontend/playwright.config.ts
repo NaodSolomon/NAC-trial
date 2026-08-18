@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { API_ORIGIN, API_URL, APP_URL } from './tests/helpers/test-endpoints';
 
 export default defineConfig({
   testDir: './tests',
@@ -6,7 +7,7 @@ export default defineConfig({
   workers: 1,
   expect: { toHaveScreenshot: { animations: 'disabled', maxDiffPixelRatio: 0.01 } },
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: APP_URL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -26,18 +27,18 @@ export default defineConfig({
   webServer: [
     {
       command: 'node tests/helpers/home-api-server.mjs',
-      url: 'http://127.0.0.1:4010/health',
+      url: `${API_ORIGIN}/health`,
       reuseExistingServer: !process.env.CI,
     },
     {
       command: 'pnpm dev',
-      url: 'http://localhost:3000',
+      url: APP_URL,
       reuseExistingServer: !process.env.CI,
       env: {
-        API_URL: 'http://127.0.0.1:4010/api/v1',
-        NEXT_PUBLIC_API_URL: 'http://127.0.0.1:4010/api/v1',
-        NEXT_PUBLIC_STORAGE_ORIGIN: 'http://127.0.0.1:4010',
-        MEDIA_IMAGE_ORIGIN: 'http://127.0.0.1:4010',
+        API_URL,
+        NEXT_PUBLIC_API_URL: API_URL,
+        NEXT_PUBLIC_STORAGE_ORIGIN: API_ORIGIN,
+        MEDIA_IMAGE_ORIGIN: API_ORIGIN,
       },
     },
   ],

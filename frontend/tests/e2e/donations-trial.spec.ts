@@ -1,9 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { waitForHydration } from '../helpers/hydration';
+import { API_ORIGIN } from '../helpers/test-endpoints';
 
-const apiOrigin = new URL(process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:4010/api/v1').origin;
-const trialActionPattern = /\/api\/v1\/test\/payments\/[0-9a-f-]+\/(confirm|fail)$/i;
+const simulationPattern = (action: 'confirm' | 'fail') =>
+  new RegExp(`/api/v1/test/payments/[0-9a-f-]+/${action}$`, 'i');
 const cancelPattern = /\/api\/v1\/public\/donations\/[0-9a-f-]+\/cancel$/i;
+const donationReadPattern = /\/api\/v1\/public\/donations\/[0-9a-f-]+$/i;
 
 test('trial donation requests only approved fields and creates once across refresh', async ({
   page,
@@ -57,11 +59,13 @@ test('trial donation requests only approved fields and creates once across refre
     gateway: 'SIMULATED',
   });
   expect(page.url()).not.toContain(donorEmail);
+  expect(page.url()).not.toContain('Step 38 Donor');
 
   await page.reload();
   await expect(page.getByText('PENDING', { exact: true })).toBeVisible();
   expect(requestBodies).toHaveLength(1);
   await expectNoStoredPii(page, donorEmail);
+  await expectNoStoredPii(page, 'Step 38 Donor');
 });
 
 test('trial checkout confirms idempotently and exposes a test receipt', async ({ page }) => {
@@ -69,14 +73,14 @@ test('trial checkout confirms idempotently and exposes a test receipt', async ({
   const donationId = new URL(page.url()).searchParams.get('donation');
   expect(donationId).toBeTruthy();
 
-  await runTrialAction(page, 'Confirm simulation', trialActionPattern);
+  await runTrialAction(page, 'Confirm simulation', simulationPattern('confirm'));
   await expect(page.getByText('CONFIRMED', { exact: true })).toBeVisible();
   await expect(page.getByText(/No real money was collected/)).toBeVisible();
   const receipt = page.getByRole('link', { name: 'Open test receipt' });
   await expect(receipt).toHaveAttribute('href', /\/downloads\/test-receipt\.pdf$/);
 
   const duplicate = await page.request.post(
-    `${apiOrigin}/api/v1/test/payments/${donationId}/confirm`,
+    `${API_ORIGIN}/api/v1/test/payments/${donationId}/confirm`,
   );
   expect(duplicate.ok()).toBe(true);
   expect((await duplicate.json()).data).toMatchObject({
@@ -88,7 +92,7 @@ test('trial checkout confirms idempotently and exposes a test receipt', async ({
 
 test('trial checkout supports failure and cancellation as terminal states', async ({ page }) => {
   await createDonation(page, 'step38-fail@example.org');
-  await runTrialAction(page, 'Simulate failure', trialActionPattern);
+  await runTrialAction(page, 'Simulate failure', simulationPattern('fail'));
   await expect(page.getByText('FAILED', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Open test receipt' })).toHaveCount(0);
 
@@ -105,8 +109,12 @@ async function runTrialAction(page: Page, name: string, pattern: RegExp) {
   const action = page.waitForResponse(
     (response) => pattern.test(response.url()) && response.request().method() === 'POST',
   );
+  const reread = page.waitForResponse(
+    (response) => donationReadPattern.test(response.url()) && response.request().method() === 'GET',
+  );
   await page.getByRole('button', { name, exact: true }).click();
   await action;
+  await reread;
 }
 
 async function createDonation(page: Page, email: string) {
@@ -122,8 +130,11 @@ async function createDonation(page: Page, email: string) {
 
 async function expectNoStoredPii(page: Page, value: string) {
   const stored = await page.evaluate(() => ({
-    local: Object.values(localStorage),
-    session: Object.values(sessionStorage),
+    local: Object.entries(localStorage),
+    session: Object.entries(sessionStorage),
+    documentCookie: document.cookie,
   }));
   expect(JSON.stringify(stored)).not.toContain(value);
+  const cookies = await page.context().cookies();
+  expect(JSON.stringify(cookies)).not.toContain(value);
 }

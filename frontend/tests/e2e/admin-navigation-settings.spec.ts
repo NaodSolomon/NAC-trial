@@ -24,7 +24,7 @@ test('English and Amharic navigation are independent and successful changes reac
 }) => {
   await mockAuth(context, page, 'CONTENT_EDITOR');
   let items = [
-    baseItem,
+    { ...baseItem },
     {
       ...baseItem,
       id: '00000000-0000-4000-8000-000000001303',
@@ -50,7 +50,16 @@ test('English and Amharic navigation are independent and successful changes reac
     const request = route.request();
     const id = request.url().split('/').at(-1)!;
     const target = [...items, ...amItems].find((item) => item.id === id);
-    if (!target) return route.fulfill({ status: 404, body: `unknown navigation item ${id}` });
+    if (!target)
+      return route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: false,
+          statusCode: 404,
+          message: `unknown navigation item ${id}`,
+        }),
+      });
     if (request.method() === 'DELETE') {
       items = items.filter((item) => item.id !== id);
       amItems = amItems.filter((item) => item.id !== id);
@@ -58,10 +67,11 @@ test('English and Amharic navigation are independent and successful changes reac
     }
     const patch = (request.postDataJSON() ?? {}) as Record<string, unknown>;
     const updated = { ...target, ...patch, updatedAt: '2026-08-11T10:00:00.000Z' };
-    const apply = (list: typeof items) =>
-      list.map((item) => (item.id === id ? updated : item)) as typeof items;
-    items = apply(items);
-    amItems = apply(amItems);
+    if (items.some((item) => item.id === id)) {
+      items = items.map((item) => (item.id === id ? updated : item));
+    } else {
+      amItems = amItems.map((item) => (item.id === id ? updated : item));
+    }
     return respond(route, updated);
   });
 
@@ -108,10 +118,18 @@ test('English and Amharic navigation are independent and successful changes reac
 
 test('content editors cannot open global settings', async ({ context, page }) => {
   await mockAuth(context, page, 'CONTENT_EDITOR');
+  const settingsRequests: string[] = [];
+  page.on('request', (request) => {
+    if (/\/api\/v1\/admin\/settings/.test(request.url())) settingsRequests.push(request.url());
+  });
+
   await page.goto('/admin/settings');
   await expect(
     page.getByRole('heading', { name: 'Your role cannot access this section' }),
   ).toBeVisible();
+  await expect(page.getByLabel('Contact email')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Save public settings' })).toHaveCount(0);
+  expect(settingsRequests).toEqual([]);
 });
 
 test('a super administrator updates contact and social settings', async ({ context, page }) => {

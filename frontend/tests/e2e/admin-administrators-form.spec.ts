@@ -18,7 +18,12 @@ function administrator(
 
 type Observed = { created?: Record<string, unknown>; patched?: Record<string, unknown> };
 
-async function openAdministrators(context: BrowserContext, page: Page) {
+async function openAdministrators(
+  context: BrowserContext,
+  page: Page,
+  options: { totalPages?: number } = {},
+) {
+  let loads = 0;
   const admin = {
     id: currentAdminId,
     email: 'root@example.org',
@@ -61,9 +66,14 @@ async function openAdministrators(context: BrowserContext, page: Page) {
         201,
       );
     }
+    const requestedPage = Number(new URL(route.request().url()).searchParams.get('page') ?? '1');
+    loads += 1;
+    // Report a wider result set for the first two loads, then collapse it, which is
+    // what deleting the trailing pages looks like to this screen.
+    const totalPages = options.totalPages && loads <= 2 ? options.totalPages : 1;
     return respond(route, {
       data: admins,
-      meta: { total: admins.length, page: 1, limit: 10, totalPages: 1 },
+      meta: { total: admins.length, page: requestedPage, limit: 10, totalPages },
     });
   });
 
@@ -275,6 +285,33 @@ test('a refused deletion explains the reason inside the confirmation dialog', as
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText(
     'final active super administrator cannot be deleted',
   );
+});
+
+test('the roles are explained where they are chosen', async ({ context, page }) => {
+  await openAdministrators(context, page);
+
+  await expect(
+    page
+      .getByRole('form', { name: 'Create administrator' })
+      .getByText(/Super administrators manage accounts and security/),
+  ).toBeVisible();
+});
+
+test('a page beyond the last one falls back instead of stranding an empty list', async ({
+  context,
+  page,
+}) => {
+  await openAdministrators(context, page, { totalPages: 3 });
+
+  const pager = page.getByRole('navigation', { name: 'Administrator pagination' });
+  await expect(pager.getByText('1 / 3')).toBeVisible();
+  await pager.getByRole('button', { name: 'Next' }).click();
+  await expect(pager.getByText('2 / 3')).toBeVisible();
+
+  // The next load reports a single page, as it would after the tail was deleted.
+  await pager.getByRole('button', { name: 'Next' }).click();
+  await expect(pager.getByText('1 / 1')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Root Administrator/ })).toBeVisible();
 });
 
 test('the account filters describe what they filter', async ({ context, page }) => {

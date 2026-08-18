@@ -35,6 +35,9 @@ const emptyUpdate: AdministratorUpdate = {
   password: '',
 };
 
+const rolePolicyHint =
+  'Super administrators manage accounts and security. Content editors change public content only. Finance viewers can read donation records but change nothing.';
+
 const roleOptions = [
   { value: 'SUPER_ADMIN', label: 'Super administrator' },
   { value: 'CONTENT_EDITOR', label: 'Content editor' },
@@ -80,8 +83,13 @@ export function AdministratorsAdmin() {
           signal,
         });
         if (signal?.aborted) return;
+        const lastPage = Math.max(1, result.meta.totalPages);
+        setPages(lastPage);
+        if (page > lastPage) {
+          setPage(lastPage);
+          return;
+        }
         setRecords(result.data);
-        setPages(Math.max(1, result.meta.totalPages));
       } catch (cause) {
         if (!signal?.aborted) setError(getApiErrorMessageWithDetails(cause));
       } finally {
@@ -158,7 +166,9 @@ export function AdministratorsAdmin() {
     }
   }
 
-  const isOwnAccount = selected?.id === currentAdminId;
+  const isOwnAccount = Boolean(currentAdminId) && selected?.id === currentAdminId;
+  // An unknown signed-in identity must not enable a destructive action by default.
+  const deletionBlocked = !currentAdminId || isOwnAccount;
   return (
     <section aria-labelledby="administrators-heading">
       <p className="text-primary text-sm font-semibold tracking-wide uppercase">
@@ -281,6 +291,7 @@ export function AdministratorsAdmin() {
               <AdminFormSelect
                 label="Role"
                 id="create-administrator-role"
+                hint={rolePolicyHint}
                 error={createForm.formState.errors.role?.message}
                 {...createForm.register('role')}
               >
@@ -316,6 +327,7 @@ export function AdministratorsAdmin() {
                 <AdminFormSelect
                   label="Role"
                   id="update-administrator-role"
+                  hint={rolePolicyHint}
                   error={updateForm.formState.errors.role?.message}
                   {...updateForm.register('role')}
                 >
@@ -351,7 +363,7 @@ export function AdministratorsAdmin() {
                     <Save aria-hidden="true" /> Save changes
                   </Button>
                   <ConfirmedActionButton
-                    disabled={isOwnAccount}
+                    disabled={deletionBlocked}
                     title="Delete administrator?"
                     description={
                       isOwnAccount
@@ -409,7 +421,7 @@ function Filter({
     >
       {options.map((option, index) => (
         <option key={option || 'all'} value={option}>
-          {labels?.[index] ?? option}
+          {labels?.[index] ?? (option ? option.replaceAll('_', ' ') : 'All')}
         </option>
       ))}
     </select>
