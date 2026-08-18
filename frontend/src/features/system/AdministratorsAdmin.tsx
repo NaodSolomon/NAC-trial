@@ -4,7 +4,6 @@ import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save, Trash2, UserPlus } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { AdminFormField, AdminFormSelect } from '@/components/admin/AdminFormField';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
@@ -12,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
+import { useAdminActions } from '@/hooks/use-admin-actions';
 import { useAuthStore } from '@/store/auth.store';
 import { useAdminList } from '@/hooks/use-admin-list';
 import {
@@ -55,7 +55,6 @@ export function AdministratorsAdmin() {
   const [roleFilter, setRoleFilter] = useState('');
   const [activeFilter, setActiveFilter] = useState('');
   const currentAdminId = useAuthStore((state) => state.user?.id);
-  const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
 
   const createForm = useForm<AdministratorEditor>({
@@ -94,10 +93,10 @@ export function AdministratorsAdmin() {
     [resetUpdateForm, setError],
   );
 
-  async function refresh() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.administrators.all });
-    await load();
-  }
+  const { refresh, run } = useAdminActions({
+    reload: load,
+    queryKey: queryKeys.administrators.all,
+  });
 
   async function onCreate(values: AdministratorEditor) {
     setError('');
@@ -132,18 +131,16 @@ export function AdministratorsAdmin() {
   }
 
   async function remove(record: Administrator) {
-    try {
-      await deleteAdministrator(record.id);
-      if (selected?.id === record.id) select(null);
-      await refresh();
-      notify({
+    await run(
+      async () => {
+        await deleteAdministrator(record.id);
+        if (selected?.id === record.id) select(null);
+      },
+      {
         title: 'Administrator deleted',
         message: 'The account and its permitted dependent records were handled by the backend.',
-      });
-    } catch (cause) {
-      setError(getApiErrorMessageWithDetails(cause));
-      throw cause;
-    }
+      },
+    );
   }
 
   const isOwnAccount = Boolean(currentAdminId) && selected?.id === currentAdminId;

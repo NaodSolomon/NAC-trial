@@ -2,12 +2,11 @@
 
 import { useCallback, useState } from 'react';
 import { Search, Trash2 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
-import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { Button } from '@/components/ui/button';
 import { queryKeys } from '@/lib/api/query-keys';
+import { useAdminActions } from '@/hooks/use-admin-actions';
 import { useAuthStore } from '@/store/auth.store';
 import { useAdminList } from '@/hooks/use-admin-list';
 import { deleteVolunteerApplication, listVolunteerApplications } from './engagement-admin.client';
@@ -20,21 +19,31 @@ export function VolunteerAdmin() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const role = useAuthStore((state) => state.user?.role);
-  const queryClient = useQueryClient();
-  const { notify } = useAdminFeedback();
-  const { records, setRecords, page, setPage, pages, loading, error } =
-    useAdminList<VolunteerApplication>(
-      useCallback(
-        ({ page, signal }) =>
-          listVolunteerApplications({ page, languageCode: language, search, status, signal }),
-        [language, search, status],
-      ),
-    );
+  const {
+    records,
+    page,
+    setPage,
+    pages,
+    loading,
+    error,
+    reload: load,
+  } = useAdminList<VolunteerApplication>(
+    useCallback(
+      ({ page, signal }) =>
+        listVolunteerApplications({ page, languageCode: language, search, status, signal }),
+      [language, search, status],
+    ),
+  );
+  const { run } = useAdminActions({
+    reload: load,
+    queryKey: queryKeys.engagement.all,
+  });
+
   async function remove(id: string) {
-    await deleteVolunteerApplication(id);
-    setRecords((current) => current.filter((record) => record.id !== id));
-    await queryClient.invalidateQueries({ queryKey: queryKeys.engagement.adminVolunteers() });
-    notify({ title: 'Volunteer application deleted', message: 'The cached record was removed.' });
+    await run(() => deleteVolunteerApplication(id), {
+      title: 'Volunteer application deleted',
+      message: 'The cached record was removed.',
+    });
   }
   return (
     <section aria-labelledby="volunteer-admin-heading">

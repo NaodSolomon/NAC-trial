@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Download, ExternalLink, FlaskConical, Mail, RefreshCw, ShieldCheck } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
@@ -10,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
+import { useAdminActions } from '@/hooks/use-admin-actions';
 import { useAuthStore } from '@/store/auth.store';
 import {
   exportDonations,
@@ -44,7 +44,6 @@ export function DonationAdmin() {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState('');
   const role = useAuthStore((state) => state.user?.role);
-  const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
   const trialMode = runtime?.mode === 'trial';
 
@@ -91,10 +90,10 @@ export function DonationAdmin() {
     }
   }
 
-  async function refresh() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.donations.all });
-    await load();
-  }
+  const { refresh } = useAdminActions({
+    reload: load,
+    queryKey: queryKeys.donations.all,
+  });
 
   async function viewReceipt(id: string) {
     try {

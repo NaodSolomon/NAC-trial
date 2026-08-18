@@ -2,10 +2,9 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
-import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { queryKeys } from '@/lib/api/query-keys';
+import { useAdminActions } from '@/hooks/use-admin-actions';
 import { useAdminList } from '@/hooks/use-admin-list';
 import { deleteNewsletterSubscriber, listNewsletterSubscribers } from './engagement-admin.client';
 import type { NewsletterSubscriber } from './engagement-admin.schemas';
@@ -13,21 +12,28 @@ import { EngagementHeading, LanguageFilter, ListPager, LoadState } from './Engag
 
 export function NewsletterAdmin() {
   const [language, setLanguage] = useState('');
-  const queryClient = useQueryClient();
-  const { notify } = useAdminFeedback();
-  const { records, setRecords, page, setPage, pages, loading, error } =
-    useAdminList<NewsletterSubscriber>(
-      useCallback(({ page, signal }) => listNewsletterSubscribers({ page, signal }), []),
-    );
+  const {
+    records,
+    page,
+    setPage,
+    pages,
+    loading,
+    error,
+    reload: load,
+  } = useAdminList<NewsletterSubscriber>(
+    useCallback(({ page, signal }) => listNewsletterSubscribers({ page, signal }), []),
+  );
   const visibleRecords = useMemo(
     () => (language ? records.filter((record) => record.languageCode === language) : records),
     [records, language],
   );
+  const { run } = useAdminActions({
+    reload: load,
+    queryKey: queryKeys.engagement.all,
+  });
+
   async function remove(record: NewsletterSubscriber) {
-    await deleteNewsletterSubscriber(record.email);
-    setRecords((current) => current.filter((item) => item.id !== record.id));
-    await queryClient.invalidateQueries({ queryKey: queryKeys.engagement.adminNewsletter() });
-    notify({
+    await run(() => deleteNewsletterSubscriber(record.email), {
       title: 'Newsletter subscriber removed',
       message: 'The cached record was removed without including personal data.',
     });

@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FileUp, Save, Trash2 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { AdminFormField } from '@/components/admin/AdminFormField';
@@ -14,6 +13,7 @@ import { UploadProgress } from '@/components/admin/UploadProgress';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
+import { useAdminActions } from '@/hooks/use-admin-actions';
 import { useAuthStore } from '@/store/auth.store';
 import { useAdminList } from '@/hooks/use-admin-list';
 import {
@@ -39,7 +39,6 @@ export function GalleryAdmin() {
   const [type, setType] = useState('');
   const [progress, setProgress] = useState(0);
   const role = useAuthStore((state) => state.user?.role);
-  const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
 
   const {
@@ -70,10 +69,10 @@ export function GalleryAdmin() {
     ),
   );
 
-  const refresh = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.gallery.all });
-    await load();
-  }, [load, queryClient]);
+  const { refresh, run } = useAdminActions({
+    reload: load,
+    queryKey: queryKeys.gallery.all,
+  });
 
   async function upload(values: GalleryUploadValues) {
     const form = new FormData();
@@ -106,12 +105,12 @@ export function GalleryAdmin() {
   );
 
   const remove = useCallback(
-    async (item: GalleryApiItem) => {
-      await deleteGallery(item.id);
-      await refresh();
-      notify({ title: 'Gallery item deleted', message: item.title });
-    },
-    [notify, refresh],
+    (item: GalleryApiItem) =>
+      run(() => deleteGallery(item.id), {
+        title: 'Gallery item deleted',
+        message: item.title,
+      }),
+    [run],
   );
 
   return (

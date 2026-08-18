@@ -1,6 +1,6 @@
 import type { Language } from './config';
 
-const messages = {
+export const messages = {
   en: {
     skipToContent: 'Skip to main content',
     primaryNavigation: 'Primary navigation',

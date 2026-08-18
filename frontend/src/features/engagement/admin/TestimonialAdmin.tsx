@@ -4,7 +4,6 @@ import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FilePlus2, Save, Trash2 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import {
   AdminFormField,
@@ -16,6 +15,7 @@ import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { Button } from '@/components/ui/button';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
+import { useAdminActions } from '@/hooks/use-admin-actions';
 import { useAdminList } from '@/hooks/use-admin-list';
 import {
   createTestimonial,
@@ -44,7 +44,6 @@ export function TestimonialAdmin() {
     resolver: zodResolver(testimonialEditorSchema),
     defaultValues: emptyTestimonial,
   });
-  const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
   const {
     records,
@@ -75,11 +74,10 @@ export function TestimonialAdmin() {
     );
     setError('');
   }
-  async function refresh() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.engagement.adminTestimonials() });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.engagement.testimonials() });
-    await load();
-  }
+  const { refresh, run } = useAdminActions({
+    reload: load,
+    queryKey: queryKeys.engagement.all,
+  });
   async function onSubmit(values: TestimonialEditorValues) {
     setError('');
     try {
@@ -108,18 +106,16 @@ export function TestimonialAdmin() {
     }
   }
   async function remove(record: Testimonial) {
-    try {
-      await deleteTestimonial(record.id);
-      if (selected?.id === record.id) select(null);
-      await refresh();
-      notify({
+    await run(
+      async () => {
+        await deleteTestimonial(record.id);
+        if (selected?.id === record.id) select(null);
+      },
+      {
         title: 'Testimonial deleted',
         message: 'The public and administrative caches were refreshed.',
-      });
-    } catch (cause) {
-      setError(getApiErrorMessageWithDetails(cause));
-      throw cause;
-    }
+      },
+    );
   }
   return (
     <section aria-labelledby="testimonial-heading">
