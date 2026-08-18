@@ -22,11 +22,14 @@ export default defineConfig({
         'src/**/types/**',
         'src/**/*.server.ts',
       ],
+      // Ratcheted to just below the measured figures. The denominator includes every
+      // React component, and those are verified by Playwright rather than Vitest, so
+      // this number is a floor that cannot regress, not a measure of how much is tested.
       thresholds: {
-        statements: 18,
-        branches: 18,
-        functions: 14,
-        lines: 19,
+        statements: 22,
+        branches: 19,
+        functions: 17,
+        lines: 23,
       },
     },
   },
