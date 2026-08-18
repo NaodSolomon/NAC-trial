@@ -1,9 +1,4 @@
-import type {
-  InputHTMLAttributes,
-  ReactNode,
-  SelectHTMLAttributes,
-  TextareaHTMLAttributes,
-} from 'react';
+import type { ComponentPropsWithRef, ReactNode } from 'react';
 
 interface CommonProps {
   label: string;
@@ -66,7 +61,7 @@ export function AdminFormField({
   counted,
   className,
   ...props
-}: CommonProps & InputHTMLAttributes<HTMLInputElement>) {
+}: CommonProps & ComponentPropsWithRef<'input'>) {
   return (
     <FieldShell
       label={label}
@@ -97,7 +92,7 @@ export function AdminFormTextarea({
   counted,
   className,
   ...props
-}: CommonProps & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+}: CommonProps & ComponentPropsWithRef<'textarea'>) {
   return (
     <FieldShell
       label={label}
@@ -128,7 +123,7 @@ export function AdminFormSelect({
   className,
   children,
   ...props
-}: CommonProps & SelectHTMLAttributes<HTMLSelectElement>) {
+}: CommonProps & ComponentPropsWithRef<'select'>) {
   return (
     <FieldShell label={label} fieldId={id ?? name} error={error} hint={hint}>
       <select
