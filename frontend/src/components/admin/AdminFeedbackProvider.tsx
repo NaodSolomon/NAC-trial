@@ -45,11 +45,7 @@ export function AdminFeedbackProvider({ children }: { children: React.ReactNode 
   return (
     <AdminFeedbackContext.Provider value={value}>
       {children}
-      <div
-        aria-label="Administrator notifications"
-        aria-live="polite"
-        className="pointer-events-none fixed right-4 bottom-4 z-[70] flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3"
-      >
+      <div className="pointer-events-none fixed right-4 bottom-4 z-[70] flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3">
         {messages.map((message) => (
           <FeedbackNotice key={message.id} message={message} onDismiss={dismiss} />
         ))}
