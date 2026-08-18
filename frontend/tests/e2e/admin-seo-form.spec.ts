@@ -146,7 +146,10 @@ test('reports an over-long keyword against the keywords field', async ({ context
   expect(observed.submitted).toBeUndefined();
 });
 
-test('reports an unapproved social image URL against the image field', async ({ context, page }) => {
+test('reports an unapproved social image URL against the image field', async ({
+  context,
+  page,
+}) => {
   const observed = await openSeoAdmin(context, page);
 
   await page.getByLabel('Social image URL').fill('http://attacker.example/banner.png');
@@ -154,7 +157,9 @@ test('reports an unapproved social image URL against the image field', async ({ 
 
   const image = page.getByLabel('Social image URL');
   await expect(image).toHaveAttribute('aria-invalid', 'true');
-  await expect(image).toHaveAttribute('aria-describedby', 'imageUrl-error');
+  // The field is described by its error and by its character counter, so this
+  // asserts the error is referenced rather than that it is the only description.
+  await expect(image).toHaveAttribute('aria-describedby', /(^| )imageUrl-error( |$)/);
   await expect(page.locator('#imageUrl-error')).toContainText(/HTTPS/i);
   await expect(page.getByLabel(/Keywords/)).toHaveAttribute('aria-invalid', 'false');
   expect(observed.submitted).toBeUndefined();

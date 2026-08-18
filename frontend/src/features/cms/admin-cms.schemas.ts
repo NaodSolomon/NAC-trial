@@ -55,13 +55,24 @@ export const cmsEditorSchema = z
     slug: z
       .string()
       .trim()
-      .min(2)
-      .max(180)
-      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+      .min(2, 'The slug must contain at least 2 characters.')
+      .max(180, 'The slug cannot exceed 180 characters.')
+      .regex(
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+        'Use lowercase letters, numbers and single hyphens, for example family-support.',
+      ),
     languageCode: cmsLanguageSchema,
-    title: z.string().trim().min(1).max(255),
-    content: z.string().min(1).max(200_000),
-    translationKey: z.string().uuid().or(z.literal('')),
+    title: z.string().trim().min(1, 'A title is required.').max(255),
+    content: z.string().min(1, 'Page content is required.').max(200_000),
+    // A union would report only "Invalid input" when a non-empty value is malformed,
+    // so the optional case is expressed as a refinement that carries its own message.
+    translationKey: z
+      .string()
+      .trim()
+      .refine(
+        (value) => value === '' || z.string().uuid().safeParse(value).success,
+        'Enter a valid UUID, or leave this blank to generate one.',
+      ),
     contentType: z.enum(['generic', 'homepage', 'about', 'volunteer', 'team']),
     homepage: z.object({
       heroHeading: z.string().trim().max(180),

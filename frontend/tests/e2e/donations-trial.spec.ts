@@ -7,6 +7,11 @@ const simulationPattern = (action: 'confirm' | 'fail') =>
 const cancelPattern = /\/api\/v1\/public\/donations\/[0-9a-f-]+\/cancel$/i;
 const donationReadPattern = /\/api\/v1\/public\/donations\/[0-9a-f-]+$/i;
 
+// The e2e projects run against the development server, which compiles a route the
+// first time it is requested. Crossing into /donate/simulated can therefore take
+// far longer than the default assertion window on a loaded machine.
+const routeCompileTimeout = 30_000;
+
 test('trial donation requests only approved fields and creates once across refresh', async ({
   page,
 }) => {
@@ -48,7 +53,9 @@ test('trial donation requests only approved fields and creates once across refre
     button.click();
   });
 
-  await expect(page).toHaveURL(/\/donate\/simulated\?donation=[0-9a-f-]+$/);
+  await expect(page).toHaveURL(/\/donate\/simulated\?donation=[0-9a-f-]+$/, {
+    timeout: routeCompileTimeout,
+  });
   expect(requestBodies).toHaveLength(1);
   expect(requestBodies[0]).toEqual({
     donorName: 'Step 38 Donor',
@@ -123,7 +130,9 @@ async function createDonation(page: Page, email: string) {
   await page.getByLabel('Name').fill('Step 38 Donor');
   await page.getByLabel('Email address').fill(email);
   await page.getByRole('button', { name: 'Create trial donation' }).click();
-  await expect(page).toHaveURL(/\/donate\/simulated\?donation=[0-9a-f-]+$/);
+  await expect(page).toHaveURL(/\/donate\/simulated\?donation=[0-9a-f-]+$/, {
+    timeout: routeCompileTimeout,
+  });
   await waitForHydration(page);
   await expect(page.getByRole('button', { name: 'Confirm simulation' })).toBeEnabled();
 }

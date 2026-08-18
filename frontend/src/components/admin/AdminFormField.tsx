@@ -24,15 +24,15 @@ function FieldShell({
   const showCounter = counted !== undefined && maxLength !== undefined;
   return (
     <div>
-      <label htmlFor={fieldId} className="text-heading mb-2 flex justify-between font-semibold">
-        <span>{label}</span>
-        {showCounter && (
-          <span className="text-foreground font-normal">
-            {counted.length}/{maxLength}
-          </span>
-        )}
+      <label htmlFor={fieldId} className="text-heading mb-2 block font-semibold">
+        {label}
       </label>
       {children}
+      {showCounter && (
+        <p id={`${fieldId}-counter`} className="text-foreground mt-1 text-right text-xs">
+          {counted.length}/{maxLength}
+        </p>
+      )}
       {hint && !error && (
         <p id={`${fieldId}-hint`} className="text-foreground mt-1 text-xs">
           {hint}
@@ -47,9 +47,12 @@ function FieldShell({
   );
 }
 
-function describedBy(fieldId: string, error?: string, hint?: ReactNode) {
-  if (error) return `${fieldId}-error`;
-  return hint ? `${fieldId}-hint` : undefined;
+function describedBy(fieldId: string, error?: string, hint?: ReactNode, counted?: boolean) {
+  const described = [];
+  if (error) described.push(`${fieldId}-error`);
+  else if (hint) described.push(`${fieldId}-hint`);
+  if (counted) described.push(`${fieldId}-counter`);
+  return described.length ? described.join(' ') : undefined;
 }
 
 export function AdminFormField({
@@ -76,7 +79,12 @@ export function AdminFormField({
         id={id ?? name}
         name={name}
         aria-invalid={Boolean(error)}
-        aria-describedby={describedBy(id ?? name, error, hint)}
+        aria-describedby={describedBy(
+          id ?? name,
+          error,
+          hint,
+          counted !== undefined && props.maxLength !== undefined,
+        )}
         className={className ?? `${controlClass} min-h-12 px-4`}
       />
     </FieldShell>
@@ -107,7 +115,12 @@ export function AdminFormTextarea({
         id={id ?? name}
         name={name}
         aria-invalid={Boolean(error)}
-        aria-describedby={describedBy(id ?? name, error, hint)}
+        aria-describedby={describedBy(
+          id ?? name,
+          error,
+          hint,
+          counted !== undefined && props.maxLength !== undefined,
+        )}
         className={className ?? `${controlClass} resize-y p-4`}
       />
     </FieldShell>

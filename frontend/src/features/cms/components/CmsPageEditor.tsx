@@ -1,12 +1,19 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { CalendarClock, Eye, Save, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  AdminFormField,
+  AdminFormSelect,
+  AdminFormTextarea,
+} from '@/components/admin/AdminFormField';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
-import { getApiErrorMessage } from '@/lib/api/errors';
+import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import {
   checkCmsSlug,
   createCmsPage,
@@ -31,50 +38,71 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
   const router = useRouter();
   const { notify } = useAdminFeedback();
   const [page, setPage] = useState<AdminCmsPage | null>(null);
-  const [values, setValues] = useState<CmsEditorValues>(() => editorValuesFromPage());
   const [loading, setLoading] = useState(Boolean(pageId));
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState(false);
-  const [errors, setErrors] = useState<string[]>([]);
-  const [slugState, setSlugState] = useState<string>('');
+  const [requestError, setRequestError] = useState('');
+  const [slugState, setSlugState] = useState('');
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduledLocal, setScheduledLocal] = useState('');
+  const [scheduleError, setScheduleError] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    getValues,
+    formState: { errors, isSubmitting },
+  } = useForm<CmsEditorValues>({
+    resolver: zodResolver(cmsEditorSchema),
+    defaultValues: editorValuesFromPage(),
+  });
+
+  const contentType = useWatch({ control, name: 'contentType' });
+  const content = useWatch({ control, name: 'content' });
+  const slug = useWatch({ control, name: 'slug' });
+  const languageCode = useWatch({ control, name: 'languageCode' });
+  const homepage = useWatch({ control, name: 'homepage' });
+  const about = useWatch({ control, name: 'about' });
+  const volunteerRoles = useWatch({ control, name: 'volunteerRoles' });
+  const teamMembers = useWatch({ control, name: 'teamMembers' });
+  const teamContentApproved = useWatch({ control, name: 'teamContentApproved' });
 
   useEffect(() => {
     if (!pageId) return;
     const controller = new AbortController();
     void getAdminCmsPage(pageId, controller.signal)
       .then((loaded) => {
+        if (controller.signal.aborted) return;
         setPage(loaded);
-        setValues(editorValuesFromPage(loaded));
+        reset(editorValuesFromPage(loaded));
       })
       .catch((error: unknown) => {
-        if (!controller.signal.aborted) setErrors([getApiErrorMessage(error)]);
+        if (!controller.signal.aborted) setRequestError(getApiErrorMessageWithDetails(error));
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [pageId]);
+  }, [pageId, reset]);
+
+  // Availability is answered for one slug in one language, so it must not survive
+  // a change to either.
+  useEffect(() => {
+    setSlugState('');
+  }, [slug, languageCode]);
 
   const publishedEditWarning = page?.status === 'PUBLISHED';
   const heading = page ? `Edit ${page.title}` : 'Create CMS page';
-  const minimumSchedule = useMemo(() => localDateTimeValue(new Date(Date.now() + 60_000)), []);
 
-  async function save() {
-    const parsed = cmsEditorSchema.safeParse(values);
-    if (!parsed.success) {
-      setErrors([...new Set(parsed.error.issues.map((issue) => issue.message))]);
-      return;
-    }
-    setBusy(true);
-    setErrors([]);
+  async function save(values: CmsEditorValues) {
+    setRequestError('');
     try {
-      const saved = page
-        ? await updateCmsPage(page.id, parsed.data)
-        : await createCmsPage(parsed.data);
+      const saved = page ? await updateCmsPage(page.id, values) : await createCmsPage(values);
       setPage(saved);
-      setValues(editorValuesFromPage(saved));
+      reset(editorValuesFromPage(saved));
       notify({
         title: page ? 'Page changes saved' : 'Draft page created',
         message:
@@ -84,40 +112,38 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
       });
       if (!page) router.replace(`/admin/content/${saved.id}`);
     } catch (error) {
-      setErrors([getApiErrorMessage(error)]);
-    } finally {
-      setBusy(false);
+      setRequestError(getApiErrorMessageWithDetails(error));
     }
   }
 
-  async function checkSlug() {
-    if (page && values.slug === page.slug && values.languageCode === page.languageCode) {
+  const checkSlug = useCallback(async () => {
+    const current = getValues();
+    if (page && current.slug === page.slug && current.languageCode === page.languageCode) {
       setSlugState('This is the current page slug.');
       return;
     }
-    const basic = /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(values.slug);
-    if (!basic) {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(current.slug)) {
       setSlugState('Use lowercase kebab-case before checking availability.');
       return;
     }
     try {
-      const result = await checkCmsSlug(values.slug, values.languageCode);
+      const result = await checkCmsSlug(current.slug, current.languageCode);
       setSlugState(result.available ? 'Slug is available.' : 'Slug is already in use.');
     } catch (error) {
-      setSlugState(getApiErrorMessage(error));
+      setSlugState(getApiErrorMessageWithDetails(error));
     }
-  }
+  }, [getValues, page]);
 
   async function publish() {
     if (!page || busy) return;
     setBusy(true);
-    setErrors([]);
+    setRequestError('');
     try {
       const published = await publishCmsPage(page.id);
       setPage(published);
       notify({ title: 'Page published', message: 'The page is now publicly available.' });
     } catch (error) {
-      setErrors([getApiErrorMessage(error)]);
+      setRequestError(getApiErrorMessageWithDetails(error));
     } finally {
       setBusy(false);
     }
@@ -126,11 +152,12 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
   async function schedule() {
     if (!page || busy) return;
     if (!scheduledLocal || new Date(scheduledLocal) <= new Date()) {
-      setErrors(['Choose a future local date and time.']);
+      setScheduleError('Choose a future local date and time.');
       return;
     }
     setBusy(true);
-    setErrors([]);
+    setScheduleError('');
+    setRequestError('');
     try {
       const scheduled = await scheduleCmsPage(page.id, scheduledLocal);
       setPage(scheduled);
@@ -140,7 +167,7 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
         message: `Scheduled for ${new Date(scheduled.scheduledAt!).toLocaleString()}.`,
       });
     } catch (error) {
-      setErrors([getApiErrorMessage(error)]);
+      setScheduleError(getApiErrorMessageWithDetails(error));
     } finally {
       setBusy(false);
     }
@@ -192,7 +219,7 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
           Publish again only after reviewing the changes.
         </p>
       )}
-      {errors.length > 0 && (
+      {requestError && (
         <div
           role="alert"
           className="mt-6 rounded-xl border border-red-300 bg-red-50 p-4 text-red-900"
@@ -200,137 +227,135 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
           <p className="font-semibold">
             The page was not saved. Your unsaved content remains in the editor.
           </p>
-          <ul className="mt-2 list-disc pl-5 text-sm">
-            {errors.map((error) => (
-              <li key={error}>{error}</li>
-            ))}
-          </ul>
+          <p className="mt-2 text-sm">{requestError}</p>
         </div>
       )}
 
       {preview ? (
         <div className="mt-8">
-          <CmsContentPreview values={values} />
+          <CmsContentPreview values={getValues()} />
         </div>
       ) : (
         <form
+          aria-label="CMS page details"
           className="bg-card mt-8 space-y-6 rounded-xl border p-5 shadow-sm sm:p-7"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void save();
-          }}
+          onSubmit={handleSubmit(save)}
           noValidate
         >
           <div className="grid gap-5 sm:grid-cols-2">
-            <EditorField
+            <AdminFormField
               label="Title"
-              value={values.title}
+              id="cms-title"
               maxLength={255}
-              onChange={(title) => setValues({ ...values, title })}
+              error={errors.title?.message}
+              {...register('title')}
             />
-            <label className="block">
-              <span className="text-heading mb-2 block text-sm font-semibold">Language</span>
-              <select
-                value={values.languageCode}
-                disabled={Boolean(page)}
-                onChange={(event) =>
-                  setValues({ ...values, languageCode: event.target.value as 'en' | 'am' })
-                }
-                className="min-h-11 w-full rounded-lg border bg-white px-3"
-              >
-                <option value="en">English</option>
-                <option value="am">Amharic</option>
-              </select>
-            </label>
+            <AdminFormSelect
+              label="Language"
+              id="cms-language"
+              disabled={Boolean(page)}
+              hint={page ? 'The language is fixed once a page exists.' : undefined}
+              error={errors.languageCode?.message}
+              {...register('languageCode')}
+            >
+              <option value="en">English</option>
+              <option value="am">Amharic</option>
+            </AdminFormSelect>
           </div>
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-            <EditorField
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
+            <AdminFormField
               label="Slug"
-              value={values.slug}
+              id="cms-slug"
               maxLength={180}
-              onChange={(slug) => {
-                setValues({ ...values, slug });
-                setSlugState('');
-              }}
+              hint={slugState || undefined}
+              error={errors.slug?.message}
+              {...register('slug')}
             />
-            <Button type="button" variant="outline" onClick={() => void checkSlug()}>
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-9"
+              onClick={() => void checkSlug()}
+            >
               Check availability
             </Button>
           </div>
-          {slugState && (
-            <p role="status" className="text-sm font-medium">
-              {slugState}
-            </p>
-          )}
           {!page && (
-            <EditorField
+            <AdminFormField
               label="Translation key (optional UUID)"
-              value={values.translationKey}
-              onChange={(translationKey) => setValues({ ...values, translationKey })}
+              id="cms-translation-key"
+              hint="Leave blank unless this page pairs with an existing translation."
+              error={errors.translationKey?.message}
+              {...register('translationKey')}
             />
           )}
-          <label className="block">
-            <span className="text-heading mb-2 block text-sm font-semibold">Content structure</span>
-            <select
-              value={values.contentType}
-              onChange={(event) =>
-                setValues({
-                  ...values,
-                  contentType: event.target.value as CmsEditorValues['contentType'],
-                })
-              }
-              className="min-h-11 w-full rounded-lg border bg-white px-3"
-            >
-              <option value="generic">Generic page</option>
-              <option value="homepage">Homepage composition</option>
-              <option value="about">About: mission, history and services</option>
-              <option value="volunteer">Volunteer role listings</option>
-              <option value="team">Approved team biographies</option>
-            </select>
-          </label>
-          <label className="block">
-            <span className="text-heading mb-2 block text-sm font-semibold">Page content</span>
-            <textarea
-              value={values.content}
-              maxLength={200_000}
-              rows={12}
-              onChange={(event) => setValues({ ...values, content: event.target.value })}
-              className="w-full rounded-lg border p-3"
-            />
-            <span className="text-foreground mt-1 block text-right text-xs">
-              {values.content.length.toLocaleString()} / 200,000
-            </span>
-          </label>
-          {values.contentType === 'homepage' && (
+          <AdminFormSelect
+            label="Content structure"
+            id="cms-content-type"
+            error={errors.contentType?.message}
+            {...register('contentType')}
+          >
+            <option value="generic">Generic page</option>
+            <option value="homepage">Homepage composition</option>
+            <option value="about">About: mission, history and services</option>
+            <option value="volunteer">Volunteer role listings</option>
+            <option value="team">Approved team biographies</option>
+          </AdminFormSelect>
+          <AdminFormTextarea
+            label="Page content"
+            id="cms-content"
+            rows={12}
+            maxLength={200_000}
+            counted={content ?? ''}
+            error={errors.content?.message}
+            {...register('content')}
+          />
+          {contentType === 'homepage' && (
             <HomepageEditor
-              value={values.homepage}
-              onChange={(homepage) => setValues({ ...values, homepage })}
+              value={homepage}
+              errors={{
+                heroHeading: errors.homepage?.heroHeading?.message,
+                servicesHeading: errors.homepage?.servicesHeading?.message,
+                services: errors.homepage?.services?.message,
+                locationHeading: errors.homepage?.locationHeading?.message,
+                mapEmbedUrl: errors.homepage?.mapEmbedUrl?.message,
+                ctaHeading: errors.homepage?.ctaHeading?.message,
+                ctaLabel: errors.homepage?.ctaLabel?.message,
+                ctaHref: errors.homepage?.ctaHref?.message,
+              }}
+              onChange={(next) => setValue('homepage', next)}
             />
           )}
-          {values.contentType === 'about' && (
+          {contentType === 'about' && (
             <AboutEditor
-              value={values.about}
-              onChange={(about) => setValues({ ...values, about })}
+              value={about}
+              errors={{
+                missionBody: errors.about?.missionBody?.message,
+                historyBody: errors.about?.historyBody?.message,
+                services: errors.about?.services?.message,
+              }}
+              onChange={(next) => setValue('about', next)}
             />
           )}
-          {values.contentType === 'volunteer' && (
+          {contentType === 'volunteer' && (
             <VolunteerRolesEditor
-              value={values.volunteerRoles}
-              onChange={(volunteerRoles) => setValues({ ...values, volunteerRoles })}
+              value={volunteerRoles}
+              error={errors.volunteerRoles?.message}
+              onChange={(next) => setValue('volunteerRoles', next)}
             />
           )}
-          {values.contentType === 'team' && (
+          {contentType === 'team' && (
             <TeamMembersEditor
-              value={values.teamMembers}
-              onChange={(teamMembers) => setValues({ ...values, teamMembers })}
-              approved={values.teamContentApproved}
-              onApprovalChange={(teamContentApproved) =>
-                setValues({ ...values, teamContentApproved })
-              }
+              value={teamMembers}
+              error={errors.teamMembers?.message}
+              onChange={(next) => setValue('teamMembers', next)}
+              approved={teamContentApproved}
+              onApprovalChange={(next) => setValue('teamContentApproved', next)}
             />
           )}
-          <Button type="submit" disabled={busy} className="min-h-11">
-            <Save aria-hidden="true" /> {busy ? 'Saving…' : page ? 'Save changes' : 'Create draft'}
+          <Button type="submit" disabled={isSubmitting} className="min-h-11">
+            <Save aria-hidden="true" />{' '}
+            {isSubmitting ? 'Saving…' : page ? 'Save changes' : 'Create draft'}
           </Button>
         </form>
       )}
@@ -364,7 +389,7 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
             </Button>
             <ConfirmedActionButton
               title="Delete this CMS page?"
-              description="The page and its localized SEO metadata will be permanently removed. This action is audited."
+              description={`${page.title} and its localized SEO metadata will be permanently removed. This action is audited.`}
               confirmLabel="Delete page"
               onConfirm={remove}
             >
@@ -372,23 +397,45 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
             </ConfirmedActionButton>
           </div>
           {scheduleOpen && (
-            <div className="mt-5 flex flex-col gap-3 rounded-lg bg-slate-50 p-4 sm:flex-row sm:items-end">
-              <label className="flex-1">
-                <span className="text-heading mb-2 block text-sm font-semibold">
+            <div className="mt-5 flex flex-col gap-3 rounded-lg bg-slate-50 p-4 sm:flex-row sm:items-start">
+              <div className="flex-1">
+                <label
+                  htmlFor="cms-scheduled-at"
+                  className="text-heading mb-2 block text-sm font-semibold"
+                >
                   Local publication date and time
-                </span>
+                </label>
                 <input
+                  id="cms-scheduled-at"
                   type="datetime-local"
-                  min={minimumSchedule}
                   value={scheduledLocal}
-                  onChange={(event) => setScheduledLocal(event.target.value)}
+                  aria-invalid={Boolean(scheduleError)}
+                  aria-describedby={scheduleError ? 'cms-scheduled-at-error' : undefined}
+                  onChange={(event) => {
+                    setScheduledLocal(event.target.value);
+                    setScheduleError('');
+                  }}
                   className="min-h-11 w-full rounded-lg border bg-white px-3"
                 />
-              </label>
-              <Button type="button" disabled={busy} onClick={() => void schedule()}>
+                {scheduleError && (
+                  <p
+                    id="cms-scheduled-at-error"
+                    role="alert"
+                    className="text-destructive mt-1 text-sm"
+                  >
+                    {scheduleError}
+                  </p>
+                )}
+              </div>
+              <Button
+                type="button"
+                className="mt-9"
+                disabled={busy}
+                onClick={() => void schedule()}
+              >
                 Confirm schedule
               </Button>
-              <p className="text-foreground text-xs sm:max-w-48">
+              <p className="text-foreground mt-9 text-xs sm:max-w-48">
                 Your local selection is converted to an ISO timestamp before transmission.
               </p>
             </div>
@@ -397,33 +444,4 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
       )}
     </section>
   );
-}
-
-function EditorField({
-  label,
-  value,
-  onChange,
-  maxLength,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  maxLength?: number;
-}) {
-  return (
-    <label className="block">
-      <span className="text-heading mb-2 block text-sm font-semibold">{label}</span>
-      <input
-        value={value}
-        maxLength={maxLength}
-        onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 w-full rounded-lg border px-3"
-      />
-    </label>
-  );
-}
-
-function localDateTimeValue(date: Date) {
-  const offset = date.getTimezoneOffset();
-  return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 16);
 }
