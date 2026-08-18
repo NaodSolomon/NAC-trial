@@ -29,7 +29,7 @@ test('reviews, filters, paginates and deletes contact submissions without PII fe
   await page.goto('/admin/contact');
   await expect(page.getByText('family.private@example.org')).toBeVisible();
   await page.getByPlaceholder('Search name, email or subject').fill('family');
-  await page.getByLabel('Language').selectOption('en');
+  await page.getByLabel('Filter by language').selectOption('en');
   await page.getByRole('button', { name: 'Apply filters' }).click();
   await expect.poll(() => requested).toContain('search=family');
   await page.getByRole('button', { name: 'Delete' }).click();

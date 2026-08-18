@@ -57,7 +57,7 @@ export function TestimonialAdmin() {
       try {
         const result = await listAdminTestimonials({
           page,
-          languageCode: language || 'en',
+          languageCode: language,
           status,
           signal,
         });
@@ -123,13 +123,18 @@ export function TestimonialAdmin() {
     }
   }
   async function remove(record: Testimonial) {
-    await deleteTestimonial(record.id);
-    if (selected?.id === record.id) select(null);
-    await refresh();
-    notify({
-      title: 'Testimonial deleted',
-      message: 'The public and administrative caches were refreshed.',
-    });
+    try {
+      await deleteTestimonial(record.id);
+      if (selected?.id === record.id) select(null);
+      await refresh();
+      notify({
+        title: 'Testimonial deleted',
+        message: 'The public and administrative caches were refreshed.',
+      });
+    } catch (cause) {
+      setError(getApiErrorMessageWithDetails(cause));
+      throw cause;
+    }
   }
   return (
     <section aria-labelledby="testimonial-heading">
@@ -184,6 +189,7 @@ export function TestimonialAdmin() {
                   <button
                     type="button"
                     onClick={() => select(record)}
+                    aria-current={selected?.id === record.id ? 'true' : undefined}
                     className={`w-full rounded-lg border p-3 text-left ${selected?.id === record.id ? 'border-primary bg-green-50' : ''}`}
                   >
                     <span className="flex items-center justify-between gap-2">

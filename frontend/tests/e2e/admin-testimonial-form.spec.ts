@@ -53,7 +53,11 @@ async function openTestimonialAdmin(context: BrowserContext, page: Page) {
   );
   await page.route('**/api/v1/auth/me', (route) => respond(route, admin));
 
-  const observed: { created?: Record<string, unknown>; updated?: Record<string, unknown> } = {};
+  const observed: {
+    created?: Record<string, unknown>;
+    updated?: Record<string, unknown>;
+    listUrl?: string;
+  } = {};
 
   await page.route(/\/api\/v1\/admin\/testimonials\/[0-9a-f-]+$/, async (route) => {
     if (route.request().method() === 'PATCH') {
@@ -68,6 +72,7 @@ async function openTestimonialAdmin(context: BrowserContext, page: Page) {
       observed.created = route.request().postDataJSON() as Record<string, unknown>;
       return respond(route, testimonial(observed.created), 201);
     }
+    observed.listUrl = route.request().url();
     return respond(route, {
       data: [testimonial()],
       meta: { total: 1, page: 1, limit: 10, totalPages: 1 },
@@ -173,4 +178,52 @@ test('clears a field error once the value becomes valid', async ({ context, page
 
   await expect(page.locator('#name-error')).toHaveCount(0);
   await expect.poll(() => observed.created?.name).toBe('A grateful parent');
+});
+
+test('leaves the language unfiltered when every language is selected', async ({ context, page }) => {
+  const observed = await openTestimonialAdmin(context, page);
+
+  await expect.poll(() => observed.listUrl).toBeTruthy();
+  expect(observed.listUrl).not.toContain('languageCode');
+
+  await page.getByLabel('Filter by language').selectOption('am');
+  await expect.poll(() => observed.listUrl).toContain('languageCode=am');
+
+  await page.getByLabel('Filter by language').selectOption('');
+  await expect.poll(() => observed.listUrl).not.toContain('languageCode');
+});
+
+test('marks the selected record for assistive technology, not by colour alone', async ({
+  context,
+  page,
+}) => {
+  await openTestimonialAdmin(context, page);
+  const entry = page.getByRole('button', { name: /A grateful parent/ });
+
+  await expect(entry).not.toHaveAttribute('aria-current', 'true');
+  await entry.click();
+  await expect(entry).toHaveAttribute('aria-current', 'true');
+});
+
+test('reports why a deletion failed instead of a generic message', async ({ context, page }) => {
+  await openTestimonialAdmin(context, page);
+
+  await page.route(/\/api\/v1\/admin\/testimonials\/[0-9a-f-]+$/, (route) =>
+    route.fulfill({
+      status: 403,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: false,
+        statusCode: 403,
+        message: 'Only a super administrator may delete testimonials.',
+      }),
+    }),
+  );
+
+  await page.getByRole('button', { name: /A grateful parent/ }).click();
+  await page.getByRole('button', { name: 'Delete' }).click();
+  await page.getByRole('button', { name: 'Delete testimonial' }).click();
+
+  await expect(page.getByRole('dialog')).toContainText(/super administrator may delete/i);
+  await expect(page.getByRole('dialog')).toContainText(/No changes were applied/i);
 });

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Dialog } from 'radix-ui';
 import { TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 
 export function ConfirmationDialog({
   open,
@@ -101,8 +102,13 @@ export function ConfirmedActionButton({
     try {
       await onConfirm();
       setOpen(false);
-    } catch {
-      setActionError('The action could not be completed. No changes were applied.');
+    } catch (cause) {
+      const reason = getApiErrorMessageWithDetails(cause);
+      setActionError(
+        reason
+          ? `${reason} No changes were applied.`
+          : 'The action could not be completed. No changes were applied.',
+      );
     } finally {
       setBusy(false);
     }
