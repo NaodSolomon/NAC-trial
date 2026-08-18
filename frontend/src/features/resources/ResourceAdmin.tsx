@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ExternalLink, FilePlus2, Send, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import {
   AdminFormField,
@@ -192,10 +193,12 @@ export function ResourceAdmin() {
       )}
       {loading ? (
         <div role="status" className="bg-card mt-6 h-52 animate-pulse rounded-xl border" />
-      ) : items.length === 0 ? (
-        <p role="status" className="bg-card mt-6 rounded-xl border p-8">
-          No resources match this language.
-        </p>
+      ) : error ? null : items.length === 0 ? (
+        <AdminEmptyState
+          entity="resources"
+          filtered={Boolean(language)}
+          onClearFilters={() => setLanguage('')}
+        />
       ) : (
         <ul className="mt-6 grid gap-4 lg:grid-cols-2">
           {items.map((item) => (

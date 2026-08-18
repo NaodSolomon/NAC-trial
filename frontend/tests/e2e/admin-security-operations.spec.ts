@@ -157,7 +157,7 @@ test('revokes every session for another administrator with one confirmed action'
   await page.getByRole('button', { name: 'Revoke all sessions' }).click();
   await expect.poll(() => target).toEqual({ adminId: secondAdminId });
   await expect(page.getByText('2 sessions revoked.')).toBeVisible();
-  await expect(page.getByText('No sessions match these filters.')).toBeVisible();
+  await expect(page.getByText('No sessions match the current filters.')).toBeVisible();
 });
 
 test('distinguishes readiness from Redis degradation and serializes maintenance actions', async ({

@@ -9,6 +9,7 @@ import { AdminFormField, AdminFormSelect } from '@/components/admin/AdminFormFie
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { Button } from '@/components/ui/button';
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useAuthStore } from '@/store/auth.store';
@@ -201,10 +202,15 @@ export function AdministratorsAdmin() {
             <p role="status" className="mt-4">
               Loading administrators…
             </p>
-          ) : records.length === 0 ? (
-            <p role="status" className="mt-4">
-              No accounts match these filters.
-            </p>
+          ) : error ? null : records.length === 0 ? (
+            <AdminEmptyState
+              entity="accounts"
+              filtered={Boolean(roleFilter || activeFilter)}
+              onClearFilters={() => {
+                setRoleFilter('');
+                setActiveFilter('');
+              }}
+            />
           ) : (
             <ul className="mt-4 space-y-2">
               {records.map((record) => (

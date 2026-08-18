@@ -5,6 +5,7 @@ import { Ban, ShieldX } from 'lucide-react';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { Button } from '@/components/ui/button';
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import { useAdminList } from '@/hooks/use-admin-list';
 import { listAdminSessions, revokeSession } from './system.client';
@@ -112,10 +113,16 @@ export function SessionsAdmin() {
         <p role="status" className="mt-6">
           Loading sessions…
         </p>
-      ) : records.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-dashed p-6 text-center">
-          No sessions match these filters.
-        </p>
+      ) : error ? null : records.length === 0 ? (
+        <AdminEmptyState
+          entity="sessions"
+          filtered={Boolean(adminId || status)}
+          onClearFilters={() => {
+            setStatus('active');
+            setAdminIdInput('');
+            setAdminId('');
+          }}
+        />
       ) : (
         <ul className="mt-6 grid gap-4">
           {records.map((session) => (

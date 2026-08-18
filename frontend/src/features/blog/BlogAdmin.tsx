@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FilePlus2, RotateCcw, Save, Send, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import {
   AdminFormField,
@@ -156,8 +157,12 @@ export function BlogAdmin() {
             <p role="status" className="mt-4">
               Loading articles…
             </p>
-          ) : posts.length === 0 ? (
-            <p className="mt-4 text-sm">No articles match this language.</p>
+          ) : error ? null : posts.length === 0 ? (
+            <AdminEmptyState
+              entity="articles"
+              filtered={Boolean(language)}
+              onClearFilters={() => setLanguage('')}
+            />
           ) : (
             <ul className="mt-4 space-y-2">
               {posts.map((post) => (

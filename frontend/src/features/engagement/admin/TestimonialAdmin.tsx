@@ -167,7 +167,19 @@ export function TestimonialAdmin() {
       <div className="mt-6 grid gap-6 xl:grid-cols-[22rem_minmax(0,1fr)]">
         <aside className="bg-card h-fit rounded-xl border p-4 shadow-sm">
           <h2 className="text-heading font-semibold">Moderation queue</h2>
-          <LoadState loading={loading} error="" empty={records.length === 0}>
+          <LoadState
+            loading={loading}
+            // This screen reports save and delete failures in its own banner above,
+            // so the state block only needs to stop claiming the list is empty.
+            error=""
+            empty={records.length === 0 && !error}
+            entity="testimonials"
+            filtered={Boolean(language || status)}
+            onClearFilters={() => {
+              setLanguage('');
+              setStatus('');
+            }}
+          >
             <ul className="mt-4 space-y-2">
               {records.map((record) => (
                 <li key={record.id}>

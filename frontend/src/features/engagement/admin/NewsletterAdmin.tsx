@@ -48,7 +48,14 @@ export function NewsletterAdmin() {
           Language filters the current page; server-side pagination remains authoritative.
         </p>
       </div>
-      <LoadState loading={loading} error={error} empty={visibleRecords.length === 0}>
+      <LoadState
+        loading={loading}
+        error={error}
+        empty={visibleRecords.length === 0}
+        entity="subscribers"
+        filtered={Boolean(language)}
+        onClearFilters={() => setLanguage('')}
+      >
         <div className="mt-6 overflow-x-auto rounded-xl border bg-white shadow-sm">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50">

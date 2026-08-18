@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import { Filter as FilterIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { useAdminList } from '@/hooks/use-admin-list';
 import { listAuditLogs } from './system.client';
 import { safeAuditMetadata } from './safe-audit-metadata';
@@ -95,10 +96,12 @@ export function AuditLogsAdmin() {
         <p role="status" className="mt-6">
           Loading audit history…
         </p>
-      ) : records.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-dashed p-6 text-center">
-          No audit records match these filters.
-        </p>
+      ) : error ? null : records.length === 0 ? (
+        <AdminEmptyState
+          entity="audit records"
+          filtered={Object.values(filters).some(Boolean)}
+          onClearFilters={() => setFilters(draft)}
+        />
       ) : (
         <ol className="mt-6 space-y-4">
           {records.map((record) => {

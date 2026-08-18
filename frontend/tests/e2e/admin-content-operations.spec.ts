@@ -56,7 +56,7 @@ test('media upload reports validation and progress before refreshing the list', 
   await expect(page.getByRole('heading', { name: 'family.png' })).toBeVisible();
   await page.getByRole('button', { name: 'Delete' }).click();
   await page.getByRole('button', { name: 'Delete media' }).click();
-  await expect(page.getByText('No media matches these filters.')).toBeVisible();
+  await expect(page.getByText('There are no media assets yet.')).toBeVisible();
 });
 
 test('gallery upload and metadata editing preserve localized items', async ({ page }) => {
@@ -95,7 +95,7 @@ test('gallery upload and metadata editing preserve localized items', async ({ pa
   await expect(page.getByText('Gallery item saved')).toBeVisible();
   await page.getByRole('button', { name: 'Delete' }).click();
   await page.getByRole('button', { name: 'Delete gallery item' }).click();
-  await expect(page.getByText(/No EN gallery items/)).toBeVisible();
+  await expect(page.getByText('There are no EN gallery items yet.')).toBeVisible();
 });
 
 test('blog workflows clearly transition from draft to published', async ({ page }) => {
@@ -134,7 +134,7 @@ test('blog workflows clearly transition from draft to published', async ({ page 
   await expect(page.getByText('DRAFT', { exact: true }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Delete' }).click();
   await page.getByRole('button', { name: 'Delete article' }).click();
-  await expect(page.getByText('No articles match this language.')).toBeVisible();
+  await expect(page.getByText('There are no articles yet.')).toBeVisible();
 });
 
 test('resource drafts publish explicitly from approved media URLs', async ({ page }) => {
@@ -165,7 +165,7 @@ test('resource drafts publish explicitly from approved media URLs', async ({ pag
   await expect(page.getByText('PUBLISHED', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Delete' }).click();
   await page.getByRole('button', { name: 'Delete resource' }).click();
-  await expect(page.getByText('No resources match this language.')).toBeVisible();
+  await expect(page.getByText('There are no resources yet.')).toBeVisible();
 });
 
 test('event RSVP CSV and iCal controls download actual files', async ({ page }) => {

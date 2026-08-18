@@ -12,7 +12,9 @@ test('about renders only the published, sanitized CMS response', async ({ page }
   await expect(page.getByText('draft-secret')).toHaveCount(0);
 });
 
-test('a published generic CMS slug renders sanitized localized content and SEO', async ({ page }) => {
+test('a published generic CMS slug renders sanitized localized content and SEO', async ({
+  page,
+}) => {
   await page.goto('/services?lang=en');
 
   await expect(

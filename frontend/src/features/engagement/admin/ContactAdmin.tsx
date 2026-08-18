@@ -74,7 +74,17 @@ export function ContactAdmin() {
           Apply filters
         </Button>
       </form>
-      <LoadState loading={loading} error={error} empty={records.length === 0}>
+      <LoadState
+        loading={loading}
+        error={error}
+        empty={records.length === 0}
+        entity="contact submissions"
+        filtered={Boolean(language || search)}
+        onClearFilters={() => {
+          setLanguage('');
+          setSearch('');
+        }}
+      >
         <ul className="mt-6 grid gap-4">
           {records.map((record) => (
             <li key={record.id} className="bg-card rounded-xl border p-5 shadow-sm">

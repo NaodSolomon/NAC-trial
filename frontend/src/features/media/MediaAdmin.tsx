@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ExternalLink, FileUp, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import {
   AdminFormField,
   AdminFormSelect,
@@ -211,10 +212,16 @@ export function MediaAdmin() {
           aria-label="Loading media"
           className="bg-card mt-6 h-48 animate-pulse rounded-xl border motion-reduce:animate-none"
         />
-      ) : items.length === 0 ? (
-        <p role="status" className="bg-card mt-6 rounded-xl border p-8">
-          No media matches these filters.
-        </p>
+      ) : error ? null : items.length === 0 ? (
+        <AdminEmptyState
+          entity="media assets"
+          filtered={Boolean(type || appliedSearch)}
+          onClearFilters={() => {
+            setType('');
+            setSearch('');
+            setAppliedSearch('');
+          }}
+        />
       ) : (
         <ul className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {items.map((item) => (

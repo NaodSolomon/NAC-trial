@@ -34,9 +34,11 @@ test('reviews, filters, paginates and deletes contact submissions without PII fe
   await expect.poll(() => requested).toContain('search=family');
   await page.getByRole('button', { name: 'Delete' }).click();
   await page.getByRole('button', { name: 'Delete submission' }).click();
-  await expect(page.getByText('No records match these filters.')).toBeVisible();
+  await expect(page.getByText('No contact submissions match the current filters.')).toBeVisible();
   await expect(page.getByText('Contact submission deleted')).toBeVisible();
-  await expect(page.getByRole('status')).not.toContainText('family.private@example.org');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'family.private@example.org' }),
+  ).toHaveCount(0);
 });
 
 test('reviews volunteer applications with status filtering and super-admin deletion', async ({
@@ -58,7 +60,9 @@ test('reviews volunteer applications with status filtering and super-admin delet
   await expect.poll(() => requested).toContain('status=PENDING');
   await page.getByRole('button', { name: 'Delete' }).click();
   await page.getByRole('button', { name: 'Delete application' }).click();
-  await expect(page.getByText('No records match these filters.')).toBeVisible();
+  await expect(
+    page.getByText('No volunteer applications match the current filters.'),
+  ).toBeVisible();
 });
 
 test('creates, publishes, updates and deletes testimonials through the moderation queue', async ({
@@ -96,7 +100,7 @@ test('creates, publishes, updates and deletes testimonials through the moderatio
   await expect(page.getByText('Testimonial updated')).toBeVisible();
   await page.getByRole('button', { name: 'Delete' }).click();
   await page.getByRole('button', { name: 'Delete testimonial' }).click();
-  await expect(page.getByText('No records match these filters.')).toBeVisible();
+  await expect(page.getByText('There are no testimonials yet.')).toBeVisible();
 });
 
 test('newsletter removal keeps the address out of client logs, analytics and feedback', async ({
@@ -118,11 +122,11 @@ test('newsletter removal keeps the address out of client logs, analytics and fee
   await expect(page.getByText(privateEmail)).toBeVisible();
   await page.getByRole('button', { name: 'Remove' }).click();
   await page.getByRole('button', { name: 'Remove subscriber' }).click();
-  await expect(page.getByText('No records match these filters.')).toBeVisible();
+  await expect(page.getByText('There are no subscribers yet.')).toBeVisible();
   await expect(page.getByText('Newsletter subscriber removed')).toBeVisible();
   expect(consoleMessages.join(' ')).not.toContain(privateEmail);
   expect(analyticsPayloads.join(' ')).not.toContain(privateEmail);
-  await expect(page.getByRole('status')).not.toContainText(privateEmail);
+  await expect(page.getByRole('status').filter({ hasText: privateEmail })).toHaveCount(0);
 });
 
 test('content editors can review private records but cannot delete or access subscribers', async ({

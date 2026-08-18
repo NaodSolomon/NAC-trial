@@ -90,7 +90,18 @@ export function VolunteerAdmin() {
           Apply filters
         </Button>
       </form>
-      <LoadState loading={loading} error={error} empty={records.length === 0}>
+      <LoadState
+        loading={loading}
+        error={error}
+        empty={records.length === 0}
+        entity="volunteer applications"
+        filtered={Boolean(language || search || status)}
+        onClearFilters={() => {
+          setLanguage('');
+          setSearch('');
+          setStatus('');
+        }}
+      >
         <ul className="mt-6 grid gap-4 lg:grid-cols-2">
           {records.map((record) => (
             <li key={record.id} className="bg-card rounded-xl border p-5 shadow-sm">

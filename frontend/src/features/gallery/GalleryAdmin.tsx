@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FileUp, Save, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { AdminFormField } from '@/components/admin/AdminFormField';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { UploadProgress } from '@/components/admin/UploadProgress';
@@ -219,10 +220,12 @@ export function GalleryAdmin() {
           aria-label="Loading gallery"
           className="bg-card mt-6 h-52 animate-pulse rounded-xl border motion-reduce:animate-none"
         />
-      ) : items.length === 0 ? (
-        <p role="status" className="bg-card mt-6 rounded-xl border p-8">
-          No {language.toUpperCase()} gallery items match this filter.
-        </p>
+      ) : error ? null : items.length === 0 ? (
+        <AdminEmptyState
+          entity={`${language.toUpperCase()} gallery items`}
+          filtered={Boolean(type)}
+          onClearFilters={() => setType('')}
+        />
       ) : (
         <ul className="mt-6 grid gap-5 xl:grid-cols-2">
           {items.map((item) => (

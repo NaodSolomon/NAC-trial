@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarPlus, Download, FilePlus2, Save, Trash2, Users } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { AdminEmptyState } from '@/components/admin/AdminEmptyState';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import {
   AdminFormField,
@@ -196,8 +197,16 @@ export function EventAdmin() {
             <p role="status" className="mt-4">
               Loading events…
             </p>
-          ) : events.length === 0 ? (
-            <p className="mt-4 text-sm">No events match these filters.</p>
+          ) : error ? null : events.length === 0 ? (
+            <AdminEmptyState
+              entity="events"
+              filtered={Boolean(language || status || timeframe !== 'all')}
+              onClearFilters={() => {
+                setLanguage('');
+                setStatus('');
+                setTimeframe('all');
+              }}
+            />
           ) : (
             <ul className="mt-4 space-y-2">
               {events.map((event) => (
