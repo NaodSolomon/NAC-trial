@@ -1,10 +1,17 @@
 'use client';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ExternalLink, FilePlus2, Send, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
+import {
+  AdminFormField,
+  AdminFormSelect,
+  AdminFormTextarea,
+} from '@/components/admin/AdminFormField';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
@@ -26,16 +33,23 @@ import {
 
 export function ResourceAdmin() {
   const [items, setItems] = useState<AdminResource[]>([]);
-  const [values, setValues] = useState<ResourceEditorValues>(emptyResource);
   const [language, setLanguage] = useState('');
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const role = useAuthStore((state) => state.user?.role);
   const queryClient = useQueryClient();
   const { notify } = useAdminFeedback();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ResourceEditorValues>({
+    resolver: zodResolver(resourceEditorSchema),
+    defaultValues: emptyResource,
+  });
   const load = useCallback(
     async (signal?: AbortSignal) => {
       setLoading(true);
@@ -60,23 +74,17 @@ export function ResourceAdmin() {
     await queryClient.invalidateQueries({ queryKey: queryKeys.resources.all });
     await load();
   }
-  async function create() {
-    const parsed = resourceEditorSchema.safeParse(values);
-    if (!parsed.success)
-      return setError([...new Set(parsed.error.issues.map((issue) => issue.message))].join(' '));
-    setSaving(true);
+  async function onSubmit(values: ResourceEditorValues) {
     setError('');
     try {
-      const created = await createResource(parsed.data);
-      setValues({ ...emptyResource, languageCode: parsed.data.languageCode });
+      const created = await createResource(values);
+      reset({ ...emptyResource, languageCode: values.languageCode });
       await refresh();
       notify({ title: 'Resource draft created', message: created.title });
     } catch (createError) {
       setError(
         `${getApiErrorMessageWithDetails(createError)} Your resource details remain in the form.`,
       );
-    } finally {
-      setSaving(false);
     }
   }
   async function publish(item: AdminResource) {
@@ -104,10 +112,8 @@ export function ResourceAdmin() {
       </p>
       <form
         className="bg-card mt-8 grid gap-4 rounded-xl border p-6 shadow-sm md:grid-cols-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void create();
-        }}
+        noValidate
+        onSubmit={handleSubmit(onSubmit)}
       >
         <div className="rounded-lg bg-blue-50 p-4 text-sm text-blue-950 md:col-span-2">
           Upload documents in the{' '}
@@ -116,72 +122,57 @@ export function ResourceAdmin() {
           </Link>
           , then paste the resulting approved public URL here.
         </div>
-        <Field
+        <AdminFormField
           label="Title"
-          value={values.title}
           maxLength={255}
-          onChange={(title) => setValues({ ...values, title })}
+          error={errors.title?.message}
+          {...register('title')}
         />
-        <Field
+        <AdminFormField
           label="File name"
-          value={values.fileName}
           maxLength={255}
-          onChange={(fileName) => setValues({ ...values, fileName })}
+          error={errors.fileName?.message}
+          {...register('fileName')}
         />
-        <label className="md:col-span-2">
-          <span className="text-heading mb-2 block text-sm font-semibold">Approved file URL</span>
-          <input
+        <div className="md:col-span-2">
+          <AdminFormField
+            label="Approved file URL"
             type="url"
-            value={values.fileUrl}
             maxLength={2048}
-            onChange={(event) => setValues({ ...values, fileUrl: event.target.value })}
-            className="min-h-11 w-full rounded-lg border px-3"
+            error={errors.fileUrl?.message}
+            {...register('fileUrl')}
           />
-        </label>
-        <label>
-          <span className="text-heading mb-2 block text-sm font-semibold">MIME type</span>
-          <select
-            value={values.mimeType}
-            onChange={(event) =>
-              setValues({
-                ...values,
-                mimeType: event.target.value as ResourceEditorValues['mimeType'],
-              })
-            }
-            className="min-h-11 w-full rounded-lg border bg-white px-3"
-          >
-            {resourceMimeTypes.map((mime) => (
-              <option key={mime}>{mime}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span className="text-heading mb-2 block text-sm font-semibold">Language</span>
-          <select
-            value={values.languageCode}
-            onChange={(event) =>
-              setValues({ ...values, languageCode: event.target.value as 'en' | 'am' })
-            }
-            className="min-h-11 w-full rounded-lg border bg-white px-3"
-          >
-            <option value="en">English</option>
-            <option value="am">Amharic</option>
-          </select>
-        </label>
-        <label className="md:col-span-2">
-          <span className="text-heading mb-2 block text-sm font-semibold">Description</span>
-          <textarea
-            value={values.description}
+        </div>
+        <AdminFormSelect
+          label="MIME type"
+          error={errors.mimeType?.message}
+          {...register('mimeType')}
+        >
+          {resourceMimeTypes.map((mime) => (
+            <option key={mime}>{mime}</option>
+          ))}
+        </AdminFormSelect>
+        <AdminFormSelect
+          label="Language"
+          error={errors.languageCode?.message}
+          {...register('languageCode')}
+        >
+          <option value="en">English</option>
+          <option value="am">Amharic</option>
+        </AdminFormSelect>
+        <div className="md:col-span-2">
+          <AdminFormTextarea
+            label="Description"
             maxLength={2000}
             rows={5}
-            onChange={(event) => setValues({ ...values, description: event.target.value })}
-            className="w-full rounded-lg border p-3"
+            error={errors.description?.message}
+            {...register('description')}
           />
-        </label>
+        </div>
         <div className="md:col-span-2">
-          <Button type="submit" disabled={saving}>
+          <Button type="submit" disabled={isSubmitting}>
             <FilePlus2 aria-hidden="true" />
-            {saving ? 'Creating…' : 'Create resource draft'}
+            {isSubmitting ? 'Creating…' : 'Create resource draft'}
           </Button>
         </div>
       </form>
@@ -279,28 +270,5 @@ export function ResourceAdmin() {
         </Button>
       </div>
     </section>
-  );
-}
-function Field({
-  label,
-  value,
-  maxLength,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  maxLength: number;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label>
-      <span className="text-heading mb-2 block text-sm font-semibold">{label}</span>
-      <input
-        value={value}
-        maxLength={maxLength}
-        onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 w-full rounded-lg border px-3"
-      />
-    </label>
   );
 }
