@@ -108,6 +108,7 @@ export class EventsService {
           status: dto.status,
           languageCode: dto.languageCode,
           translationKey: dto.translationKey,
+          imageUrl: dto.imageUrl?.trim() || null,
           createdBy: actor.id,
         },
         actor.id,
@@ -139,6 +140,7 @@ export class EventsService {
           ...(dto.location !== undefined && { location: dto.location.trim() }),
           ...(dto.rsvpEnabled !== undefined && { rsvpEnabled: dto.rsvpEnabled }),
           ...(dto.status !== undefined && { status: dto.status }),
+          ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl?.trim() || null }),
         },
         actor.id,
       );

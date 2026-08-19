@@ -1,8 +1,9 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import type { SiteLocalizedText } from '../../../database/schema/site-setting.schema';
 import { SiteSetting } from '../../../database/schema';
 import { AdminPrincipal } from '../../auth/interfaces/auth.types';
 import { ApplicationCache, CACHE, NOOP_CACHE } from '../../cache/cache.interface';
-import { UpdateSiteSettingsDto } from '../dto/update-site-settings.dto';
+import { LocalizedTextDto, UpdateSiteSettingsDto } from '../dto/update-site-settings.dto';
 import {
   SITE_SETTINGS_REPOSITORY,
   SiteSettingsRepository,
@@ -63,6 +64,12 @@ export class SiteSettingsService {
               .filter((entry): entry is [string, string] => Boolean(entry[1])),
           ),
         }),
+        ...(dto.defaultShareImageUrl !== undefined && {
+          defaultShareImageUrl: dto.defaultShareImageUrl?.trim() || null,
+        }),
+        ...(dto.localizedText !== undefined && {
+          localizedText: normalizeLocalizedText(dto.localizedText),
+        }),
       },
       actor.id,
     );
@@ -94,6 +101,18 @@ export class SiteSettingsService {
       phone: settings.phone,
       address: settings.address,
       socialLinks: settings.socialLinks,
+      defaultShareImageUrl: settings.defaultShareImageUrl,
+      localizedText: settings.localizedText,
     };
   }
+}
+
+function normalizeLocalizedText(dto: LocalizedTextDto): SiteLocalizedText {
+  const entries = Object.entries(dto).map(([key, value]) => {
+    const en = value?.en?.trim();
+    const am = value?.am?.trim();
+    const localized = { ...(en && { en }), ...(am && { am }) };
+    return [key, localized] as const;
+  });
+  return Object.fromEntries(entries.filter(([, value]) => Object.keys(value).length > 0));
 }

@@ -13,6 +13,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import { IsApprovedSeoImageUrl } from '../../seo/dto/validators/approved-seo-image-url.validator';
 
 export class SocialLinksDto {
   @ApiPropertyOptional({ example: 'https://facebook.com/nehemiah', maxLength: 2048 })
@@ -38,6 +39,58 @@ export class SocialLinksDto {
   @IsUrl({ protocols: ['https'], require_protocol: true })
   @MaxLength(2048)
   linkedin?: string;
+
+  @ApiPropertyOptional({ example: 'https://x.com/nehemiah', maxLength: 2048 })
+  @IsOptional()
+  @IsUrl({ protocols: ['https'], require_protocol: true })
+  @MaxLength(2048)
+  x?: string;
+
+  @ApiPropertyOptional({ example: 'https://tiktok.com/@nehemiah', maxLength: 2048 })
+  @IsOptional()
+  @IsUrl({ protocols: ['https'], require_protocol: true })
+  @MaxLength(2048)
+  tiktok?: string;
+}
+
+export class LocalizedValueDto {
+  @ApiPropertyOptional({ maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  en?: string;
+
+  @ApiPropertyOptional({ maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  am?: string;
+}
+
+export class LocalizedTextDto {
+  @ApiPropertyOptional({ type: () => LocalizedValueDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => LocalizedValueDto)
+  openingHours?: LocalizedValueDto;
+
+  @ApiPropertyOptional({ type: () => LocalizedValueDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => LocalizedValueDto)
+  tagline?: LocalizedValueDto;
+
+  @ApiPropertyOptional({ type: () => LocalizedValueDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => LocalizedValueDto)
+  footerAbout?: LocalizedValueDto;
+
+  @ApiPropertyOptional({ type: () => LocalizedValueDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => LocalizedValueDto)
+  faqIntro?: LocalizedValueDto;
 }
 
 export class UpdateSiteSettingsDto {
@@ -84,4 +137,16 @@ export class UpdateSiteSettingsDto {
   @ValidateNested()
   @Type(() => SocialLinksDto)
   socialLinks?: SocialLinksDto;
+
+  @ApiPropertyOptional({ example: 'https://media.example.org/share.jpg', maxLength: 2048 })
+  @IsOptional()
+  @IsApprovedSeoImageUrl()
+  @MaxLength(2048)
+  defaultShareImageUrl?: string | null;
+
+  @ApiPropertyOptional({ type: () => LocalizedTextDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => LocalizedTextDto)
+  localizedText?: LocalizedTextDto;
 }

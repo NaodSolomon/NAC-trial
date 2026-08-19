@@ -15,6 +15,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+import { IsApprovedSeoImageUrl } from '../../seo/dto/validators/approved-seo-image-url.validator';
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -49,6 +50,7 @@ export class CreateEventDto {
   @IsIn(['DRAFT', 'PUBLISHED']) status!: 'DRAFT' | 'PUBLISHED';
   @IsIn(['en', 'am']) languageCode!: 'en' | 'am';
   @IsOptional() @IsUUID() translationKey?: string;
+  @IsOptional() @IsApprovedSeoImageUrl() @MaxLength(2048) imageUrl?: string | null;
 }
 
 export class UpdateEventDto {
@@ -60,6 +62,7 @@ export class UpdateEventDto {
   @IsOptional() @IsString() @MinLength(2) @MaxLength(500) location?: string;
   @IsOptional() @IsBoolean() rsvpEnabled?: boolean;
   @IsOptional() @IsIn(['DRAFT', 'PUBLISHED']) status?: 'DRAFT' | 'PUBLISHED';
+  @IsOptional() @IsApprovedSeoImageUrl() @MaxLength(2048) imageUrl?: string | null;
 }
 
 export class CreateRsvpDto {

@@ -13,6 +13,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import { IsApprovedSeoImageUrl } from '../../seo/dto/validators/approved-seo-image-url.validator';
 
 export class HomepageActionDto {
   @IsString()
@@ -63,6 +64,11 @@ export class HomepageHeroSectionDto extends HomepageSectionDto {
   @ValidateNested()
   @Type(() => HomepageActionDto)
   secondaryAction?: HomepageActionDto;
+
+  @IsOptional()
+  @IsApprovedSeoImageUrl()
+  @MaxLength(2048)
+  imageUrl?: string;
 }
 
 export class HomepageServicesSectionDto extends HomepageSectionDto {
@@ -234,4 +240,9 @@ export class CmsPageMetadataDto {
   @IsUrl({ protocols: ['https'], require_protocol: true })
   @MaxLength(2048)
   mapEmbedUrl?: string;
+
+  @IsOptional()
+  @IsApprovedSeoImageUrl()
+  @MaxLength(2048)
+  bannerImageUrl?: string;
 }

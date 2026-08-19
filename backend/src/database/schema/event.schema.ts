@@ -25,6 +25,7 @@ export const events = pgTable(
     startDate: timestamp('start_date', { withTimezone: true, precision: 3 }).notNull(),
     endDate: timestamp('end_date', { withTimezone: true, precision: 3 }).notNull(),
     location: varchar('location', { length: 500 }).notNull(),
+    imageUrl: varchar('image_url', { length: 2048 }),
     rsvpEnabled: boolean('rsvp_enabled').default(false).notNull(),
     status: eventStatusEnum('status').default('DRAFT').notNull(),
     languageCode: languageCodeEnum('language_code').default('en').notNull(),

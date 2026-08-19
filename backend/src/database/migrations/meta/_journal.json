@@ -141,6 +141,13 @@
       "when": 1786883515309,
       "tag": "0019_backfill_faqs_from_cms_pages",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1787129510256,
+      "tag": "0020_add_launch_content_columns",
+      "breakpoints": true
     }
   ]
 }
