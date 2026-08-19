@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { FaqPage } from '@/features/faq';
+import { loadPublicSettings, localizedSetting } from '@/features/settings/public-settings.server';
 import { loadFaqs } from '@/features/faq/faq.server';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 import { loadPublicSeo } from '@/features/seo';
@@ -31,5 +32,12 @@ export async function generateMetadata({ searchParams }: FaqRouteProps): Promise
 
 export default async function Page({ searchParams }: FaqRouteProps) {
   const language = await resolveRequestLanguage((await searchParams).lang);
-  return <FaqPage content={await loadFaqs(language)} language={language} />;
+  const [content, settings] = await Promise.all([loadFaqs(language), loadPublicSettings()]);
+  return (
+    <FaqPage
+      content={content}
+      language={language}
+      intro={localizedSetting(settings, 'faqIntro', language)}
+    />
+  );
 }

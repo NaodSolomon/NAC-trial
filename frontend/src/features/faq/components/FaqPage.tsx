@@ -21,8 +21,10 @@ function groupByCategory(items: FaqItem[], fallback: string) {
 export default function FaqPage({
   content,
   language,
+  intro,
 }: {
   content: FaqCollection;
+  intro?: string | null;
   language: Language;
 }) {
   const title = translate(language, 'faq');
@@ -41,7 +43,7 @@ export default function FaqPage({
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-4xl px-4">
           <p className="text-foreground mx-auto mb-10 max-w-2xl text-center text-lg">
-            {translate(language, 'faqIntro')}
+            {intro ?? translate(language, 'faqIntro')}
           </p>
 
           {content.items.length ? (

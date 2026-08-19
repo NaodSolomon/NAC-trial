@@ -1,15 +1,10 @@
 import PageBanner from '@/components/common/PageBanner';
 import { localizedHref, translate, type Language } from '@/lib/i18n';
 import type { PublishedCmsPage } from '../cms.types';
+import { cmsBannerImage } from '../cms.schemas';
 import { CmsArticle } from './CmsArticle';
 
-export function GenericCmsPage({
-  page,
-  language,
-}: {
-  page: PublishedCmsPage;
-  language: Language;
-}) {
+export function GenericCmsPage({ page, language }: { page: PublishedCmsPage; language: Language }) {
   return (
     <>
       <PageBanner
@@ -18,7 +13,7 @@ export function GenericCmsPage({
           { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: page.title },
         ]}
-        backgroundImage="/images/about-us.jpg"
+        backgroundImage={cmsBannerImage(page.metadata) ?? '/images/about-us.jpg'}
       />
       <section className="bg-secondary-bg py-16 sm:py-20">
         <article className="bg-card mx-auto max-w-4xl rounded-xl border px-6 py-10 shadow-sm sm:px-10">

@@ -55,7 +55,9 @@ export function PublicFooter() {
             <FooterColumn title={t('discover')} links={discoveryLinks} localize={href} />
             <section className="min-h-40">
               <h2 className="mb-4 font-serif text-lg text-white">{t('about')}</h2>
-              <p className="max-w-sm text-sm leading-relaxed">{t('footerAbout')}</p>
+              <p className="max-w-sm text-sm leading-relaxed">
+                {settings.footerAbout ?? t('footerAbout')}
+              </p>
             </section>
           </nav>
 

@@ -29,7 +29,7 @@ export function usePublicShellData(language: Language) {
     queryKey: queryKeys.settings.public(),
     queryFn: async ({ signal }) => {
       const response = await browserApiClient.get('/settings', { signal });
-      return normalizeSettings(response, fallbackSettings);
+      return normalizeSettings(response, fallbackSettings, language);
     },
     placeholderData: fallbackSettings,
     staleTime: 5 * 60_000,
@@ -48,17 +48,10 @@ function createFallbackNavigation(language: Language): PublicNavigationItem[] {
   const label = (key: MessageKey) => translate(language, key);
   return [
     { id: 'fallback-home', label: label('home'), url: '/' },
-    {
-      id: 'fallback-about',
-      label: label('aboutUs'),
-      url: '/about',
-      children: [
-        { id: 'fallback-about-page', label: label('aboutUs'), url: '/about' },
-        { id: 'fallback-gallery', label: label('gallery'), url: '/gallery' },
-        { id: 'fallback-volunteers', label: label('volunteers'), url: '/volunteer' },
-        { id: 'fallback-faq', label: label('faq'), url: '/faq' },
-      ],
-    },
+    // Flat on purpose: managed navigation items cannot carry children, so a fallback
+    // with dropdowns would silently lose them the moment the first item is managed.
+    { id: 'fallback-about', label: label('aboutUs'), url: '/about' },
+    { id: 'fallback-gallery', label: label('gallery'), url: '/gallery' },
     { id: 'fallback-events', label: label('events'), url: '/events' },
     { id: 'fallback-blog', label: label('blog'), url: '/blog' },
     { id: 'fallback-contact', label: label('contact'), url: '/contact' },
@@ -70,9 +63,13 @@ function createFallbackSettings(): PublicSiteSettings {
     siteName: SITE_CONFIG.name,
     defaultLanguage: 'en',
     supportedLanguages: ['en', 'am'],
-    contactEmail: SITE_CONFIG.email,
-    phone: SITE_CONFIG.phone,
-    address: SITE_CONFIG.address,
+    // Deliberately empty: placeholder contact details must never reach a visitor.
+    // The shell hides what is unset until the real values arrive from settings.
+    contactEmail: null,
+    phone: null,
+    address: null,
+    openingHours: null,
+    footerAbout: null,
     socialLinks: {},
   };
 }
@@ -97,7 +94,11 @@ function normalizeNavigation(
   return navigation.length > 0 ? navigation : fallback;
 }
 
-function normalizeSettings(value: unknown, fallback: PublicSiteSettings): PublicSiteSettings {
+function normalizeSettings(
+  value: unknown,
+  fallback: PublicSiteSettings,
+  language: Language,
+): PublicSiteSettings {
   if (!value || typeof value !== 'object') return fallback;
   const candidate = value as Record<string, unknown>;
   const supportedLanguages = Array.isArray(candidate.supportedLanguages)
@@ -119,8 +120,22 @@ function normalizeSettings(value: unknown, fallback: PublicSiteSettings): Public
     contactEmail: nullableString(candidate.contactEmail, fallback.contactEmail),
     phone: nullableString(candidate.phone, fallback.phone),
     address: nullableString(candidate.address, fallback.address),
+    openingHours: localizedText(candidate.localizedText, 'openingHours', language),
+    footerAbout: localizedText(candidate.localizedText, 'footerAbout', language),
     socialLinks: normalizeSocialLinks(candidate.socialLinks),
   };
+}
+
+function localizedText(value: unknown, key: string, language: Language): string | null {
+  if (!value || typeof value !== 'object') return null;
+  const entry = (value as Record<string, unknown>)[key];
+  if (!entry || typeof entry !== 'object') return null;
+  const localized = entry as Record<string, unknown>;
+  const preferred = localized[language];
+  const english = localized.en;
+  if (typeof preferred === 'string' && preferred.trim()) return preferred.trim();
+  if (typeof english === 'string' && english.trim()) return english.trim();
+  return null;
 }
 
 function normalizeSocialLinks(value: unknown): PublicSiteSettings['socialLinks'] {

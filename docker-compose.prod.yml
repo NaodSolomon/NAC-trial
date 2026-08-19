@@ -21,7 +21,7 @@ services:
       - letsencrypt:/letsencrypt
 
   frontend:
-    image: ${FRONTEND_IMAGE:-ghcr.io/yourusername/nehemiah-frontend:latest}
+    image: ${FRONTEND_IMAGE:?Set FRONTEND_IMAGE in .env.production}
     restart: always
     env_file:
       - ./frontend/.env.production
@@ -41,7 +41,7 @@ services:
       - backend
 
   backend:
-    image: ${BACKEND_IMAGE:-ghcr.io/yourusername/nehemiah-backend:latest}
+    image: ${BACKEND_IMAGE:?Set BACKEND_IMAGE in .env.production}
     restart: always
     env_file:
       - ./backend/.env.production
@@ -70,6 +70,32 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+  migrate:
+    image: ${BACKEND_IMAGE:?Set BACKEND_IMAGE in .env.production}
+    profiles: ["bootstrap"]
+    restart: "no"
+    env_file:
+      - ./backend/.env.production
+    environment:
+      NODE_ENV: production
+    command: ["node", "dist/src/database/run-migrations.js"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  seed:
+    image: ${BACKEND_IMAGE:?Set BACKEND_IMAGE in .env.production}
+    profiles: ["bootstrap"]
+    restart: "no"
+    env_file:
+      - ./backend/.env.production
+    environment:
+      NODE_ENV: production
+    command: ["node", "dist/src/database/seeds/seed.js"]
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   postgres:
     image: postgres:16-alpine

@@ -73,12 +73,15 @@ export const cmsEditorSchema = z
         (value) => value === '' || z.string().uuid().safeParse(value).success,
         'Enter a valid UUID, or leave this blank to generate one.',
       ),
-    contentType: z.enum(['generic', 'homepage', 'about', 'volunteer', 'team']),
+    contentType: z.enum(['generic', 'homepage', 'about', 'volunteer', 'team', 'contact']),
     homepage: z.object({
       heroHeading: z.string().trim().max(180),
       heroBody: z.string().trim().max(1_000),
       primaryLabel: z.string().trim().max(80),
       primaryHref: z.string().trim().max(2_048),
+      secondaryLabel: z.string().trim().max(80),
+      secondaryHref: z.string().trim().max(2_048),
+      imageUrl: z.string().trim().max(2_048),
       servicesHeading: z.string().trim().max(180),
       services: z.array(homepageServiceSchema).max(12),
       locationHeading: z.string().trim().max(180),
@@ -116,6 +119,8 @@ export const cmsEditorSchema = z
       )
       .max(50),
     teamContentApproved: z.boolean(),
+    contactMapEmbedUrl: z.string().trim().max(2_048),
+    bannerImageUrl: z.string().trim().max(2_048),
   })
   .superRefine((value, context) => {
     if (value.contentType === 'homepage') {
@@ -150,6 +155,20 @@ export const cmsEditorSchema = z
     }
     if (value.contentType === 'team' && !value.teamMembers.length) {
       issue(context, ['teamMembers'], 'Add at least one approved team biography.');
+    }
+    if (value.contentType === 'contact' && !isApprovedMapUrl(value.contactMapEmbedUrl)) {
+      issue(context, ['contactMapEmbedUrl'], 'Use an approved HTTPS Google Maps embed URL.');
+    }
+    const secondary = value.homepage;
+    if (
+      value.contentType === 'homepage' &&
+      Boolean(secondary.secondaryLabel) !== Boolean(secondary.secondaryHref)
+    ) {
+      issue(
+        context,
+        ['homepage', secondary.secondaryLabel ? 'secondaryHref' : 'secondaryLabel'],
+        'Provide both a label and a link for the second button, or neither.',
+      );
     }
   });
 

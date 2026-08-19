@@ -14,6 +14,8 @@ export interface PublicSiteSettings {
   contactEmail: string | null;
   phone: string | null;
   address: string | null;
+  openingHours: string | null;
+  footerAbout: string | null;
   socialLinks: {
     facebook?: string;
     instagram?: string;

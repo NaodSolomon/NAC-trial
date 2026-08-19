@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarPlus, Download, FilePlus2, Save, Trash2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import {
   AdminFormSelect,
   AdminFormTextarea,
 } from '@/components/admin/AdminFormField';
+import { MediaPicker } from '@/components/admin/MediaPicker';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
@@ -51,6 +52,7 @@ export function EventAdmin() {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<EventEditorValues>({
     resolver: zodResolver(eventEditorSchema),
@@ -287,6 +289,20 @@ export function EventAdmin() {
                 maxLength={500}
                 error={errors.location?.message}
                 {...register('location')}
+              />
+              <Controller
+                control={control}
+                name="imageUrl"
+                render={({ field }) => (
+                  <MediaPicker
+                    label="Event photo"
+                    id="event-image"
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.imageUrl?.message}
+                    hint="Shown on the event card and the event page. Optional."
+                  />
+                )}
               />
               <AdminFormField
                 label="Start date and time"

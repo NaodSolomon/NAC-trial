@@ -57,11 +57,7 @@ export function RsvpForm({ eventId, language }: { eventId: string; language: Lan
       <p className="text-foreground mt-2">
         {language === 'am' ? 'የተሳታፊዎችን ብዛት ያሳውቁን።' : 'Let us know how many people will attend.'}
       </p>
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        noValidate
-        className="mt-6 grid gap-5 sm:grid-cols-2"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-6 grid gap-5 sm:grid-cols-2">
         <PublicFormField
           label={language === 'am' ? 'ስም' : 'Name'}
           error={errors.name?.message}

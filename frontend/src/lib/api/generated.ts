@@ -1769,6 +1769,7 @@ export interface components {
         };
         CmsPageMetadataDto: {
             about?: components["schemas"]["AboutMetadataDto"];
+            bannerImageUrl?: string;
             contentApproved?: boolean;
             /** Format: uri */
             mapEmbedUrl?: string;
@@ -1856,6 +1857,7 @@ export interface components {
         CreateEventDto: {
             description: string;
             endDate: string;
+            imageUrl?: string | null;
             /** @enum {string} */
             languageCode: "en" | "am";
             location: string;
@@ -1978,6 +1980,16 @@ export interface components {
         HomepageServiceItemDto: {
             body: string;
             title: string;
+        };
+        LocalizedTextDto: {
+            faqIntro?: components["schemas"]["LocalizedValueDto"];
+            footerAbout?: components["schemas"]["LocalizedValueDto"];
+            openingHours?: components["schemas"]["LocalizedValueDto"];
+            tagline?: components["schemas"]["LocalizedValueDto"];
+        };
+        LocalizedValueDto: {
+            am?: string;
+            en?: string;
         };
         LoginDto: {
             /**
@@ -2160,6 +2172,16 @@ export interface components {
             linkedin?: string;
             /**
              * Format: uri
+             * @example https://tiktok.com/@nehemiah
+             */
+            tiktok?: string;
+            /**
+             * Format: uri
+             * @example https://x.com/nehemiah
+             */
+            x?: string;
+            /**
+             * Format: uri
              * @example https://youtube.com/@nehemiah
              */
             youtube?: string;
@@ -2218,6 +2240,7 @@ export interface components {
         UpdateEventDto: {
             description?: string;
             endDate?: string;
+            imageUrl?: string | null;
             location?: string;
             rsvpEnabled?: boolean;
             slug?: string;
@@ -2266,6 +2289,9 @@ export interface components {
              * @enum {string}
              */
             defaultLanguage?: "en" | "am";
+            /** @example https://media.example.org/share.jpg */
+            defaultShareImageUrl?: string | null;
+            localizedText?: components["schemas"]["LocalizedTextDto"];
             /** @example +251 11 000 0000 */
             phone?: string;
             /** @example Nehemiah Autism Center */

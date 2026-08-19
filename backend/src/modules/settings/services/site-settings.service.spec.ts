@@ -21,6 +21,8 @@ const settings: SiteSetting = {
   phone: null,
   address: null,
   socialLinks: {},
+  defaultShareImageUrl: null,
+  localizedText: {},
   updatedBy: actor.id,
   createdAt: now,
   updatedAt: now,

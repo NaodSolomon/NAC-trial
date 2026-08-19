@@ -8,4 +8,6 @@ export interface PublicSiteSettings {
   phone: string | null;
   address: string | null;
   socialLinks: SiteSetting['socialLinks'];
+  defaultShareImageUrl: string | null;
+  localizedText: SiteSetting['localizedText'];
 }

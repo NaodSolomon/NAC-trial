@@ -100,8 +100,10 @@ export function editorValuesFromPage(page?: AdminCmsPage): CmsEditorValues {
       ? 'about'
       : volunteerRoles.length
         ? 'volunteer'
-          : teamMembers.length
-            ? 'team'
+        : teamMembers.length
+          ? 'team'
+          : typeof metadata.mapEmbedUrl === 'string' && metadata.mapEmbedUrl
+            ? 'contact'
             : 'generic';
   return {
     slug: page?.slug ?? '',
@@ -115,6 +117,9 @@ export function editorValuesFromPage(page?: AdminCmsPage): CmsEditorValues {
       heroBody: stringValue(hero.body),
       primaryLabel: stringValue(objectValue(hero.primaryAction).label),
       primaryHref: stringValue(objectValue(hero.primaryAction).href),
+      secondaryLabel: stringValue(objectValue(hero.secondaryAction).label),
+      secondaryHref: stringValue(objectValue(hero.secondaryAction).href),
+      imageUrl: stringValue(hero.imageUrl),
       servicesHeading: stringValue(services.heading),
       services: Array.isArray(services.items)
         ? services.items.map((item) => ({
@@ -152,6 +157,8 @@ export function editorValuesFromPage(page?: AdminCmsPage): CmsEditorValues {
       biography: stringValue(objectValue(item).biography),
     })),
     teamContentApproved: metadata.contentApproved === true,
+    contactMapEmbedUrl: stringValue(metadata.mapEmbedUrl),
+    bannerImageUrl: stringValue(metadata.bannerImageUrl),
   };
 }
 
@@ -178,6 +185,15 @@ function editorPayload(values: CmsEditorValues, includeLanguage: boolean) {
                       },
                     }
                   : {}),
+                ...(values.homepage.secondaryLabel && values.homepage.secondaryHref
+                  ? {
+                      secondaryAction: {
+                        label: values.homepage.secondaryLabel,
+                        href: values.homepage.secondaryHref,
+                      },
+                    }
+                  : {}),
+                ...(values.homepage.imageUrl && { imageUrl: values.homepage.imageUrl }),
               },
               {
                 type: 'services',
@@ -198,35 +214,45 @@ function editorPayload(values: CmsEditorValues, includeLanguage: boolean) {
               },
             ],
           }
-          : values.contentType === 'about'
-            ? {
-                contentApproved: values.about.contentApproved,
-                about: {
-                  mission: {
-                    heading: values.about.missionHeading,
-                    body: values.about.missionBody,
-                  },
-                  history: {
-                    heading: values.about.historyHeading,
-                    body: values.about.historyBody,
-                  },
-                  services: values.about.services,
+        : values.contentType === 'about'
+          ? {
+              ...(values.bannerImageUrl && { bannerImageUrl: values.bannerImageUrl }),
+              contentApproved: values.about.contentApproved,
+              about: {
+                mission: {
+                  heading: values.about.missionHeading,
+                  body: values.about.missionBody,
                 },
+                history: {
+                  heading: values.about.historyHeading,
+                  body: values.about.historyBody,
+                },
+                services: values.about.services,
+              },
+            }
+          : values.contentType === 'volunteer'
+            ? {
+                ...(values.bannerImageUrl && { bannerImageUrl: values.bannerImageUrl }),
+                volunteerRoles: values.volunteerRoles.map((role) => ({
+                  title: role.title,
+                  summary: role.summary,
+                  ...(role.commitment && { commitment: role.commitment }),
+                })),
               }
-            : values.contentType === 'volunteer'
+            : values.contentType === 'team'
               ? {
-                  volunteerRoles: values.volunteerRoles.map((role) => ({
-                    title: role.title,
-                    summary: role.summary,
-                    ...(role.commitment && { commitment: role.commitment }),
-                  })),
+                  ...(values.bannerImageUrl && { bannerImageUrl: values.bannerImageUrl }),
+                  contentApproved: values.teamContentApproved,
+                  teamMembers: values.teamMembers,
                 }
-              : values.contentType === 'team'
+              : values.contentType === 'contact'
                 ? {
-                    contentApproved: values.teamContentApproved,
-                    teamMembers: values.teamMembers,
+                    ...(values.bannerImageUrl && { bannerImageUrl: values.bannerImageUrl }),
+                    mapEmbedUrl: values.contactMapEmbedUrl,
                   }
-                : {},
+                : {
+                    ...(values.bannerImageUrl && { bannerImageUrl: values.bannerImageUrl }),
+                  },
   };
 }
 

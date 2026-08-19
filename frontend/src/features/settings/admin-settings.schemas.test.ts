@@ -8,7 +8,14 @@ const valid = {
   contactEmail: 'info@example.org',
   phone: '+251 11 000 0000',
   address: 'Addis Ababa',
-  socialLinks: { facebook: '', instagram: '', youtube: '', linkedin: '' },
+  socialLinks: { facebook: '', instagram: '', youtube: '', linkedin: '', x: '', tiktok: '' },
+  defaultShareImageUrl: '',
+  localizedText: {
+    openingHours: { en: '', am: '' },
+    tagline: { en: '', am: '' },
+    footerAbout: { en: '', am: '' },
+    faqIntro: { en: '', am: '' },
+  },
 };
 
 describe('settingsEditorSchema', () => {

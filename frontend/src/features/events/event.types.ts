@@ -11,6 +11,7 @@ export interface PublicEvent {
   startDate: string;
   endDate: string;
   location: string;
+  imageUrl: string | null;
   rsvpEnabled: boolean;
   status: 'PUBLISHED';
   languageCode: Language;

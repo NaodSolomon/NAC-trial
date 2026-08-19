@@ -1,7 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import PageBanner from '@/components/common/PageBanner';
-import { aboutMetadataSchema, CmsArticle, type PublishedCmsPage } from '@/features/cms';
+import {
+  aboutMetadataSchema,
+  cmsBannerImage,
+  CmsArticle,
+  type PublishedCmsPage,
+} from '@/features/cms';
 import { localizedHref, translate, type Language } from '@/lib/i18n';
 
 export default function AboutPage({
@@ -20,7 +25,7 @@ export default function AboutPage({
           { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: page.title },
         ]}
-        backgroundImage="/images/about-us.jpg"
+        backgroundImage={cmsBannerImage(page.metadata) ?? '/images/about-us.jpg'}
       />
       <section className="py-16 sm:py-20">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 lg:grid-cols-[1.05fr_0.95fr]">

@@ -8,6 +8,7 @@ const event = {
   startDate: '2030-01-01T10:00',
   endDate: '2030-01-01T12:00',
   location: 'Addis Ababa',
+  imageUrl: '',
   rsvpEnabled: true,
   status: 'DRAFT' as const,
   languageCode: 'en' as const,

@@ -81,7 +81,13 @@ export function PublicHeader() {
           <div className="flex min-w-0 items-center justify-end gap-5 lg:gap-8">
             <InfoBox icon={<Phone />} heading={t('getInTouch')} content={settings.phone} />
             <InfoBox icon={<MapPin />} heading={t('officeAddress')} content={settings.address} />
-            <InfoBox icon={<Clock />} heading={t('openingHours')} content={t('localHours')} />
+            {settings.openingHours && (
+              <InfoBox
+                icon={<Clock />}
+                heading={t('openingHours')}
+                content={settings.openingHours}
+              />
+            )}
           </div>
         </div>
       </div>

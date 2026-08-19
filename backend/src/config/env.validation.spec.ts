@@ -16,6 +16,11 @@ describe('validateEnvironment', () => {
     STORAGE_PUBLIC_URL: 'https://media.example.org',
     PASSWORD_RESET_URL: 'https://www.example.org/admin/reset-password',
     CONTACT_NOTIFICATION_EMAIL: 'contact@example.org',
+    MAIL_DRIVER: 'smtp',
+    MAIL_HOST: 'smtp.example.org',
+    MAIL_USER: 'apikey',
+    MAIL_PASSWORD: 'smtp-credential',
+    MAIL_FROM: 'noreply@example.org',
   } as const;
 
   it('applies safe development defaults', () => {
@@ -286,6 +291,53 @@ describe('validateEnvironment', () => {
         FRONTEND_URL: 'https://localhost',
       }),
     ).toThrow('FRONTEND_URL must use a non-local HTTPS origin in production');
+  });
+
+  it('refuses the unauthenticated mail driver in production', () => {
+    expect(() =>
+      validateEnvironment({ ...validProductionEnvironment, MAIL_DRIVER: 'mailpit' }),
+    ).toThrow('MAIL_DRIVER must be smtp in production');
+
+    expect(() =>
+      validateEnvironment({ ...validProductionEnvironment, MAIL_DRIVER: undefined }),
+    ).toThrow('MAIL_DRIVER must be smtp in production');
+  });
+
+  it('requires SMTP credentials whenever the smtp driver is selected', () => {
+    expect(() =>
+      validateEnvironment({ ...validProductionEnvironment, MAIL_USER: undefined }),
+    ).toThrow('MAIL_USER and MAIL_PASSWORD are required when MAIL_DRIVER is smtp');
+
+    expect(() =>
+      validateEnvironment({ ...validProductionEnvironment, MAIL_PASSWORD: '   ' }),
+    ).toThrow('MAIL_USER and MAIL_PASSWORD are required when MAIL_DRIVER is smtp');
+
+    // The requirement follows the driver, not the environment.
+    expect(() =>
+      validateEnvironment({ NODE_ENV: 'development', MAIL_DRIVER: 'smtp' }),
+    ).toThrow('MAIL_USER and MAIL_PASSWORD are required when MAIL_DRIVER is smtp');
+  });
+
+  it('defaults the SMTP port to submission and keeps STARTTLS as the default posture', () => {
+    const validated = validateEnvironment({
+      ...validProductionEnvironment,
+    });
+    expect(validated.MAIL_PORT).toBe(587);
+    expect(validated.MAIL_SECURE).toBe(false);
+
+    expect(
+      validateEnvironment({ ...validProductionEnvironment, MAIL_SECURE: 'true', MAIL_PORT: '465' }),
+    ).toMatchObject({ MAIL_SECURE: true, MAIL_PORT: 465 });
+  });
+
+  it('requires a valid sender address in production', () => {
+    expect(() =>
+      validateEnvironment({ ...validProductionEnvironment, MAIL_FROM: undefined }),
+    ).toThrow('MAIL_FROM is required in production');
+
+    expect(() =>
+      validateEnvironment({ ...validProductionEnvironment, MAIL_FROM: 'not-an-address' }),
+    ).toThrow('MAIL_FROM must be a valid email address');
   });
 
   it('never permits Swagger in production', () => {

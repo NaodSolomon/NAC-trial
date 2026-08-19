@@ -1,5 +1,10 @@
 import PageBanner from '@/components/common/PageBanner';
-import { CmsArticle, teamMetadataSchema, type PublishedCmsPage } from '@/features/cms';
+import {
+  cmsBannerImage,
+  CmsArticle,
+  teamMetadataSchema,
+  type PublishedCmsPage,
+} from '@/features/cms';
 import { localizedHref, translate, type Language } from '@/lib/i18n';
 
 export function TeamPage({ page, language }: { page: PublishedCmsPage; language: Language }) {
@@ -13,7 +18,7 @@ export function TeamPage({ page, language }: { page: PublishedCmsPage; language:
           { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: page.title },
         ]}
-        backgroundImage="/images/about-us.jpg"
+        backgroundImage={cmsBannerImage(page.metadata) ?? '/images/about-us.jpg'}
       />
       <section className="bg-secondary-bg py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4">
