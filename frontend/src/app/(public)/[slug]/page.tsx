@@ -5,7 +5,7 @@ import { loadPublicSeo } from '@/features/seo';
 import { isApiRequestError } from '@/lib/api/errors';
 import { type Language } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
-import { buildLocalizedMetadata } from '@/lib/seo/site';
+import { localizedPageMetadata } from '@/lib/seo/site.server';
 
 interface GenericCmsRouteProps {
   params: Promise<{ slug: string }>;
@@ -25,7 +25,7 @@ export async function generateMetadata({
     loadPublicSeo(slug, language).catch(() => null),
   ]);
 
-  return buildLocalizedMetadata({
+  return localizedPageMetadata({
     pathname: `/${slug}`,
     language,
     title: seo?.title ?? page.seoTitle ?? page.title,

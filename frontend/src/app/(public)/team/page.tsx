@@ -5,7 +5,7 @@ import { loadPublicSeo } from '@/features/seo';
 import { TeamPage } from '@/features/team';
 import { isApiRequestError } from '@/lib/api/errors';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
-import { buildLocalizedMetadata } from '@/lib/seo/site';
+import { localizedPageMetadata } from '@/lib/seo/site.server';
 
 interface TeamRouteProps {
   searchParams: Promise<{ lang?: string }>;
@@ -17,7 +17,7 @@ export async function generateMetadata({ searchParams }: TeamRouteProps): Promis
     getApprovedTeamPage(language),
     loadPublicSeo('team', language).catch(() => null),
   ]);
-  return buildLocalizedMetadata({
+  return localizedPageMetadata({
     pathname: '/team',
     language,
     title: seo?.title ?? page.seoTitle ?? page.title,

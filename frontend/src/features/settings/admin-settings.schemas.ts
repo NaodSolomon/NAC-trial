@@ -41,6 +41,10 @@ export const siteSettingsSchema = z.object({
     })
     .default({}),
   defaultShareImageUrl: z.string().nullable().default(null),
+  pageBanners: z
+    .object({ gallery: z.string(), blog: z.string(), events: z.string() })
+    .partial()
+    .default({}),
   localizedText: z
     .object({
       openingHours: z.object({ en: z.string(), am: z.string() }).partial().optional(),
@@ -80,6 +84,11 @@ export const settingsEditorSchema = z
       tiktok: optionalHttpsUrl,
     }),
     defaultShareImageUrl: z.string().max(2_048),
+    pageBanners: z.object({
+      gallery: z.string().max(2_048),
+      blog: z.string().max(2_048),
+      events: z.string().max(2_048),
+    }),
     localizedText: localizedTextSchema,
   })
   .refine((value) => value.supportedLanguages.includes(value.defaultLanguage), {
@@ -107,6 +116,11 @@ export function settingsEditorValues(settings: SiteSettings): SettingsEditorValu
       tiktok: settings.socialLinks.tiktok ?? '',
     },
     defaultShareImageUrl: settings.defaultShareImageUrl ?? '',
+    pageBanners: {
+      gallery: settings.pageBanners.gallery ?? '',
+      blog: settings.pageBanners.blog ?? '',
+      events: settings.pageBanners.events ?? '',
+    },
     localizedText: {
       openingHours: localizedValue(settings.localizedText.openingHours),
       tagline: localizedValue(settings.localizedText.tagline),

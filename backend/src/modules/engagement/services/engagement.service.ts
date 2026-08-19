@@ -33,6 +33,10 @@ export class EngagementService {
       description: page.content,
       languageCode: page.languageCode,
       roles: page.metadata.volunteerRoles ?? [],
+      bannerImageUrl:
+        typeof page.metadata.bannerImageUrl === 'string' && page.metadata.bannerImageUrl
+          ? page.metadata.bannerImageUrl
+          : null,
     };
   }
 

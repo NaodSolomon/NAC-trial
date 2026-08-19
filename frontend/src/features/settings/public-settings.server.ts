@@ -13,6 +13,10 @@ const publicSettingsSchema = z.object({
   address: z.string().nullable(),
   socialLinks: z.record(z.string(), z.string()).default({}),
   defaultShareImageUrl: z.string().nullable().default(null),
+  pageBanners: z
+    .object({ gallery: z.string(), blog: z.string(), events: z.string() })
+    .partial()
+    .default({}),
   localizedText: z
     .object({
       openingHours: z.object({ en: z.string(), am: z.string() }).partial().optional(),

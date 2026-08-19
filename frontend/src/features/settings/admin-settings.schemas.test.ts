@@ -10,6 +10,7 @@ const valid = {
   address: 'Addis Ababa',
   socialLinks: { facebook: '', instagram: '', youtube: '', linkedin: '', x: '', tiktok: '' },
   defaultShareImageUrl: '',
+  pageBanners: { gallery: '', blog: '', events: '' },
   localizedText: {
     openingHours: { en: '', am: '' },
     tagline: { en: '', am: '' },

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { loadPublicSettings } from '@/features/settings/public-settings.server';
 import { Grid3X3, LayoutGrid } from 'lucide-react';
 import PageBanner from '@/components/common/PageBanner';
 import { localizedHref, translate, type Language } from '@/lib/i18n';
@@ -14,6 +15,7 @@ interface GalleryPageProps {
 }
 
 export default async function GalleryPage({ searchParams, layoutOverride }: GalleryPageProps) {
+  const settings = await loadPublicSettings();
   const query = await searchParams;
   const language = await resolveRequestLanguage(query.lang);
   const currentPage = parseGalleryPage(query.page);
@@ -30,7 +32,7 @@ export default async function GalleryPage({ searchParams, layoutOverride }: Gall
           { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: language === 'am' ? 'ማዕከለ ስዕል' : 'Gallery' },
         ]}
-        backgroundImage="/images/gallery_1.jpg"
+        backgroundImage={settings?.pageBanners.gallery ?? '/images/gallery_1.jpg'}
       />
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4">

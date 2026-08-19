@@ -10,12 +10,14 @@ export const publicContactPageSchema = z.object({
   phone: z.string().min(1).max(100).nullable(),
   address: z.string().min(1).max(500).nullable(),
   mapEmbedUrl: z.string().url().refine(isApprovedMapUrl, 'Map URL is not approved').nullable(),
+  bannerImageUrl: z.string().url().nullable().catch(null),
   languageCode,
 });
 
 export const publicVolunteerPageSchema = z.object({
   title: z.string().min(1).max(255),
   description: z.string().max(20_000),
+  bannerImageUrl: z.string().url().nullable().catch(null),
   languageCode,
   roles: z
     .array(

@@ -53,6 +53,26 @@ export class SocialLinksDto {
   tiktok?: string;
 }
 
+export class PageBannersDto {
+  @ApiPropertyOptional({ example: 'https://media.example.org/gallery.jpg', maxLength: 2048 })
+  @IsOptional()
+  @IsApprovedSeoImageUrl()
+  @MaxLength(2048)
+  gallery?: string;
+
+  @ApiPropertyOptional({ example: 'https://media.example.org/blog.jpg', maxLength: 2048 })
+  @IsOptional()
+  @IsApprovedSeoImageUrl()
+  @MaxLength(2048)
+  blog?: string;
+
+  @ApiPropertyOptional({ example: 'https://media.example.org/events.jpg', maxLength: 2048 })
+  @IsOptional()
+  @IsApprovedSeoImageUrl()
+  @MaxLength(2048)
+  events?: string;
+}
+
 export class LocalizedValueDto {
   @ApiPropertyOptional({ maxLength: 500 })
   @IsOptional()
@@ -149,4 +169,10 @@ export class UpdateSiteSettingsDto {
   @ValidateNested()
   @Type(() => LocalizedTextDto)
   localizedText?: LocalizedTextDto;
+
+  @ApiPropertyOptional({ type: () => PageBannersDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PageBannersDto)
+  pageBanners?: PageBannersDto;
 }

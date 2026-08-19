@@ -18,7 +18,7 @@ export async function VolunteerPage({ language }: { language: Language }) {
           { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: content.title },
         ]}
-        backgroundImage="/images/volunteers.jpg"
+        backgroundImage={content.bannerImageUrl ?? '/images/volunteers.jpg'}
       />
       <section className="py-16 sm:py-20">
         <div className="mx-auto grid max-w-7xl items-start gap-12 px-4 lg:grid-cols-2">

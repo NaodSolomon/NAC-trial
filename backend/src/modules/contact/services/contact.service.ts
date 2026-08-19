@@ -28,6 +28,7 @@ export class ContactService {
       phone: settings.phone,
       address: settings.address,
       mapEmbedUrl: this.safeMapUrl(page.metadata.mapEmbedUrl),
+      bannerImageUrl: stringOrNull(page.metadata.bannerImageUrl),
       languageCode: page.languageCode,
     };
   }
@@ -79,4 +80,8 @@ export class ContactService {
       return null;
     }
   }
+}
+
+function stringOrNull(value: unknown): string | null {
+  return typeof value === 'string' && value ? value : null;
 }

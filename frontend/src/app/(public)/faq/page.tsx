@@ -4,7 +4,7 @@ import { loadPublicSettings, localizedSetting } from '@/features/settings/public
 import { loadFaqs } from '@/features/faq/faq.server';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 import { loadPublicSeo } from '@/features/seo';
-import { buildLocalizedMetadata } from '@/lib/seo/site';
+import { localizedPageMetadata } from '@/lib/seo/site.server';
 
 interface FaqRouteProps {
   searchParams: Promise<{ lang?: string }>;
@@ -20,7 +20,7 @@ export async function generateMetadata({ searchParams }: FaqRouteProps): Promise
   const language = await resolveRequestLanguage((await searchParams).lang);
   const seo = await loadPublicSeo('faqs', language).catch(() => null);
 
-  return buildLocalizedMetadata({
+  return localizedPageMetadata({
     pathname: '/faq',
     language,
     title: seo?.title ?? fallbackTitle[language],

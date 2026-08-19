@@ -1,0 +1,1 @@
+ALTER TABLE "site_settings" ADD COLUMN "page_banners" jsonb DEFAULT '{}'::jsonb NOT NULL;

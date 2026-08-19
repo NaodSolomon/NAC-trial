@@ -10,4 +10,5 @@ export interface PublicSiteSettings {
   socialLinks: SiteSetting['socialLinks'];
   defaultShareImageUrl: string | null;
   localizedText: SiteSetting['localizedText'];
+  pageBanners: SiteSetting['pageBanners'];
 }

@@ -45,6 +45,7 @@ describe('EngagementService', () => {
   it('composes the volunteer page from published CMS content', async () => {
     await expect(service.getVolunteerPage('en')).resolves.toEqual({
       title: 'Volunteer with us',
+      bannerImageUrl: null,
       description: 'Join our mission.',
       languageCode: 'en',
       roles: [{ title: 'Therapy Assistant', summary: 'Support therapy sessions.' }],

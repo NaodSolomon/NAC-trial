@@ -25,8 +25,32 @@ describe('public SEO metadata', () => {
   it('resolves relative media and strips query strings from localized paths', () => {
     process.env.NEXT_PUBLIC_SITE_URL = 'https://nehemiah.example';
     expect(absoluteUrl('/images/story.jpg')).toBe('https://nehemiah.example/images/story.jpg');
-    expect(localizedUrl('/blog?draft=true', 'en')).toBe(
-      'https://nehemiah.example/blog?lang=en',
-    );
+    expect(localizedUrl('/blog?draft=true', 'en')).toBe('https://nehemiah.example/blog?lang=en');
+  });
+
+  it('prefers configured identity and sharing image over the built-in constants', () => {
+    const metadata = buildLocalizedMetadata({
+      pathname: '/about',
+      language: 'en',
+      title: 'About',
+      siteNameOverride: 'Configured Name',
+      defaultImageUrl: 'https://media.example.org/share.jpg',
+    });
+    expect(metadata.openGraph).toMatchObject({
+      siteName: 'Configured Name',
+      images: [{ url: 'https://media.example.org/share.jpg', alt: 'About' }],
+    });
+
+    // A page's own image still beats the configured default.
+    const withOwn = buildLocalizedMetadata({
+      pathname: '/about',
+      language: 'en',
+      title: 'About',
+      imageUrl: 'https://media.example.org/own.jpg',
+      defaultImageUrl: 'https://media.example.org/share.jpg',
+    });
+    expect(withOwn.openGraph).toMatchObject({
+      images: [{ url: 'https://media.example.org/own.jpg', alt: 'About' }],
+    });
   });
 });

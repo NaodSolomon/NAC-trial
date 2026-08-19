@@ -14,6 +14,9 @@ export async function updateAdminSettings(values: SettingsEditorValues) {
         Object.entries(values.socialLinks).filter(([, url]) => Boolean(url)),
       ),
       defaultShareImageUrl: values.defaultShareImageUrl.trim() || null,
+      pageBanners: Object.fromEntries(
+        Object.entries(values.pageBanners).filter(([, url]) => Boolean(url.trim())),
+      ),
       localizedText: values.localizedText,
     }),
   );

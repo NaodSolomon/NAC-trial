@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { loadPublicSettings } from '@/features/settings/public-settings.server';
 import Link from 'next/link';
 import { CalendarDays, List } from 'lucide-react';
 import PageBanner from '@/components/common/PageBanner';
@@ -14,7 +15,7 @@ import {
 import { localizedHref, translate, type Language } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 
-import { buildLocalizedMetadata } from '@/lib/seo/site';
+import { localizedPageMetadata } from '@/lib/seo/site.server';
 
 interface EventsPageProps {
   searchParams: Promise<{ lang?: string; timeframe?: string; view?: string }>;
@@ -22,7 +23,7 @@ interface EventsPageProps {
 
 export async function generateMetadata({ searchParams }: EventsPageProps): Promise<Metadata> {
   const language = await resolveRequestLanguage((await searchParams).lang);
-  return buildLocalizedMetadata({
+  return localizedPageMetadata({
     pathname: '/events',
     language,
     title: language === 'am' ? 'ዝግጅቶች' : 'Events',
@@ -34,6 +35,7 @@ export async function generateMetadata({ searchParams }: EventsPageProps): Promi
 }
 
 export default async function EventsPage({ searchParams }: EventsPageProps) {
+  const settings = await loadPublicSettings();
   const query = await searchParams;
   const language = await resolveRequestLanguage(query.lang);
   const timeframe = parseEventTimeframe(query.timeframe);
@@ -49,7 +51,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
           { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: title },
         ]}
-        backgroundImage="/images/event_1.jpg"
+        backgroundImage={settings?.pageBanners.events ?? '/images/event_1.jpg'}
       />
       <section className="bg-secondary-bg py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4">
