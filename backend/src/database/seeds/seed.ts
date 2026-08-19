@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import { sql } from 'drizzle-orm';
 import { db, pool } from '../data-source';
-import { admins, siteSettings } from '../schema';
+import { admins, navigationItems, siteSettings } from '../schema';
 
 async function seedBootstrapAdmin(): Promise<void> {
   const name = process.env.SEED_ADMIN_NAME?.trim();
@@ -44,6 +44,43 @@ async function seedBootstrapAdmin(): Promise<void> {
   console.warn('Bootstrap super administrator created.');
 }
 
+const defaultNavigation = [
+  { url: '/', en: 'Home', am: 'መነሻ' },
+  { url: '/about', en: 'About us', am: 'ስለ እኛ' },
+  { url: '/gallery', en: 'Gallery', am: 'ምስሎች' },
+  { url: '/events', en: 'Events', am: 'ዝግጅቶች' },
+  { url: '/blog', en: 'Blog', am: 'ብሎግ' },
+  { url: '/contact', en: 'Contact', am: 'ያግኙን' },
+] as const;
+
+async function seedNavigation(): Promise<void> {
+  const [existingItem] = await db.select({ id: navigationItems.id }).from(navigationItems).limit(1);
+  if (existingItem) {
+    return;
+  }
+
+  const [anyAdmin] = await db.select({ id: admins.id }).from(admins).limit(1);
+  if (!anyAdmin) {
+    console.warn('No administrator exists yet; skipping navigation seed.');
+    return;
+  }
+
+  await db.insert(navigationItems).values(
+    defaultNavigation.flatMap((item, index) =>
+      (['en', 'am'] as const).map((languageCode) => ({
+        label: languageCode === 'en' ? item.en : item.am,
+        url: item.url,
+        order: index * 10,
+        languageCode,
+        isVisible: true,
+        createdBy: anyAdmin.id,
+      })),
+    ),
+  );
+
+  console.warn('Default navigation created for both languages.');
+}
+
 async function seed(): Promise<void> {
   console.warn('Seeding database...');
 
@@ -58,6 +95,7 @@ async function seed(): Promise<void> {
     .onConflictDoNothing({ target: siteSettings.key });
 
   await seedBootstrapAdmin();
+  await seedNavigation();
 
   console.warn('Seeding complete.');
 }

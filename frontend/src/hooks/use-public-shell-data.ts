@@ -63,9 +63,11 @@ function createFallbackSettings(): PublicSiteSettings {
     siteName: SITE_CONFIG.name,
     defaultLanguage: 'en',
     supportedLanguages: ['en', 'am'],
-    contactEmail: SITE_CONFIG.email,
-    phone: SITE_CONFIG.phone,
-    address: SITE_CONFIG.address,
+    // Deliberately empty: placeholder contact details must never reach a visitor.
+    // The shell hides what is unset until the real values arrive from settings.
+    contactEmail: null,
+    phone: null,
+    address: null,
     socialLinks: {},
   };
 }

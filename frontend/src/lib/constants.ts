@@ -40,37 +40,4 @@ export const NAV_ITEMS: NavItem[] = [
 
 export const SITE_CONFIG = {
   name: 'Nehemiah Autism Center',
-  tagline: 'Care, inclusion, and opportunity',
-  phone: 'Contact our team',
-  email: 'support@nehemiah.org',
-  address: 'Addis Ababa, Ethiopia',
-  hours: 'Local office hours',
-  social: {
-    facebook: '#',
-    twitter: '#',
-    instagram: '#',
-    youtube: '#',
-    linkedin: '#',
-  },
-  footerLinks: {
-    organization: [
-      { label: 'About the Center', href: '/about' },
-      { label: 'Contact Us', href: '/contact' },
-      { label: 'Upcoming Events', href: '/events' },
-      { label: 'Donate', href: '/donate' },
-    ],
-    support: [
-      { label: 'Volunteer', href: '/volunteer' },
-      { label: 'Frequently Asked Questions', href: '/faq' },
-      { label: 'Events', href: '/events' },
-      { label: 'Resources', href: '/resources' },
-    ],
-    discover: [
-      { label: 'Gallery', href: '/gallery' },
-      { label: 'Latest Stories', href: '/blog' },
-      { label: 'Make a Donation', href: '/donate' },
-    ],
-  },
-  footerAbout:
-    'Nehemiah Autism Center supports autistic children and their families through care, education, advocacy, and community inclusion.',
 };
