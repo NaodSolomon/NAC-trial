@@ -23,7 +23,7 @@ Almost every screen that shows a photo uses the same two steps:
    read it aloud and search engines index it), and upload.
 2. On any other screen, press **Choose photo** and click the picture you uploaded.
 
-Photos must be JPEG, PNG or WebP and at most 10 MB. Larger dimensions are always
+Photos must be JPEG, PNG, GIF or WebP and at most 10 MB. Larger dimensions are always
 fine — the site scales pictures down, never up.
 
 > **Consent first.** Never upload a photo in which a child is identifiable without
