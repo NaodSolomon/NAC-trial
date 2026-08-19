@@ -300,6 +300,7 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
             <option value="about">About: mission, history and services</option>
             <option value="volunteer">Volunteer role listings</option>
             <option value="team">Approved team biographies</option>
+            <option value="contact">Contact page with map</option>
           </AdminFormSelect>
           <AdminFormTextarea
             label="Page content"
@@ -335,6 +336,16 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
                 services: errors.about?.services?.message,
               }}
               onChange={(next) => setValue('about', next)}
+            />
+          )}
+          {contentType === 'contact' && (
+            <AdminFormField
+              label="Google Maps embed URL"
+              id="cms-contact-map"
+              maxLength={2048}
+              hint='In Google Maps: Share, then Embed a map, then copy the link inside src="...".'
+              error={errors.contactMapEmbedUrl?.message}
+              {...register('contactMapEmbedUrl')}
             />
           )}
           {contentType === 'volunteer' && (

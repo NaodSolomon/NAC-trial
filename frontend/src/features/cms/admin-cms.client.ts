@@ -100,8 +100,10 @@ export function editorValuesFromPage(page?: AdminCmsPage): CmsEditorValues {
       ? 'about'
       : volunteerRoles.length
         ? 'volunteer'
-          : teamMembers.length
-            ? 'team'
+        : teamMembers.length
+          ? 'team'
+          : typeof metadata.mapEmbedUrl === 'string' && metadata.mapEmbedUrl
+            ? 'contact'
             : 'generic';
   return {
     slug: page?.slug ?? '',
@@ -115,6 +117,8 @@ export function editorValuesFromPage(page?: AdminCmsPage): CmsEditorValues {
       heroBody: stringValue(hero.body),
       primaryLabel: stringValue(objectValue(hero.primaryAction).label),
       primaryHref: stringValue(objectValue(hero.primaryAction).href),
+      secondaryLabel: stringValue(objectValue(hero.secondaryAction).label),
+      secondaryHref: stringValue(objectValue(hero.secondaryAction).href),
       servicesHeading: stringValue(services.heading),
       services: Array.isArray(services.items)
         ? services.items.map((item) => ({
@@ -152,6 +156,7 @@ export function editorValuesFromPage(page?: AdminCmsPage): CmsEditorValues {
       biography: stringValue(objectValue(item).biography),
     })),
     teamContentApproved: metadata.contentApproved === true,
+    contactMapEmbedUrl: stringValue(metadata.mapEmbedUrl),
   };
 }
 
@@ -178,6 +183,14 @@ function editorPayload(values: CmsEditorValues, includeLanguage: boolean) {
                       },
                     }
                   : {}),
+                ...(values.homepage.secondaryLabel && values.homepage.secondaryHref
+                  ? {
+                      secondaryAction: {
+                        label: values.homepage.secondaryLabel,
+                        href: values.homepage.secondaryHref,
+                      },
+                    }
+                  : {}),
               },
               {
                 type: 'services',
@@ -198,34 +211,36 @@ function editorPayload(values: CmsEditorValues, includeLanguage: boolean) {
               },
             ],
           }
-          : values.contentType === 'about'
-            ? {
-                contentApproved: values.about.contentApproved,
-                about: {
-                  mission: {
-                    heading: values.about.missionHeading,
-                    body: values.about.missionBody,
-                  },
-                  history: {
-                    heading: values.about.historyHeading,
-                    body: values.about.historyBody,
-                  },
-                  services: values.about.services,
+        : values.contentType === 'about'
+          ? {
+              contentApproved: values.about.contentApproved,
+              about: {
+                mission: {
+                  heading: values.about.missionHeading,
+                  body: values.about.missionBody,
                 },
+                history: {
+                  heading: values.about.historyHeading,
+                  body: values.about.historyBody,
+                },
+                services: values.about.services,
+              },
+            }
+          : values.contentType === 'volunteer'
+            ? {
+                volunteerRoles: values.volunteerRoles.map((role) => ({
+                  title: role.title,
+                  summary: role.summary,
+                  ...(role.commitment && { commitment: role.commitment }),
+                })),
               }
-            : values.contentType === 'volunteer'
+            : values.contentType === 'team'
               ? {
-                  volunteerRoles: values.volunteerRoles.map((role) => ({
-                    title: role.title,
-                    summary: role.summary,
-                    ...(role.commitment && { commitment: role.commitment }),
-                  })),
+                  contentApproved: values.teamContentApproved,
+                  teamMembers: values.teamMembers,
                 }
-              : values.contentType === 'team'
-                ? {
-                    contentApproved: values.teamContentApproved,
-                    teamMembers: values.teamMembers,
-                  }
+              : values.contentType === 'contact'
+                ? { mapEmbedUrl: values.contactMapEmbedUrl }
                 : {},
   };
 }

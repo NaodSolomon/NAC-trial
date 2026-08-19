@@ -48,17 +48,10 @@ function createFallbackNavigation(language: Language): PublicNavigationItem[] {
   const label = (key: MessageKey) => translate(language, key);
   return [
     { id: 'fallback-home', label: label('home'), url: '/' },
-    {
-      id: 'fallback-about',
-      label: label('aboutUs'),
-      url: '/about',
-      children: [
-        { id: 'fallback-about-page', label: label('aboutUs'), url: '/about' },
-        { id: 'fallback-gallery', label: label('gallery'), url: '/gallery' },
-        { id: 'fallback-volunteers', label: label('volunteers'), url: '/volunteer' },
-        { id: 'fallback-faq', label: label('faq'), url: '/faq' },
-      ],
-    },
+    // Flat on purpose: managed navigation items cannot carry children, so a fallback
+    // with dropdowns would silently lose them the moment the first item is managed.
+    { id: 'fallback-about', label: label('aboutUs'), url: '/about' },
+    { id: 'fallback-gallery', label: label('gallery'), url: '/gallery' },
     { id: 'fallback-events', label: label('events'), url: '/events' },
     { id: 'fallback-blog', label: label('blog'), url: '/blog' },
     { id: 'fallback-contact', label: label('contact'), url: '/contact' },

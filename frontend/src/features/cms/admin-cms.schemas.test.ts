@@ -14,6 +14,8 @@ function editor(overrides: Record<string, unknown> = {}) {
       heroBody: '',
       primaryLabel: '',
       primaryHref: '',
+      secondaryLabel: '',
+      secondaryHref: '',
       servicesHeading: '',
       services: [],
       locationHeading: '',
@@ -35,6 +37,7 @@ function editor(overrides: Record<string, unknown> = {}) {
     volunteerRoles: [],
     teamMembers: [],
     teamContentApproved: false,
+    contactMapEmbedUrl: '',
     ...overrides,
   };
 }
@@ -134,6 +137,63 @@ describe('cmsEditorSchema', () => {
     ['team', 'teamMembers', 'Add at least one approved team biography.'],
   ])('requires at least one entry for a %s page', (contentType, path, message) => {
     expect(messagesFor(editor({ contentType }), path)).toEqual([message]);
+  });
+
+  describe('contact page', () => {
+    it('requires an approved map URL', () => {
+      expect(messagesFor(editor({ contentType: 'contact' }), 'contactMapEmbedUrl')).toEqual([
+        'Use an approved HTTPS Google Maps embed URL.',
+      ]);
+      expect(
+        cmsEditorSchema.safeParse(
+          editor({
+            contentType: 'contact',
+            contactMapEmbedUrl: 'https://www.google.com/maps/embed?pb=1',
+          }),
+        ).success,
+      ).toBe(true);
+    });
+
+    it('does not judge other content types on the map field', () => {
+      expect(cmsEditorSchema.safeParse(editor({ contentType: 'generic' })).success).toBe(true);
+    });
+  });
+
+  it('requires the second hero button to be complete or absent', () => {
+    const homepage = {
+      ...editor().homepage,
+      heroHeading: 'Welcome',
+      servicesHeading: 'Services',
+      services: [{ title: 'Support', body: 'Guidance.' }],
+      locationHeading: 'Visit',
+      mapEmbedUrl: 'https://www.google.com/maps/embed?pb=1',
+      ctaHeading: 'Help',
+      ctaLabel: 'Donate',
+      ctaHref: '/donate',
+    };
+    const base = { contentType: 'homepage' };
+
+    expect(cmsEditorSchema.safeParse(editor({ ...base, homepage })).success).toBe(true);
+    expect(
+      messagesFor(
+        editor({ ...base, homepage: { ...homepage, secondaryLabel: 'Contact us' } }),
+        'homepage.secondaryHref',
+      ),
+    ).toEqual(['Provide both a label and a link for the second button, or neither.']);
+    expect(
+      messagesFor(
+        editor({ ...base, homepage: { ...homepage, secondaryHref: '/contact' } }),
+        'homepage.secondaryLabel',
+      ),
+    ).toEqual(['Provide both a label and a link for the second button, or neither.']);
+    expect(
+      cmsEditorSchema.safeParse(
+        editor({
+          ...base,
+          homepage: { ...homepage, secondaryLabel: 'Contact us', secondaryHref: '/contact' },
+        }),
+      ).success,
+    ).toBe(true);
   });
 
   it('requires mission, history and services for an about page', () => {

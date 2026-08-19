@@ -51,6 +51,8 @@ export function HomepageEditor({
         {field('heroBody', 'Hero body', 1_000)}
         {field('primaryLabel', 'Primary action label', 80)}
         {field('primaryHref', 'Primary action link', 2_048)}
+        {field('secondaryLabel', 'Second button label (optional)', 80)}
+        {field('secondaryHref', 'Second button link (optional)', 2_048)}
         {field('servicesHeading', 'Services heading', 180)}
         {field('locationHeading', 'Location heading', 180)}
         {field('locationBody', 'Location description', 1_000)}

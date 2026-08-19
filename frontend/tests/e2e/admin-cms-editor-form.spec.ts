@@ -268,6 +268,80 @@ test('a failed save keeps the typed content and reports the reason once', async 
   await expect(page.locator('#cms-content')).toHaveValue('Unsaved failure content');
 });
 
+test('saving a homepage keeps the second hero button it was loaded with', async ({
+  context,
+  page,
+}) => {
+  const observed = await openEditor(context, page, {
+    existing: {
+      title: 'Homepage',
+      slug: 'home',
+      metadata: {
+        sections: [
+          {
+            type: 'hero',
+            heading: 'Welcome families',
+            primaryAction: { label: 'Donate', href: '/donate' },
+            secondaryAction: { label: 'Contact us', href: '/contact' },
+          },
+          {
+            type: 'services',
+            heading: 'Our services',
+            items: [{ title: 'Family support', body: 'Guidance for families.' }],
+          },
+          {
+            type: 'location',
+            heading: 'Visit the centre',
+            mapEmbedUrl: 'https://www.google.com/maps/embed?pb=1',
+          },
+          {
+            type: 'callToAction',
+            heading: 'Support our work',
+            action: { label: 'Volunteer', href: '/volunteer' },
+          },
+        ],
+      },
+    },
+  });
+
+  await expect(page.locator('#homepage-secondaryLabel')).toHaveValue('Contact us');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByText('Page changes saved')).toBeVisible();
+
+  // Before this content type round-tripped, the first save silently deleted the button.
+  const sections = (observed.updated?.metadata as { sections: Array<Record<string, unknown>> })
+    .sections;
+  const hero = sections.find((section) => section.type === 'hero');
+  expect(hero?.secondaryAction).toEqual({ label: 'Contact us', href: '/contact' });
+});
+
+test('a contact page loads as a contact page and keeps its map on save', async ({
+  context,
+  page,
+}) => {
+  const observed = await openEditor(context, page, {
+    existing: {
+      title: 'Contact',
+      slug: 'contact',
+      metadata: { mapEmbedUrl: 'https://www.google.com/maps/embed?pb=99' },
+    },
+  });
+
+  await expect(page.locator('#cms-content-type')).toHaveValue('contact');
+  await expect(page.locator('#cms-contact-map')).toHaveValue(
+    'https://www.google.com/maps/embed?pb=99',
+  );
+
+  await page.locator('#cms-content').fill('Updated visiting information.');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByText('Page changes saved')).toBeVisible();
+
+  // A generic save used to emit empty metadata here, erasing the public map.
+  expect(observed.updated?.metadata).toEqual({
+    mapEmbedUrl: 'https://www.google.com/maps/embed?pb=99',
+  });
+});
+
 test('deleting names the page inside the confirmation dialog', async ({ context, page }) => {
   await openEditor(context, page, { existing: { title: 'Family support' } });
 

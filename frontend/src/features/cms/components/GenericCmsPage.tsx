@@ -3,13 +3,7 @@ import { localizedHref, translate, type Language } from '@/lib/i18n';
 import type { PublishedCmsPage } from '../cms.types';
 import { CmsArticle } from './CmsArticle';
 
-export function GenericCmsPage({
-  page,
-  language,
-}: {
-  page: PublishedCmsPage;
-  language: Language;
-}) {
+export function GenericCmsPage({ page, language }: { page: PublishedCmsPage; language: Language }) {
   return (
     <>
       <PageBanner
