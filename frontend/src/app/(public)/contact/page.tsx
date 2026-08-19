@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { ContactPage } from '@/features/contact';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 
-import { buildLocalizedMetadata } from '@/lib/seo/site';
+import { localizedPageMetadata } from '@/lib/seo/site.server';
 
 export async function generateMetadata({
   searchParams,
@@ -10,7 +10,7 @@ export async function generateMetadata({
   searchParams: Promise<{ lang?: string }>;
 }): Promise<Metadata> {
   const language = await resolveRequestLanguage((await searchParams).lang);
-  return buildLocalizedMetadata({
+  return localizedPageMetadata({
     pathname: '/contact',
     language,
     title: language === 'am' ? 'ያግኙን' : 'Contact us',

@@ -2013,6 +2013,14 @@ export interface components {
             languageCode: "en" | "am";
         };
         Object: Record<string, never>;
+        PageBannersDto: {
+            /** @example https://media.example.org/blog.jpg */
+            blog?: string;
+            /** @example https://media.example.org/events.jpg */
+            events?: string;
+            /** @example https://media.example.org/gallery.jpg */
+            gallery?: string;
+        };
         PageVisitsDto: {
             /** @example /services */
             route: string;
@@ -2292,6 +2300,7 @@ export interface components {
             /** @example https://media.example.org/share.jpg */
             defaultShareImageUrl?: string | null;
             localizedText?: components["schemas"]["LocalizedTextDto"];
+            pageBanners?: components["schemas"]["PageBannersDto"];
             /** @example +251 11 000 0000 */
             phone?: string;
             /** @example Nehemiah Autism Center */

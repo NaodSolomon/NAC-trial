@@ -70,6 +70,13 @@ export class SiteSettingsService {
         ...(dto.localizedText !== undefined && {
           localizedText: normalizeLocalizedText(dto.localizedText),
         }),
+        ...(dto.pageBanners !== undefined && {
+          pageBanners: Object.fromEntries(
+            Object.entries(dto.pageBanners)
+              .map(([pageKey, url]) => [pageKey, typeof url === 'string' ? url.trim() : ''])
+              .filter((entry): entry is [string, string] => Boolean(entry[1])),
+          ),
+        }),
       },
       actor.id,
     );
@@ -103,6 +110,7 @@ export class SiteSettingsService {
       socialLinks: settings.socialLinks,
       defaultShareImageUrl: settings.defaultShareImageUrl,
       localizedText: settings.localizedText,
+      pageBanners: settings.pageBanners,
     };
   }
 }

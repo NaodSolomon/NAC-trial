@@ -6,7 +6,7 @@ import { DonationUnavailable } from '@/features/donations/components/DonationUna
 import { loadDonationCapabilities } from '@/features/donations/donation.server';
 import { localizedHref, translate } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
-import { buildLocalizedMetadata } from '@/lib/seo/site';
+import { localizedPageMetadata } from '@/lib/seo/site.server';
 
 export async function generateMetadata({
   searchParams,
@@ -14,7 +14,7 @@ export async function generateMetadata({
   searchParams: Promise<{ lang?: string }>;
 }): Promise<Metadata> {
   const language = await resolveRequestLanguage((await searchParams).lang);
-  return buildLocalizedMetadata({
+  return localizedPageMetadata({
     pathname: '/donate',
     language,
     title: language === 'am' ? 'ይለግሱ' : 'Donation demonstration',

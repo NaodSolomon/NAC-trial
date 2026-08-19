@@ -50,9 +50,7 @@ export async function listVolunteerApplications(criteria: ListCriteria) {
 }
 
 export function deleteVolunteerApplication(id: string) {
-  return browserApiClient.delete(
-    `/admin/volunteers/${encodeURIComponent(id)}`,
-  );
+  return browserApiClient.delete(`/admin/volunteers/${encodeURIComponent(id)}`);
 }
 
 export async function listAdminTestimonials(criteria: ListCriteria) {
@@ -64,9 +62,7 @@ export async function listAdminTestimonials(criteria: ListCriteria) {
 }
 
 export async function createTestimonial(values: TestimonialEditorValues) {
-  return testimonialSchema.parse(
-    await browserApiClient.post('/admin/testimonials', values),
-  );
+  return testimonialSchema.parse(await browserApiClient.post('/admin/testimonials', values));
 }
 
 export async function updateTestimonial(id: string, values: TestimonialEditorValues) {
@@ -80,9 +76,7 @@ export async function updateTestimonial(id: string, values: TestimonialEditorVal
 }
 
 export function deleteTestimonial(id: string) {
-  return browserApiClient.delete(
-    `/admin/testimonials/${encodeURIComponent(id)}`,
-  );
+  return browserApiClient.delete(`/admin/testimonials/${encodeURIComponent(id)}`);
 }
 
 export async function listNewsletterSubscribers(criteria: ListCriteria) {
@@ -96,7 +90,5 @@ export async function listNewsletterSubscribers(criteria: ListCriteria) {
 export function deleteNewsletterSubscriber(email: string) {
   // The backend contract currently identifies subscribers by email. Keep this value out of
   // query keys, feedback messages, analytics and logs; it exists only for this authenticated call.
-  return browserApiClient.delete(
-    `/admin/newsletter/${encodeURIComponent(email)}`,
-  );
+  return browserApiClient.delete(`/admin/newsletter/${encodeURIComponent(email)}`);
 }

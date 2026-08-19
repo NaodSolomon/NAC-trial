@@ -6,7 +6,8 @@ import { isApiRequestError } from '@/lib/api/errors';
 import { localizedHref, translate, type Language } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 import { serializeJsonLd } from '@/lib/seo/json-ld';
-import { absoluteUrl, buildLocalizedMetadata, localizedUrl } from '@/lib/seo/site';
+import { absoluteUrl, localizedUrl } from '@/lib/seo/site';
+import { localizedPageMetadata } from '@/lib/seo/site.server';
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -20,7 +21,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const language = await resolveRequestLanguage((await searchParams).lang);
   const post = await getPost(slug, language);
-  return buildLocalizedMetadata({
+  return localizedPageMetadata({
     pathname: `/blog/${slug}`,
     language,
     title: post.seoTitle ?? post.title,

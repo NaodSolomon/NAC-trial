@@ -23,6 +23,7 @@ const settings: SiteSetting = {
   socialLinks: {},
   defaultShareImageUrl: null,
   localizedText: {},
+  pageBanners: {},
   updatedBy: actor.id,
   createdAt: now,
   updatedAt: now,

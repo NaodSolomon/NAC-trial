@@ -4,11 +4,7 @@ import { headers } from 'next/headers';
 import './globals.css';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { ThemeProvider } from '@/providers/ThemeProvider';
-import {
-  defaultLanguage,
-  documentLanguageHeaderName,
-  normalizeLanguage,
-} from '@/lib/i18n';
+import { defaultLanguage, documentLanguageHeaderName, normalizeLanguage } from '@/lib/i18n';
 import { defaultDescription, getSiteUrl, siteName } from '@/lib/seo/site';
 
 const openSans = Open_Sans({

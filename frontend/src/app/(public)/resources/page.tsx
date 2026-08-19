@@ -4,7 +4,7 @@ import { ResourceExplorer, loadPublicResources } from '@/features/resources';
 import { localizedHref, translate } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 
-import { buildLocalizedMetadata } from '@/lib/seo/site';
+import { localizedPageMetadata } from '@/lib/seo/site.server';
 
 interface ResourcesRouteProps {
   searchParams: Promise<{ lang?: string }>;
@@ -12,7 +12,7 @@ interface ResourcesRouteProps {
 
 export async function generateMetadata({ searchParams }: ResourcesRouteProps): Promise<Metadata> {
   const language = await resolveRequestLanguage((await searchParams).lang);
-  return buildLocalizedMetadata({
+  return localizedPageMetadata({
     pathname: '/resources',
     language,
     title: language === 'am' ? 'ግብዓቶች' : 'Resources',

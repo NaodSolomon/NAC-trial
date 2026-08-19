@@ -9,7 +9,8 @@ import {
 } from '@/features/home';
 import { loadPublicSeo } from '@/features/seo';
 import { isApiRequestError } from '@/lib/api/errors';
-import { buildLocalizedMetadata, defaultDescription, siteName } from '@/lib/seo/site';
+import { defaultDescription, siteName } from '@/lib/seo/site';
+import { localizedPageMetadata } from '@/lib/seo/site.server';
 
 interface HomeRouteProps {
   searchParams: Promise<{ lang?: string }>;
@@ -28,7 +29,7 @@ export async function generateMetadata({ searchParams }: HomeRouteProps): Promis
       loadComposition(language),
       loadPublicSeo('homepage', language).catch(() => null),
     ]);
-    return buildLocalizedMetadata({
+    return localizedPageMetadata({
       pathname: '/',
       language,
       title: seo?.title ?? composition.seo.title,
@@ -38,7 +39,7 @@ export async function generateMetadata({ searchParams }: HomeRouteProps): Promis
     });
   } catch (error) {
     if (!isUnpublishedHomepage(error)) throw error;
-    return buildLocalizedMetadata({
+    return localizedPageMetadata({
       pathname: '/',
       language,
       title: siteName,

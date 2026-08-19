@@ -4,7 +4,7 @@ import PageBanner from '@/components/common/PageBanner';
 import { SearchResults, loadPublicSearch, validateSearchTerm } from '@/features/search';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 
-import { buildLocalizedMetadata } from '@/lib/seo/site';
+import { localizedPageMetadata } from '@/lib/seo/site.server';
 import { translate } from '@/lib/i18n';
 
 interface SearchRouteProps {
@@ -14,7 +14,7 @@ interface SearchRouteProps {
 export async function generateMetadata({ searchParams }: SearchRouteProps): Promise<Metadata> {
   const language = await resolveRequestLanguage((await searchParams).lang);
   return {
-    ...buildLocalizedMetadata({
+    ...localizedPageMetadata({
       pathname: '/search',
       language,
       title: language === 'am' ? 'ፍለጋ' : 'Search',

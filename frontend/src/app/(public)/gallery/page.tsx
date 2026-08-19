@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { GalleryPage } from '@/features/gallery';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
-import { buildLocalizedMetadata } from '@/lib/seo/site';
+import { localizedPageMetadata } from '@/lib/seo/site.server';
 
 type GalleryRouteProps = {
   searchParams: Promise<{ lang?: string; page?: string; type?: string; layout?: string }>;
@@ -9,7 +9,7 @@ type GalleryRouteProps = {
 
 export async function generateMetadata({ searchParams }: GalleryRouteProps): Promise<Metadata> {
   const language = await resolveRequestLanguage((await searchParams).lang);
-  return buildLocalizedMetadata({
+  return localizedPageMetadata({
     pathname: '/gallery',
     language,
     title: language === 'am' ? 'ማዕከለ-ስዕላት' : 'Gallery',

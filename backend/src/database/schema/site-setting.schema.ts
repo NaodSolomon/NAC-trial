@@ -16,6 +16,12 @@ export interface LocalizedValue {
   am?: string;
 }
 
+export interface SitePageBanners {
+  gallery?: string;
+  blog?: string;
+  events?: string;
+}
+
 export interface SiteLocalizedText {
   openingHours?: LocalizedValue;
   tagline?: LocalizedValue;
@@ -40,6 +46,7 @@ export const siteSettings = pgTable(
     socialLinks: jsonb('social_links').$type<SiteSocialLinks>().default({}).notNull(),
     defaultShareImageUrl: varchar('default_share_image_url', { length: 2048 }),
     localizedText: jsonb('localized_text').$type<SiteLocalizedText>().default({}).notNull(),
+    pageBanners: jsonb('page_banners').$type<SitePageBanners>().default({}).notNull(),
     updatedBy: uuid('updated_by').references(() => admins.id, {
       onDelete: 'set null',
     }),

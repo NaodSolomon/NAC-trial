@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import PageBanner from '@/components/common/PageBanner';
+import { loadPublicSettings } from '@/features/settings/public-settings.server';
 import { BlogList, loadPublishedBlogs, parseBlogPage } from '@/features/blog';
 import { localizedHref, translate } from '@/lib/i18n';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 
-import { buildLocalizedMetadata } from '@/lib/seo/site';
+import { localizedPageMetadata } from '@/lib/seo/site.server';
 
 interface BlogRouteProps {
   searchParams: Promise<{ lang?: string; page?: string }>;
@@ -12,7 +13,7 @@ interface BlogRouteProps {
 
 export async function generateMetadata({ searchParams }: BlogRouteProps): Promise<Metadata> {
   const language = await resolveRequestLanguage((await searchParams).lang);
-  return buildLocalizedMetadata({
+  return localizedPageMetadata({
     pathname: '/blog',
     language,
     title: language === 'am' ? 'ጽሑፎችና ዜና' : 'News and stories',
@@ -24,6 +25,7 @@ export async function generateMetadata({ searchParams }: BlogRouteProps): Promis
 }
 
 export default async function BlogPage({ searchParams }: BlogRouteProps) {
+  const settings = await loadPublicSettings();
   const query = await searchParams;
   const language = await resolveRequestLanguage(query.lang);
   const page = await loadPublishedBlogs(language, parseBlogPage(query.page));
@@ -36,7 +38,7 @@ export default async function BlogPage({ searchParams }: BlogRouteProps) {
           { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: language === 'am' ? 'ብሎግ' : 'Blog' },
         ]}
-        backgroundImage="/images/blog_1.jpg"
+        backgroundImage={settings?.pageBanners.blog ?? '/images/blog_1.jpg'}
       />
       <section className="bg-secondary-bg py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4">

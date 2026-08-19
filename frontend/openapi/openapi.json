@@ -11085,6 +11085,26 @@
           }
         }
       },
+      "PageBannersDto": {
+        "type": "object",
+        "properties": {
+          "gallery": {
+            "type": "string",
+            "maxLength": 2048,
+            "example": "https://media.example.org/gallery.jpg"
+          },
+          "blog": {
+            "type": "string",
+            "maxLength": 2048,
+            "example": "https://media.example.org/blog.jpg"
+          },
+          "events": {
+            "type": "string",
+            "maxLength": 2048,
+            "example": "https://media.example.org/events.jpg"
+          }
+        }
+      },
       "UpdateSiteSettingsDto": {
         "type": "object",
         "properties": {
@@ -11145,6 +11165,9 @@
           },
           "localizedText": {
             "$ref": "#/components/schemas/LocalizedTextDto"
+          },
+          "pageBanners": {
+            "$ref": "#/components/schemas/PageBannersDto"
           }
         }
       },

@@ -148,6 +148,13 @@
       "when": 1787129510256,
       "tag": "0020_add_launch_content_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1787133932188,
+      "tag": "0021_add_page_banners",
+      "breakpoints": true
     }
   ]
 }

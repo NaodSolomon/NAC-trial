@@ -5,7 +5,7 @@ import { loadPublishedPage } from '@/features/cms';
 import { isApiRequestError } from '@/lib/api/errors';
 import { resolveRequestLanguage } from '@/lib/i18n/server';
 import { loadPublicSeo } from '@/features/seo';
-import { buildLocalizedMetadata } from '@/lib/seo/site';
+import { localizedPageMetadata } from '@/lib/seo/site.server';
 
 interface AboutRouteProps {
   searchParams: Promise<{ lang?: string }>;
@@ -17,7 +17,7 @@ export async function generateMetadata({ searchParams }: AboutRouteProps): Promi
     getAboutPage(language),
     loadPublicSeo('about', language).catch(() => null),
   ]);
-  return buildLocalizedMetadata({
+  return localizedPageMetadata({
     pathname: '/about',
     language,
     title: seo?.title ?? page.seoTitle ?? page.title,

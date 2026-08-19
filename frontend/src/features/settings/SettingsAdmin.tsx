@@ -253,6 +253,32 @@ export function SettingsAdmin() {
             ))}
           </fieldset>
 
+          <fieldset className="bg-card grid gap-5 rounded-xl border p-6 shadow-sm md:grid-cols-3">
+            <legend className="text-heading px-2 font-serif text-xl font-semibold">
+              Page banners
+            </legend>
+            {(['gallery', 'blog', 'events'] as const).map((pageKey) => (
+              <Controller
+                key={pageKey}
+                control={control}
+                name={`pageBanners.${pageKey}`}
+                render={({ field }) => (
+                  <MediaPicker
+                    label={`${pageKey.charAt(0).toUpperCase() + pageKey.slice(1)} banner`}
+                    id={`page-banner-${pageKey}`}
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.pageBanners?.[pageKey]?.message}
+                  />
+                )}
+              />
+            ))}
+            <p className="text-foreground text-sm md:col-span-3">
+              The wide photos at the top of the gallery, blog, and events pages. A template photo is
+              used when none is chosen.
+            </p>
+          </fieldset>
+
           <fieldset className="bg-card grid gap-5 rounded-xl border p-6 shadow-sm">
             <legend className="text-heading px-2 font-serif text-xl font-semibold">
               Sharing image

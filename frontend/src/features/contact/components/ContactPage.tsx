@@ -16,7 +16,7 @@ export default async function ContactPage({ language }: { language: Language }) 
           { label: translate(language, 'home'), href: localizedHref('/', language) },
           { label: content.title },
         ]}
-        backgroundImage="/images/header-bg.jpg"
+        backgroundImage={content.bannerImageUrl ?? '/images/header-bg.jpg'}
       />
       <section className="py-16 sm:py-20">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">

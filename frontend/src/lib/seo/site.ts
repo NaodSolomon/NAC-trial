@@ -39,12 +39,17 @@ interface LocalizedMetadataInput {
   type?: 'website' | 'article';
   publishedTime?: string;
   modifiedTime?: string;
+  /** From site settings; the constants remain the fallback. */
+  siteNameOverride?: string | null;
+  defaultImageUrl?: string | null;
 }
 
 export function buildLocalizedMetadata(input: LocalizedMetadataInput): Metadata {
   const description = cleanDescription(input.description);
   const canonical = localizedUrl(input.pathname, input.language);
-  const image = absoluteUrl(input.imageUrl ?? '/images/home_1_slider_1.jpg');
+  const image = absoluteUrl(
+    input.imageUrl ?? input.defaultImageUrl ?? '/images/home_1_slider_1.jpg',
+  );
   return {
     title: input.title,
     description,
@@ -54,7 +59,7 @@ export function buildLocalizedMetadata(input: LocalizedMetadataInput): Metadata 
       locale: input.language === 'am' ? 'am_ET' : 'en_US',
       alternateLocale: input.language === 'am' ? ['en_US'] : ['am_ET'],
       url: canonical,
-      siteName,
+      siteName: input.siteNameOverride ?? siteName,
       title: input.title,
       description,
       images: [{ url: image, alt: input.title }],
@@ -80,6 +85,9 @@ export function absoluteUrl(value: string): string {
 }
 
 function cleanDescription(value?: string | null): string {
-  const normalized = value?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  const normalized = value
+    ?.replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   return (normalized || defaultDescription).slice(0, 160);
 }

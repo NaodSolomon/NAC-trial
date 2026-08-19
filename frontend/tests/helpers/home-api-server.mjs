@@ -288,13 +288,17 @@ const settings = {
   phone: '+251 11 000 0000',
   address: 'Addis Ababa, Ethiopia',
   defaultShareImageUrl: null,
+  pageBanners: {},
   localizedText: {
     openingHours: { en: 'Monday-Friday, 8:30-17:00', am: 'ሰኞ-አርብ, 8:30-17:00' },
     footerAbout: {
       en: 'We support autistic children and their families through care, education, advocacy, and community inclusion.',
       am: '',
     },
-    faqIntro: { en: 'Answers about the center, our services and how families can reach us.', am: '' },
+    faqIntro: {
+      en: 'Answers about the center, our services and how families can reach us.',
+      am: '',
+    },
   },
 };
 
