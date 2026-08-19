@@ -5,6 +5,20 @@ const socialLinksSchema = z.object({
   instagram: z.string().default(''),
   youtube: z.string().default(''),
   linkedin: z.string().default(''),
+  x: z.string().default(''),
+  tiktok: z.string().default(''),
+});
+
+const localizedValueSchema = z.object({
+  en: z.string().trim().max(500),
+  am: z.string().trim().max(500),
+});
+
+const localizedTextSchema = z.object({
+  openingHours: localizedValueSchema,
+  tagline: localizedValueSchema,
+  footerAbout: localizedValueSchema,
+  faqIntro: localizedValueSchema,
 });
 
 export const siteSettingsSchema = z.object({
@@ -22,6 +36,17 @@ export const siteSettingsSchema = z.object({
       instagram: z.string().optional(),
       youtube: z.string().optional(),
       linkedin: z.string().optional(),
+      x: z.string().optional(),
+      tiktok: z.string().optional(),
+    })
+    .default({}),
+  defaultShareImageUrl: z.string().nullable().default(null),
+  localizedText: z
+    .object({
+      openingHours: z.object({ en: z.string(), am: z.string() }).partial().optional(),
+      tagline: z.object({ en: z.string(), am: z.string() }).partial().optional(),
+      footerAbout: z.object({ en: z.string(), am: z.string() }).partial().optional(),
+      faqIntro: z.object({ en: z.string(), am: z.string() }).partial().optional(),
     })
     .default({}),
   updatedBy: z.string().uuid().nullable(),
@@ -51,7 +76,11 @@ export const settingsEditorSchema = z
       instagram: optionalHttpsUrl,
       youtube: optionalHttpsUrl,
       linkedin: optionalHttpsUrl,
+      x: optionalHttpsUrl,
+      tiktok: optionalHttpsUrl,
     }),
+    defaultShareImageUrl: z.string().max(2_048),
+    localizedText: localizedTextSchema,
   })
   .refine((value) => value.supportedLanguages.includes(value.defaultLanguage), {
     message: 'The default language must also be enabled.',
@@ -74,6 +103,19 @@ export function settingsEditorValues(settings: SiteSettings): SettingsEditorValu
       instagram: settings.socialLinks.instagram ?? '',
       youtube: settings.socialLinks.youtube ?? '',
       linkedin: settings.socialLinks.linkedin ?? '',
+      x: settings.socialLinks.x ?? '',
+      tiktok: settings.socialLinks.tiktok ?? '',
+    },
+    defaultShareImageUrl: settings.defaultShareImageUrl ?? '',
+    localizedText: {
+      openingHours: localizedValue(settings.localizedText.openingHours),
+      tagline: localizedValue(settings.localizedText.tagline),
+      footerAbout: localizedValue(settings.localizedText.footerAbout),
+      faqIntro: localizedValue(settings.localizedText.faqIntro),
     },
   };
+}
+
+function localizedValue(value?: { en?: string; am?: string }) {
+  return { en: value?.en ?? '', am: value?.am ?? '' };
 }

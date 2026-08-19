@@ -33,6 +33,7 @@ function payload(values: EventEditorValues, includeLanguage: boolean) {
     startDate: new Date(values.startDate).toISOString(),
     endDate: new Date(values.endDate).toISOString(),
     location: values.location,
+    imageUrl: values.imageUrl.trim() || null,
     rsvpEnabled: values.rsvpEnabled,
     status: values.status,
     ...(includeLanguage && { languageCode: values.languageCode }),
@@ -45,10 +46,7 @@ export async function createEvent(values: EventEditorValues) {
 }
 export async function updateEvent(id: string, values: EventEditorValues) {
   return adminEventSchema.parse(
-    await browserApiClient.patch(
-      `/admin/events/${encodeURIComponent(id)}`,
-      payload(values, false),
-    ),
+    await browserApiClient.patch(`/admin/events/${encodeURIComponent(id)}`, payload(values, false)),
   );
 }
 export function deleteEvent(id: string) {

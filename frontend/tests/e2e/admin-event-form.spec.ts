@@ -26,6 +26,7 @@ function eventItem(overrides: Record<string, unknown> = {}) {
     startDate: '2030-08-12T10:00:00.000Z',
     endDate: '2030-08-12T12:00:00.000Z',
     location: 'Addis Ababa',
+    imageUrl: null,
     rsvpEnabled: true,
     status: 'PUBLISHED',
     languageCode: 'en',
@@ -188,4 +189,49 @@ test('clears a field error once the value becomes valid', async ({ page }) => {
 
   await expect(page.locator('#slug-error')).toHaveCount(0);
   await expect.poll(() => observed.created?.slug).toBe('valid-event-slug');
+});
+
+test('an event photo is chosen from the media library and saved with the event', async ({
+  page,
+}) => {
+  await page.route(/\/api\/v1\/admin\/media(\?|$)/, (route) =>
+    respond(route, {
+      data: [
+        {
+          id: '00000000-0000-4000-8000-000000001504',
+          objectKey: 'media/family-day.jpg',
+          publicUrl: 'http://127.0.0.1:4010/media/family-day.jpg',
+          originalName: 'family-day.jpg',
+          mimeType: 'image/jpeg',
+          sizeBytes: 2048,
+          type: 'IMAGE',
+          uploadedBy: adminId,
+          createdAt: '2026-08-16T00:00:00.000Z',
+          translations: [],
+        },
+      ],
+      meta: { total: 1, page: 1, limit: 12, totalPages: 1 },
+    }),
+  );
+  const observed = await openEventAdmin(page);
+  await page
+    .getByRole('button', { name: /Family day/ })
+    .first()
+    .click();
+
+  await page.getByRole('button', { name: 'Choose event photo' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('Pictures come from the Media library');
+  await dialog.getByRole('button', { name: 'family-day.jpg' }).click();
+  await expect(dialog).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Save event' }).click();
+  await expect
+    .poll(() => observed.updated?.imageUrl)
+    .toBe('http://127.0.0.1:4010/media/family-day.jpg');
+
+  // Removing the photo must clear it on the server, not just on screen.
+  await page.getByRole('button', { name: 'Remove' }).click();
+  await page.getByRole('button', { name: 'Save event' }).click();
+  await expect.poll(() => observed.updated?.imageUrl).toBeNull();
 });

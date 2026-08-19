@@ -1,5 +1,6 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MediaPicker } from '@/components/admin/MediaPicker';
 import type { CmsEditorValues } from '../admin-cms.schemas';
 
 type FieldMessages<T> = Partial<Record<keyof T, string>>;
@@ -46,6 +47,14 @@ export function HomepageEditor({
   return (
     <fieldset className="space-y-5 rounded-xl border p-5">
       <legend className="text-heading px-2 font-semibold">Homepage composition</legend>
+      <MediaPicker
+        label="Hero photo"
+        id="homepage-hero-image"
+        value={value.imageUrl}
+        onChange={(imageUrl) => onChange({ ...value, imageUrl })}
+        error={errors?.imageUrl}
+        hint="The large photo behind the welcome heading."
+      />
       <div className="grid gap-4 sm:grid-cols-2">
         {field('heroHeading', 'Hero heading', 180)}
         {field('heroBody', 'Hero body', 1_000)}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Save } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -13,6 +13,7 @@ import {
   AdminFormSelect,
   AdminFormTextarea,
 } from '@/components/admin/AdminFormField';
+import { MediaPicker } from '@/components/admin/MediaPicker';
 import { getApiErrorMessage, isApiRequestError } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/query-keys';
 import { getAdminSettings, updateAdminSettings } from './admin-settings.client';
@@ -22,7 +23,26 @@ import {
   type SettingsEditorValues,
 } from './admin-settings.schemas';
 
-const SOCIAL_NETWORKS = ['facebook', 'instagram', 'youtube', 'linkedin'] as const;
+const SOCIAL_NETWORKS = ['facebook', 'instagram', 'youtube', 'linkedin', 'x', 'tiktok'] as const;
+
+const LOCALIZED_FIELDS = [
+  {
+    key: 'openingHours',
+    label: 'Opening hours',
+    hint: 'One line, shown in the page header, for example Monday-Friday, 8:30-17:00.',
+  },
+  { key: 'tagline', label: 'Tagline', hint: 'A short motto. Optional.' },
+  {
+    key: 'footerAbout',
+    label: 'Footer sentence',
+    hint: 'One or two sentences about the organization, shown at the bottom of every page.',
+  },
+  {
+    key: 'faqIntro',
+    label: 'FAQ introduction',
+    hint: 'One sentence under the FAQ page title.',
+  },
+] as const;
 const LANGUAGES = [
   ['en', 'English'],
   ['am', 'Amharic'],
@@ -40,6 +60,7 @@ export function SettingsAdmin() {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<SettingsEditorValues>({
     resolver: zodResolver(settingsEditorSchema),
@@ -205,6 +226,51 @@ export function SettingsAdmin() {
               Only HTTPS links are accepted. Leave a field empty to remove that network from the
               public footer.
             </p>
+          </fieldset>
+
+          <fieldset className="bg-card grid gap-5 rounded-xl border p-6 shadow-sm">
+            <legend className="text-heading px-2 font-serif text-xl font-semibold">
+              Organization voice
+            </legend>
+            {LOCALIZED_FIELDS.map((field) => (
+              <div key={field.key} className="grid gap-4 md:grid-cols-2">
+                <AdminFormField
+                  label={`${field.label} (English)`}
+                  id={`localized-${field.key}-en`}
+                  maxLength={500}
+                  hint={field.hint}
+                  error={errors.localizedText?.[field.key]?.en?.message}
+                  {...register(`localizedText.${field.key}.en`)}
+                />
+                <AdminFormField
+                  label={`${field.label} (Amharic)`}
+                  id={`localized-${field.key}-am`}
+                  maxLength={500}
+                  error={errors.localizedText?.[field.key]?.am?.message}
+                  {...register(`localizedText.${field.key}.am`)}
+                />
+              </div>
+            ))}
+          </fieldset>
+
+          <fieldset className="bg-card grid gap-5 rounded-xl border p-6 shadow-sm">
+            <legend className="text-heading px-2 font-serif text-xl font-semibold">
+              Sharing image
+            </legend>
+            <Controller
+              control={control}
+              name="defaultShareImageUrl"
+              render={({ field }) => (
+                <MediaPicker
+                  label="Default sharing image"
+                  id="settings-share-image"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.defaultShareImageUrl?.message}
+                  hint="Shown when a page without its own image is shared on social media. 1200 by 630 pixels works best."
+                />
+              )}
+            />
           </fieldset>
 
           {error && (

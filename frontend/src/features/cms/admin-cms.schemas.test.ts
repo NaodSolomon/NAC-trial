@@ -16,6 +16,7 @@ function editor(overrides: Record<string, unknown> = {}) {
       primaryHref: '',
       secondaryLabel: '',
       secondaryHref: '',
+      imageUrl: '',
       servicesHeading: '',
       services: [],
       locationHeading: '',
@@ -38,6 +39,7 @@ function editor(overrides: Record<string, unknown> = {}) {
     teamMembers: [],
     teamContentApproved: false,
     contactMapEmbedUrl: '',
+    bannerImageUrl: '',
     ...overrides,
   };
 }

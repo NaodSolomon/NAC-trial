@@ -119,6 +119,7 @@ export function editorValuesFromPage(page?: AdminCmsPage): CmsEditorValues {
       primaryHref: stringValue(objectValue(hero.primaryAction).href),
       secondaryLabel: stringValue(objectValue(hero.secondaryAction).label),
       secondaryHref: stringValue(objectValue(hero.secondaryAction).href),
+      imageUrl: stringValue(hero.imageUrl),
       servicesHeading: stringValue(services.heading),
       services: Array.isArray(services.items)
         ? services.items.map((item) => ({
@@ -157,6 +158,7 @@ export function editorValuesFromPage(page?: AdminCmsPage): CmsEditorValues {
     })),
     teamContentApproved: metadata.contentApproved === true,
     contactMapEmbedUrl: stringValue(metadata.mapEmbedUrl),
+    bannerImageUrl: stringValue(metadata.bannerImageUrl),
   };
 }
 
@@ -191,6 +193,7 @@ function editorPayload(values: CmsEditorValues, includeLanguage: boolean) {
                       },
                     }
                   : {}),
+                ...(values.homepage.imageUrl && { imageUrl: values.homepage.imageUrl }),
               },
               {
                 type: 'services',
@@ -213,6 +216,7 @@ function editorPayload(values: CmsEditorValues, includeLanguage: boolean) {
           }
         : values.contentType === 'about'
           ? {
+              ...(values.bannerImageUrl && { bannerImageUrl: values.bannerImageUrl }),
               contentApproved: values.about.contentApproved,
               about: {
                 mission: {
@@ -228,6 +232,7 @@ function editorPayload(values: CmsEditorValues, includeLanguage: boolean) {
             }
           : values.contentType === 'volunteer'
             ? {
+                ...(values.bannerImageUrl && { bannerImageUrl: values.bannerImageUrl }),
                 volunteerRoles: values.volunteerRoles.map((role) => ({
                   title: role.title,
                   summary: role.summary,
@@ -236,12 +241,18 @@ function editorPayload(values: CmsEditorValues, includeLanguage: boolean) {
               }
             : values.contentType === 'team'
               ? {
+                  ...(values.bannerImageUrl && { bannerImageUrl: values.bannerImageUrl }),
                   contentApproved: values.teamContentApproved,
                   teamMembers: values.teamMembers,
                 }
               : values.contentType === 'contact'
-                ? { mapEmbedUrl: values.contactMapEmbedUrl }
-                : {},
+                ? {
+                    ...(values.bannerImageUrl && { bannerImageUrl: values.bannerImageUrl }),
+                    mapEmbedUrl: values.contactMapEmbedUrl,
+                  }
+                : {
+                    ...(values.bannerImageUrl && { bannerImageUrl: values.bannerImageUrl }),
+                  },
   };
 }
 

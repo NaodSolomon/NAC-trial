@@ -81,6 +81,7 @@ export const cmsEditorSchema = z
       primaryHref: z.string().trim().max(2_048),
       secondaryLabel: z.string().trim().max(80),
       secondaryHref: z.string().trim().max(2_048),
+      imageUrl: z.string().trim().max(2_048),
       servicesHeading: z.string().trim().max(180),
       services: z.array(homepageServiceSchema).max(12),
       locationHeading: z.string().trim().max(180),
@@ -119,6 +120,7 @@ export const cmsEditorSchema = z
       .max(50),
     teamContentApproved: z.boolean(),
     contactMapEmbedUrl: z.string().trim().max(2_048),
+    bannerImageUrl: z.string().trim().max(2_048),
   })
   .superRefine((value, context) => {
     if (value.contentType === 'homepage') {

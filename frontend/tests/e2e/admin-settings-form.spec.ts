@@ -79,8 +79,8 @@ test('loads existing settings into every field shape', async ({ context, page })
   await expect(page.getByLabel('Facebook')).toHaveValue('https://facebook.com/nehemiah');
   await expect(page.getByLabel('Instagram')).toHaveValue('');
 
-  await expect(page.getByLabel('English')).toBeChecked();
-  await expect(page.getByLabel('Amharic')).toBeChecked();
+  await expect(page.getByLabel('English', { exact: true })).toBeChecked();
+  await expect(page.getByLabel('Amharic', { exact: true })).toBeChecked();
 });
 
 test('reports a non-HTTPS social link against that network only', async ({ context, page }) => {
@@ -123,7 +123,7 @@ test('moves focus to the first invalid field on submit', async ({ context, page 
 test('requires the default language to remain enabled', async ({ context, page }) => {
   const observed = await openSettings(context, page);
 
-  await page.getByLabel('English').uncheck();
+  await page.getByLabel('English', { exact: true }).uncheck();
   await page.getByRole('button', { name: 'Save public settings' }).click();
 
   await expect(page.locator('#defaultLanguage-error')).toContainText(/must also be enabled/i);
@@ -134,8 +134,8 @@ test('requires the default language to remain enabled', async ({ context, page }
 test('requires at least one enabled public language', async ({ context, page }) => {
   const observed = await openSettings(context, page);
 
-  await page.getByLabel('English').uncheck();
-  await page.getByLabel('Amharic').uncheck();
+  await page.getByLabel('English', { exact: true }).uncheck();
+  await page.getByLabel('Amharic', { exact: true }).uncheck();
   await page.getByRole('button', { name: 'Save public settings' }).click();
 
   await expect(page.getByRole('alert').filter({ hasText: /.+/ }).first()).toBeVisible();
@@ -147,7 +147,7 @@ test('submits the nested social links and language array together', async ({ con
 
   await page.getByLabel('Contact email').fill('families@example.org');
   await page.getByLabel('Instagram').fill('https://instagram.com/nehemiah');
-  await page.getByLabel('Amharic').uncheck();
+  await page.getByLabel('Amharic', { exact: true }).uncheck();
   await page.getByRole('button', { name: 'Save public settings' }).click();
 
   await expect(page.getByText('Global settings saved')).toBeVisible();

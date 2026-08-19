@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { CalendarClock, Eye, Save, Send } from 'lucide-react';
@@ -12,6 +12,7 @@ import {
   AdminFormTextarea,
 } from '@/components/admin/AdminFormField';
 import { ConfirmedActionButton } from '@/components/admin/ConfirmationDialog';
+import { MediaPicker } from '@/components/admin/MediaPicker';
 import { useAdminFeedback } from '@/components/admin/AdminFeedbackProvider';
 import { getApiErrorMessageWithDetails } from '@/lib/api/errors';
 import {
@@ -311,10 +312,27 @@ export function CmsPageEditor({ pageId }: { pageId?: string }) {
             error={errors.content?.message}
             {...register('content')}
           />
+          {contentType !== 'homepage' && (
+            <Controller
+              control={control}
+              name="bannerImageUrl"
+              render={({ field }) => (
+                <MediaPicker
+                  label="Banner photo"
+                  id="cms-banner-image"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.bannerImageUrl?.message}
+                  hint="The wide photo at the top of this page. Optional."
+                />
+              )}
+            />
+          )}
           {contentType === 'homepage' && (
             <HomepageEditor
               value={homepage}
               errors={{
+                imageUrl: errors.homepage?.imageUrl?.message,
                 heroHeading: errors.homepage?.heroHeading?.message,
                 servicesHeading: errors.homepage?.servicesHeading?.message,
                 services: errors.homepage?.services?.message,
