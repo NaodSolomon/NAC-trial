@@ -18,6 +18,7 @@ pnpm dev:frontend     # frontend only
 pnpm dev:backend      # backend only
 pnpm test             # run all tests
 pnpm lint             # lint both apps
+pnpm verify           # full backend + frontend + browser quality gates
 ```
 
 ### Frontend (`cd frontend`)
@@ -25,8 +26,9 @@ pnpm lint             # lint both apps
 pnpm dev              # next dev (port 3000)
 pnpm build            # next build
 pnpm test             # vitest run
-pnpm test:e2e         # playwright test
-pnpm lint             # next lint
+pnpm test:e2e         # playwright test (also: test:a11y, test:visual)
+pnpm lint             # eslint . --max-warnings=0
+pnpm typecheck        # tsc --noEmit
 pnpm format           # prettier --write .
 ```
 
@@ -38,11 +40,12 @@ pnpm test             # jest
 pnpm test:e2e         # jest --config test/e2e/jest-e2e.json
 pnpm lint             # eslint "{src,test}/**/*.ts"
 pnpm format           # prettier --write .
+pnpm test:integration # jest integration suites (requires the Docker test stack)
 pnpm db:generate      # drizzle-kit generate (create migration from schema changes)
 pnpm db:migrate       # drizzle-kit migrate (apply pending migrations)
-pnpm db:push          # drizzle-kit push (push schema directly, dev only)
 pnpm db:studio        # drizzle-kit studio (visual DB browser)
-pnpm db:seed          # ts-node src/database/seeds/seed.ts
+pnpm db:seed          # bootstrap settings, navigation, and the SEED_ADMIN_* administrator
+pnpm db:seed:demo     # fictional demonstration content (never in production)
 ```
 
 ## Code Style
@@ -50,9 +53,8 @@ pnpm db:seed          # ts-node src/database/seeds/seed.ts
 - **Formatter**: Prettier — single quotes, semicolons, trailing commas, 100 char width, 2-space indent
 - **Frontend linter**: ESLint with `next/core-web-vitals` + `next/typescript`
 - **Backend linter**: ESLint with `@typescript-eslint/recommended`
-- `no-console` is warn-level (only `console.warn` and `console.error` allowed)
+- Backend: `no-console` is warn-level (only `console.warn` and `console.error` allowed)
 - `@typescript-eslint/no-explicit-any` is warn-level — avoid `any`, use proper types
-- Frontend enforces `max-lines: 1000` per file
 - Always format before committing. Both apps have `pnpm format`.
 
 ## Architecture Rules
@@ -65,7 +67,7 @@ This project uses **Drizzle ORM**, NOT TypeORM. Do not import from `typeorm` or 
 - **Types** are inferred from schemas: `typeof table.$inferSelect` and `typeof table.$inferInsert`
 - **Drizzle instance** is injected globally via `DrizzleModule` using the `DRIZZLE` DI token
 - **Migrations** are managed with `drizzle-kit` (config: `backend/drizzle.config.ts`)
-- Use `pnpm db:push` for rapid dev iteration, `pnpm db:generate` + `pnpm db:migrate` for production
+- Every schema change goes through `pnpm db:generate` + `pnpm db:migrate`; there is no schema-push workflow
 
 ### Backend — Repository Pattern (MUST follow)
 
@@ -83,7 +85,7 @@ When creating a new module:
 5. Controller injects service — stays thin, no business logic
 6. Wire in module: provide repository with `{ provide: TOKEN, useClass: RepoImpl }`
 
-Example (see `src/modules/users/` for reference implementation):
+Example (see `src/modules/admins/` for reference implementation):
 ```typescript
 // Schema (src/database/schema/user.schema.ts)
 export const users = pgTable('users', { id: uuid('id').defaultRandom().primaryKey(), ... });
@@ -156,7 +158,8 @@ Organize domain logic in `src/features/<name>/`:
 
 - **Server state**: TanStack Query — all API data fetching goes through query hooks
 - **Client state**: Zustand stores in `src/store/`
-  - `auth.store.ts` — user session + JWT (persisted)
+  - `auth.store.ts` — administrator principal + auth status (memory only; the refresh
+    token lives in an httpOnly cookie and access tokens are never persisted)
   - `ui.store.ts` — global UI state (modals, sidebar, toasts)
 - Do NOT use React Context for state that changes frequently
 
@@ -171,13 +174,14 @@ Always use this pattern:
 ### Frontend — Components
 
 - `src/components/ui/` — shadcn/ui primitives (do not modify these directly)
-- `src/components/layout/` — Navbar, Sidebar, Footer
+- `src/components/public/` — the visitor shell (PublicHeader, PublicFooter, BrandMark)
+- `src/components/admin/` — shared admin building blocks (form fields, MediaPicker, confirmation dialog)
 - `src/components/shared/` — Reusable non-shadcn components
 - Feature-specific components go in `src/features/<name>/components/`
 
 ### Frontend — App Router
 
-- Route groups: `(auth)` for login/register, `(dashboard)` for authenticated pages
+- Route groups: `(public)` for the visitor site, `(auth)` for administrator sign-in and password recovery, `(dashboard)` for the authenticated admin workspace (there is no public registration)
 - Each group has its own `layout.tsx`
 - Global error/loading/not-found pages are in `src/app/`
 
@@ -214,7 +218,7 @@ Always use path aliases, never relative imports like `../../../`.
 - Frontend env: `frontend/.env` (copy from `frontend/.env.example`)
 - Backend env: `backend/.env` (copy from `backend/.env.example`)
 - `.env` files are gitignored — NEVER commit them
-- Backend connects to Postgres on `DATABASE_HOST:DATABASE_PORT` (defaults: `postgres:5432`)
+- Backend connects with `DATABASE_URL` when set; the individual `DATABASE_*` variables are a legacy fallback
 - Backend API runs on port `API_PORT` (default: `8000`)
 - Frontend expects backend at `NEXT_PUBLIC_API_URL` (default: `http://localhost:8000/api/v1`)
 
@@ -226,9 +230,9 @@ Always use path aliases, never relative imports like `../../../`.
 
 ## CI/CD
 
-- Single workflow: `.github/workflows/ci.yml`
+- Workflows: `ci.yml` (checks on PRs and main), `deploy.yml` (production, **manual dispatch only**), `backend-performance.yml`
 - PR to `main` → lint + test + build both apps (checks only)
-- Merge to `main` → lint + test + build → push Docker images to GHCR → auto-deploy to production
+- Production deployment is started manually from `deploy.yml`; it pushes SHA-tagged images to GHCR, runs migrations and the idempotent bootstrap seed as one-off containers, then rolls out via Compose
 
 ## Testing
 
@@ -246,4 +250,4 @@ Always use path aliases, never relative imports like `../../../`.
 - Don't skip DTO validation — every endpoint input goes through a validated DTO
 - Don't hand-edit `frontend/src/lib/api/generated.ts` — regenerate it with `pnpm api:generate`
 - Don't define table schemas inside modules — all schemas go in `src/database/schema/`
-- Don't use `db:push` in production — use `db:generate` + `db:migrate`
+- Don't bypass migrations — every schema change is a generated migration applied with `db:migrate`

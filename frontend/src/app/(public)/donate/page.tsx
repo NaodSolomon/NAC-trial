@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { loadPublicSettings, localizedSetting } from '@/features/settings/public-settings.server';
 import PageBanner from '@/components/common/PageBanner';
 import { TrialModeBanner } from '@/components/shared/TrialModeBanner';
 import { DonationForm } from '@/features/donations/components/DonationForm';
@@ -33,6 +34,7 @@ export default async function DonatePage({
   const { lang } = await searchParams;
   const language = await resolveRequestLanguage(lang);
   const capabilities = await loadDonationCapabilities().catch(() => null);
+  const settings = await loadPublicSettings();
 
   return (
     <>
@@ -64,7 +66,10 @@ export default async function DonatePage({
           {capabilities?.canCreateDonation ? (
             <DonationForm capabilities={capabilities} language={language} />
           ) : (
-            <DonationUnavailable language={language} />
+            <DonationUnavailable
+              language={language}
+              notice={localizedSetting(settings, 'donationNotice', language)}
+            />
           )}
         </div>
       </section>

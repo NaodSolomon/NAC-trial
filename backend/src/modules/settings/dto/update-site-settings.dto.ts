@@ -111,6 +111,12 @@ export class LocalizedTextDto {
   @ValidateNested()
   @Type(() => LocalizedValueDto)
   faqIntro?: LocalizedValueDto;
+
+  @ApiPropertyOptional({ type: () => LocalizedValueDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => LocalizedValueDto)
+  donationNotice?: LocalizedValueDto;
 }
 
 export class UpdateSiteSettingsDto {

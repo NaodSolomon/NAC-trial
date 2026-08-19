@@ -15,8 +15,8 @@ written license is provided.
 | Backend  | NestJS, Fastify, Drizzle ORM, Repository Pattern             |
 | Database | PostgreSQL 16                                                |
 | Cache    | Redis 7                                                      |
-| Storage  | MinIO (dev) / Cloudflare R2 (prod)                           |
-| Mail     | Mailpit (dev)                                                |
+| Storage  | S3-compatible: MinIO (dev); MinIO or Cloudflare R2 in production (`STORAGE_DRIVER`) |
+| Mail     | SMTP (production) / Mailpit (dev)                            |
 | Testing  | Vitest + Playwright (frontend) / Jest + Supertest (backend)  |
 | CI/CD    | GitHub Actions → GHCR → VPS deploy                           |
 | Infra    | Docker Compose (dev + prod), Traefik (prod SSL)              |
@@ -58,6 +58,12 @@ seed in production.
 
 ### Run without Docker
 
+> The `.env.example` templates address services by their Docker names (`postgres`,
+> `redis`, `mailpit`, `minio`). When running without Docker, point them at your own
+> services instead — for example `DATABASE_URL=postgresql://user:pass@localhost:5432/db`,
+> `REDIS_HOST=localhost`, `MAIL_HOST=localhost`. (The bundled Docker Postgres publishes
+> host port 5433, not 5432.)
+
 ```bash
 # Backend (after starting PostgreSQL, Redis, MinIO, and Mailpit)
 cd backend
@@ -82,6 +88,7 @@ pnpm dev
 | pgAdmin  | http://localhost:5050        | Postgres GUI       |
 | MinIO UI | http://localhost:9001        | Object storage GUI |
 | Mailpit  | http://localhost:8025        | Email catcher UI   |
+| Postgres | localhost:5433               | Database (host port) |
 | Redis    | localhost:6379               | Cache              |
 
 **pgAdmin login:** `admin@admin.com` / `admin`

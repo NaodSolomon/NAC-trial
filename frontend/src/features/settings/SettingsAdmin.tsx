@@ -42,6 +42,11 @@ const LOCALIZED_FIELDS = [
     label: 'FAQ introduction',
     hint: 'One sentence under the FAQ page title.',
   },
+  {
+    key: 'donationNotice',
+    label: 'Donations notice',
+    hint: 'Shown on the donate page while online payment is not connected. Tell supporters how to help meanwhile.',
+  },
 ] as const;
 const LANGUAGES = [
   ['en', 'English'],

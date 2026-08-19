@@ -1982,6 +1982,7 @@ export interface components {
             title: string;
         };
         LocalizedTextDto: {
+            donationNotice?: components["schemas"]["LocalizedValueDto"];
             faqIntro?: components["schemas"]["LocalizedValueDto"];
             footerAbout?: components["schemas"]["LocalizedValueDto"];
             openingHours?: components["schemas"]["LocalizedValueDto"];
