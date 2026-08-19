@@ -43,7 +43,9 @@ cp backend/.env.example backend/.env
 # Start everything (Postgres, Redis, MinIO, Mailpit, backend, frontend)
 docker compose up -d --build --wait
 
-# Create bootstrap settings, then populate the trial website
+# Create bootstrap settings, then populate the trial website.
+# Set SEED_ADMIN_NAME, SEED_ADMIN_EMAIL, and SEED_ADMIN_PASSWORD in backend/.env
+# first, or db:seed creates no administrator and /admin stays unreachable.
 docker compose exec backend pnpm db:seed
 docker compose exec backend pnpm db:seed:demo
 ```
@@ -768,8 +770,8 @@ production environment variables `PROD_API_URL` (including `/api/v1`), `PROD_SIT
 `PROD_MEDIA_ORIGIN`, and optional `PROD_MEDIA_HOSTS`. The frontend image validates these as
 non-local HTTPS URLs before `next build`; its browser chunks are then scanned so a localhost API,
 site, or media fallback cannot be published. The workflow
-builds immutable SHA-tagged images, runs migrations as a one-off container, and then performs
-the Compose rollout.
+builds immutable SHA-tagged images, runs migrations and the idempotent first-administrator
+seed as one-off containers, and then performs the Compose rollout.
 
 ## CI/CD
 
@@ -787,12 +789,27 @@ the Compose rollout.
 
 ### Required GitHub Secrets
 
-| Secret         | Description                            |
-| -------------- | -------------------------------------- |
-| `PROD_HOST`    | Production VPS IP                      |
-| `PROD_USER`    | SSH user for production                |
-| `PROD_SSH_KEY` | SSH private key for production         |
-| `GHCR_TOKEN`   | GitHub PAT with `write:packages` scope |
+| Secret          | Description                              |
+| --------------- | ---------------------------------------- |
+| `PROD_HOST`     | Production VPS IP                        |
+| `PROD_USER`     | SSH user for production                  |
+| `PROD_SSH_KEY`  | SSH private key for production           |
+| `PROD_APP_PATH` | Checkout path of this repository on the VPS |
+
+Image pushes authenticate with the workflow's built-in `GITHUB_TOKEN`; no personal
+access token is needed.
+
+### Required GitHub Variables
+
+Set these as repository **variables** (not secrets); the frontend image build fails
+without them:
+
+| Variable            | Description                                   |
+| ------------------- | --------------------------------------------- |
+| `PROD_API_URL`      | Public API origin including `/api/v1`         |
+| `PROD_SITE_URL`     | Public site origin                            |
+| `PROD_MEDIA_ORIGIN` | Public media origin                           |
+| `PROD_MEDIA_HOSTS`  | Extra media hostnames (optional)              |
 
 ## Free Local Trial Runtime
 
@@ -1032,6 +1049,14 @@ cp frontend/.env.production.example frontend/.env.production
 docker compose --env-file .env.production -f docker-compose.prod.yml config --quiet
 docker compose --env-file .env.production -f docker-compose.prod.yml pull
 docker compose --env-file .env.production -f docker-compose.prod.yml build media-backup media-backup-verify
+
+# Apply database migrations, then create the first administrator. The seed reads
+# SEED_ADMIN_NAME, SEED_ADMIN_EMAIL, and SEED_ADMIN_PASSWORD from
+# backend/.env.production, never overwrites an existing administrator, and does
+# nothing when they are unset. Remove them from the file after the first run.
+docker compose --env-file .env.production -f docker-compose.prod.yml --profile bootstrap run --rm migrate
+docker compose --env-file .env.production -f docker-compose.prod.yml --profile bootstrap run --rm seed
+
 docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 ```
 

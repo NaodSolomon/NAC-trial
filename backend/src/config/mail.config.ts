@@ -1,8 +1,12 @@
 import { registerAs } from '@nestjs/config';
 
 export default registerAs('mail', () => ({
+  driver: process.env.MAIL_DRIVER ?? 'mailpit',
   host: process.env.MAIL_HOST ?? 'mailpit',
   port: Number(process.env.MAIL_PORT ?? 1025),
+  user: process.env.MAIL_USER ?? null,
+  password: process.env.MAIL_PASSWORD ?? null,
+  secure: process.env.MAIL_SECURE === 'true',
   from: process.env.MAIL_FROM ?? 'noreply@nehemiah.local',
   contactNotificationEmail: process.env.CONTACT_NOTIFICATION_EMAIL ?? 'contact@nehemiah.local',
   connectionTimeoutMs: Number(process.env.MAIL_CONNECTION_TIMEOUT_MS ?? 3_000),

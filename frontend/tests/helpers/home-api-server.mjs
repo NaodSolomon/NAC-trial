@@ -2,6 +2,8 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
+let homepageUnpublished = false;
+
 const port = 4010;
 const downloadCounts = new Map();
 const eventRsvpEmails = new Set();
@@ -140,7 +142,14 @@ createServer(async (request, response) => {
     await delay(120);
     return envelope(response, { status: 'subscribed' }, 201);
   }
+  if (url.pathname === '/__test/homepage-unpublished' && request.method === 'POST') {
+    homepageUnpublished = url.searchParams.get('value') === 'true';
+    return json(response, { homepageUnpublished });
+  }
   if (url.pathname === '/api/v1/public/content/homepage') {
+    if (homepageUnpublished) {
+      return json(response, { success: false, statusCode: 404, message: 'Not found' }, 404);
+    }
     return envelope(response, homepage(language));
   }
   if (url.pathname === '/api/v1/public/blog') {
@@ -614,9 +623,7 @@ function publishedCmsPage(slug, language) {
   if (slug !== 'services') return null;
   const amharic = language === 'am';
   return {
-    id: amharic
-      ? '00000000-0000-4000-8000-000000000112'
-      : '00000000-0000-4000-8000-000000000111',
+    id: amharic ? '00000000-0000-4000-8000-000000000112' : '00000000-0000-4000-8000-000000000111',
     slug,
     languageCode: language,
     title: amharic ? 'የቤተሰብ ድጋፍ አገልግሎቶች' : 'Family Support Services',

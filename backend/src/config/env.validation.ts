@@ -50,13 +50,16 @@ export interface EnvironmentVariables extends Record<string, unknown> {
   PAYPAL_CANCEL_URL: string;
   SWAGGER_ENABLED: boolean;
   STORAGE_DRIVER: 'minio' | 'r2';
-  MAIL_DRIVER: 'mailpit';
+  MAIL_DRIVER: 'mailpit' | 'smtp';
   PAYMENT_DRIVER: 'fake' | 'paypal';
   CACHE_DRIVER: 'redis';
   PAYMENTS_ENABLED: boolean;
   TRIAL_MODE: boolean;
   MAIL_HOST: string;
   MAIL_PORT: number;
+  MAIL_USER: string | null;
+  MAIL_PASSWORD: string | null;
+  MAIL_SECURE: boolean;
   MAIL_FROM: string;
   CONTACT_NOTIFICATION_EMAIL: string;
   MAIL_CONNECTION_TIMEOUT_MS: number;
@@ -324,6 +327,22 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     throw new Error('SWAGGER_ENABLED cannot be enabled in production');
   }
 
+  const mailDriver = parseChoice(raw.MAIL_DRIVER, 'MAIL_DRIVER', ['mailpit', 'smtp'], 'mailpit');
+  if (environment === 'production' && mailDriver !== 'smtp') {
+    throw new Error(
+      'MAIL_DRIVER must be smtp in production; the mailpit driver sends without authentication or TLS',
+    );
+  }
+  const mailUser =
+    typeof raw.MAIL_USER === 'string' && raw.MAIL_USER.trim() ? raw.MAIL_USER.trim() : null;
+  const mailPassword =
+    typeof raw.MAIL_PASSWORD === 'string' && raw.MAIL_PASSWORD.trim()
+      ? raw.MAIL_PASSWORD.trim()
+      : null;
+  if (mailDriver === 'smtp' && (!mailUser || !mailPassword)) {
+    throw new Error('MAIL_USER and MAIL_PASSWORD are required when MAIL_DRIVER is smtp');
+  }
+
   return {
     ...raw,
     NODE_ENV: environment,
@@ -476,11 +495,17 @@ export function validateEnvironment(raw: Record<string, unknown>): EnvironmentVa
     TRIAL_MODE: trialMode,
     PAYMENT_DRIVER: paymentDriver,
     STORAGE_DRIVER: parseChoice(raw.STORAGE_DRIVER, 'STORAGE_DRIVER', ['minio', 'r2'], 'minio'),
-    MAIL_DRIVER: parseChoice(raw.MAIL_DRIVER, 'MAIL_DRIVER', ['mailpit'], 'mailpit'),
+    MAIL_DRIVER: mailDriver,
     CACHE_DRIVER: parseChoice(raw.CACHE_DRIVER, 'CACHE_DRIVER', ['redis'], 'redis'),
-    MAIL_HOST: String(raw.MAIL_HOST ?? 'mailpit'),
-    MAIL_PORT: parsePort(raw.MAIL_PORT, 'MAIL_PORT', 1025),
-    MAIL_FROM: String(raw.MAIL_FROM ?? 'noreply@nehemiah.local'),
+    MAIL_HOST: requiredInProduction(raw.MAIL_HOST, 'MAIL_HOST', environment, 'mailpit'),
+    MAIL_PORT: parsePort(raw.MAIL_PORT, 'MAIL_PORT', mailDriver === 'smtp' ? 587 : 1025),
+    MAIL_USER: mailUser,
+    MAIL_PASSWORD: mailPassword,
+    MAIL_SECURE: parseBoolean(raw.MAIL_SECURE, false),
+    MAIL_FROM: validateEmailAddress(
+      requiredInProduction(raw.MAIL_FROM, 'MAIL_FROM', environment, 'noreply@nehemiah.local'),
+      'MAIL_FROM',
+    ),
     CONTACT_NOTIFICATION_EMAIL: validateEmailAddress(
       requiredInProduction(
         raw.CONTACT_NOTIFICATION_EMAIL,
