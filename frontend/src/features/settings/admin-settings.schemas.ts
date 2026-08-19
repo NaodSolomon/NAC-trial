@@ -19,6 +19,7 @@ const localizedTextSchema = z.object({
   tagline: localizedValueSchema,
   footerAbout: localizedValueSchema,
   faqIntro: localizedValueSchema,
+  donationNotice: localizedValueSchema,
 });
 
 export const siteSettingsSchema = z.object({
@@ -51,6 +52,7 @@ export const siteSettingsSchema = z.object({
       tagline: z.object({ en: z.string(), am: z.string() }).partial().optional(),
       footerAbout: z.object({ en: z.string(), am: z.string() }).partial().optional(),
       faqIntro: z.object({ en: z.string(), am: z.string() }).partial().optional(),
+      donationNotice: z.object({ en: z.string(), am: z.string() }).partial().optional(),
     })
     .default({}),
   updatedBy: z.string().uuid().nullable(),
@@ -126,6 +128,7 @@ export function settingsEditorValues(settings: SiteSettings): SettingsEditorValu
       tagline: localizedValue(settings.localizedText.tagline),
       footerAbout: localizedValue(settings.localizedText.footerAbout),
       faqIntro: localizedValue(settings.localizedText.faqIntro),
+      donationNotice: localizedValue(settings.localizedText.donationNotice),
     },
   };
 }

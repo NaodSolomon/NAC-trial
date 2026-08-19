@@ -27,6 +27,7 @@ export interface SiteLocalizedText {
   tagline?: LocalizedValue;
   footerAbout?: LocalizedValue;
   faqIntro?: LocalizedValue;
+  donationNotice?: LocalizedValue;
 }
 
 export const siteSettings = pgTable(

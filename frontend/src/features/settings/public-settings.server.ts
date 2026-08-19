@@ -23,6 +23,7 @@ const publicSettingsSchema = z.object({
       tagline: z.object({ en: z.string(), am: z.string() }).partial().optional(),
       footerAbout: z.object({ en: z.string(), am: z.string() }).partial().optional(),
       faqIntro: z.object({ en: z.string(), am: z.string() }).partial().optional(),
+      donationNotice: z.object({ en: z.string(), am: z.string() }).partial().optional(),
     })
     .default({}),
 });

@@ -16,6 +16,7 @@ const valid = {
     tagline: { en: '', am: '' },
     footerAbout: { en: '', am: '' },
     faqIntro: { en: '', am: '' },
+    donationNotice: { en: '', am: '' },
   },
 };
 
