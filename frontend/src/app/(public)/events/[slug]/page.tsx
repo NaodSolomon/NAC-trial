@@ -25,7 +25,7 @@ export async function generateMetadata({
     language,
     title: event.title,
     description: event.description,
-    imageUrl: eventImage(event.slug),
+    imageUrl: eventImage(event),
   });
 }
 
@@ -43,7 +43,7 @@ export default async function EventDetailPage({ params, searchParams }: EventPag
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: { '@type': 'Place', name: event.location },
-    image: [absoluteUrl(eventImage(event.slug))],
+    image: [absoluteUrl(eventImage(event))],
     url: localizedUrl(`/events/${slug}`, language),
     inLanguage: language,
     organizer: { '@type': 'Organization', name: 'Nehemiah Autism Center' },
@@ -64,7 +64,7 @@ export default async function EventDetailPage({ params, searchParams }: EventPag
           },
           { label: event.title },
         ]}
-        backgroundImage={eventImage(event.slug)}
+        backgroundImage={eventImage(event)}
       />
       <section className="bg-secondary-bg py-16 sm:py-20">
         <div className="mx-auto max-w-4xl px-4">

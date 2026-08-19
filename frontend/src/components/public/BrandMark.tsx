@@ -13,7 +13,7 @@ export function BrandMark({ siteName, compact = false }: { siteName: string; com
       </span>
       <span
         className={cn(
-          'text-heading max-w-48 font-serif font-semibold leading-tight',
+          'text-heading max-w-48 font-serif leading-tight font-semibold',
           compact ? 'text-sm' : 'text-base lg:text-lg',
         )}
       >

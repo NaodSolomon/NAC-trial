@@ -49,9 +49,11 @@ export function eventStatus(event: PublicEvent, now = new Date()): 'upcoming' | 
   return new Date(event.endDate) > now ? 'upcoming' : 'past';
 }
 
-export function eventImage(slug: string): string {
+export function eventImage(event: Pick<PublicEvent, 'slug' | 'imageUrl'>): string {
+  if (event.imageUrl) return event.imageUrl;
+  // Template placeholder until the event has its own photo.
   let hash = 0;
-  for (const character of slug) hash = (hash + character.charCodeAt(0)) % 3;
+  for (const character of event.slug) hash = (hash + character.charCodeAt(0)) % 3;
   return `/images/event_${hash + 1}.jpg`;
 }
 

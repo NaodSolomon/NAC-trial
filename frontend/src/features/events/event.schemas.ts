@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const publicEventSchema = z
   .object({
+    imageUrl: z.string().url().nullable().catch(null),
     id: z.string().uuid(),
     slug: z.string().min(1).max(180),
     title: z.string().min(1).max(255),

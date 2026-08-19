@@ -66,7 +66,7 @@ async function loadEvents(language: Language) {
     description: event.description,
     startDate: new Date(event.startDate).toISOString(),
     location: event.location,
-    imageUrl: `/images/event_${(index % 3) + 1}.jpg`,
+    imageUrl: event.imageUrl ?? `/images/event_${(index % 3) + 1}.jpg`,
   }));
 }
 

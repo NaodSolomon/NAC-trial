@@ -8,6 +8,7 @@ export const publishedCmsPageSchema = z.object({
   content: z.string(),
   status: z.literal('PUBLISHED'),
   metadata: z.record(z.string(), z.unknown()).default({}),
+  // Derived accessor lives in cms.utils to keep unknown-metadata reads in one place.
   seoTitle: z
     .string()
     .nullable()
@@ -60,3 +61,8 @@ export const teamMetadataSchema = z.object({
     .min(1)
     .max(50),
 });
+
+export function cmsBannerImage(metadata: Record<string, unknown>): string | null {
+  const value = metadata.bannerImageUrl;
+  return typeof value === 'string' && value ? value : null;
+}

@@ -17,7 +17,7 @@ export function EventsList({ events, language }: { events: PublicEvent[]; langua
         >
           <div className="relative aspect-[16/10] overflow-hidden">
             <Image
-              src={eventImage(event.slug)}
+              src={eventImage(event)}
               alt=""
               fill
               sizes="(max-width: 768px) 100vw, 33vw"

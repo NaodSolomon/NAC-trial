@@ -94,6 +94,7 @@ export const eventListSchema = z.object({
       description: z.string(),
       startDate: z.string().or(z.date()),
       location: z.string(),
+      imageUrl: z.string().url().nullable().catch(null),
     }),
   ),
   meta: paginationMetaSchema,

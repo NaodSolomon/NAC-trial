@@ -18,7 +18,7 @@ export function EventSingle({ event, language }: { event: PublicEvent; language:
     <article>
       <div className="relative aspect-video overflow-hidden rounded-xl">
         <Image
-          src={eventImage(event.slug)}
+          src={eventImage(event)}
           alt=""
           fill
           priority
